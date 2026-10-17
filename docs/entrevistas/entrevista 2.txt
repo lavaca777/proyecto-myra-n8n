@@ -1,0 +1,498 @@
+[Orador 1]
+Voy a cambiarme de sala y seguimos por la reunión. No me voy a desconectar. Voy a convertir pantalla y vamos a partir con Whatsapp.
+
+Hoy día nosotros tenemos, vamos a hacer, estamos viendo paus. Este acá es un Whatsapp donde la gente sube, cuando hace las compras, una foto, un archivo, una imagen de un pago que se hizo a un proveedor. Esta información nosotros después la tenemos que pasar a un Excel Pagos.
+
+Esto después sube a una plataforma de pagos que se va a ver de esta forma. Vamos a tomar acá, hay un texto para materiales así que lo voy a bajar. Acá yo tengo distintos pagos, si yo veo en la columna I de categoría, tengo materiales, servicios, gastos generales, BPM.
+
+Yo entro y acá tengo más o menos las categorías específicas, están designadas. Fecha, un periodo para que se sepa que cae el mes correcto, después te voy a explicar por qué, pero no vale la pena tratar de meter otro cacho. El monto, un encargado, el cliente, el proyecto del cliente, porque por ejemplo en la católica no se puede tener tres proyectos con ellos.
+
+Después puedo tener la categoría que ahora mostré, esa subcategoría. Y después información extra donde realmente tal vez más importante que queda ahí es con qué se transfirió, el detalle de la compra para entender qué fue lo que se compró y a la empresa que se le pasó. Entonces, desde ese Excel, nosotros tenemos que tratar de tomar la mayor cantidad de información de lo que se está enviando para poedinar este Excel.
+
+¿Se entiende?
+
+[Orador 3]
+Sí, sí, sí, sí.
+
+[Orador 1]
+Ya. Entonces, ellos quieren escuchar cuál era el problema. Entonces, nosotros hacemos un trazo, bajamos la cartola de banco y lo comparamos con el listado que está en WhatsApp.
+
+Pero en vez de tener que ir bajando WhatsApp, la idea de Chuta sería más fácil, puedes tomar la lista de la cartola, ves una lista subida de la información que subieron los compradores, cuadrar ahí y subirlo directamente a la plataforma. Ojalá pueden encontrar formas de hacer eso también más rápido. Pero lo que primero necesitamos es que la información que se está haciendo en compra rápidamente llegue a una lista para poder hacer el cuadro.
+
+[Orador 2]
+Entonces, el problema tiene como estas dos partes que vendrían a ser la lectura de imágenes, en este caso para leer las boletas. Y, por ejemplo, si algún trabajador manda un audio, también eso está contemplado, ¿cierto?
+
+[Orador 1]
+Sí, pero el trabajador que va a hacerlo siempre van a ser dos o tres que son de la casa. La pregunta es, ¿ustedes qué podrían hacer? Porque nosotros siempre o subimos fotos de las boletas o, como dice Derek, mandamos audio diciendo se compró esto en tal lado y tal vez con algún seguimiento, con algún tipo de secuencia.
+
+Boleta tanto, proyecto tanto, fecha tanto, monstruo. Entonces, para ustedes, ¿qué sería más fácil? ¿O ambas cosas se pueden hacer?
+
+Ellos tienen un prototipo ya armado que se lo presentaron al profesor. El profesor le dijo que parece que están arrancando un poquito de cuál es el problema, por eso preguntaron de nuevo cuál es el problema.
+
+[Orador 2]
+El prototipo todavía no está armado, sino que le presentamos la solución como en papel. La idea de que así es lo que nosotros queremos hacer, el profesor nos dijo que tuviéramos una reunión de nuevo para entender mejor el caso. En este caso, el profesor nos mencionó que, porque nuestro enfoque fue decir lo que acabamos de decir, imagen y audio para el tema de los registros.
+
+El profesor insistió en que era necesario tener un registro de audio, que ese era el más importante. Yo le dije que realmente el de la imagen es más importante porque es donde se saca más información.
+
+[Orador 1]
+Claro, para nosotros es más fácil sacar una foto que tal vez mandar un audio. Pero la pregunta está, la foto que saquemos, ¿cómo derivamos de qué proyecto es?
+
+[Orador 3]
+La idea era hacer como un complemento, la foto y dar un poco de información que no podríamos sacar tan así, como el nombre del proyecto y esas cosas.
+
+[Orador 2]
+La idea sería que uno saca una foto, saca los datos de la foto, y luego uno manda un audio diciendo ya esto del proyecto tanto, del cliente tanto, y no sé qué otra información necesitaría en un caso de un audio.
+
+[Orador 1]
+Ya, entiendo. De la foto o del audio. Hablemos de foto.
+
+[Orador 2]
+Ya, hablemos de foto.
+
+[Orador 1]
+¿Qué informaciones ustedes pueden rescatar de ahí?
+
+[Orador 2]
+Lo que salga en la foto.
+
+[Orador 1]
+¿Ah, sí? Por ejemplo, número de factura, el monto total de la compra, porque en la foto sale todo. En la foto sale hasta cuánto costó el todo, por ejemplo, y ese neto y después le suma el impuesto.
+
+Entonces, ¿cómo eso va a llegar a una tabla? ¿Cómo la foto va a captar cuál es el total del monto?
+
+[Orador 3]
+Hay como partes que casi siempre son iguales, como ese monto total, y ahí es como que sacaríamos esa información.
+
+[Orador 2]
+Claro, en el fondo nos apoyamos de la herramienta de la IA. O sea, la IA es capaz de ver una foto y tomar los requerimientos que uno le pida para rellenar ciertas tablas específicas. Perfecto.
+
+[Orador 1]
+Yo anoté un pequeño diagrama en mi cabeza de la situación que tenemos. Entonces, por ejemplo, lo que existe es lo que nosotros estamos subiendo a WhatsApp, lo que quiero obtener en primera categoría y segunda categoría y finalmente lo adquirir y llegar. Entonces, en lo que existe el día está la imagen.
+
+Iniciamos la lista. A veces es una boleta que está jugada, a veces una boleta que está chueca, a veces una boleta que está mal impresa por la persona y a veces está escrita con pasta arriba porque, oye, ese producto no está, oye, aquí está el nombre del proyecto. Entonces, ahí me gustaría que se hiciera un buen análisis de qué tan bien se pueden analizar las fotos.
+
+Además de eso, eso es una imagen JPG. Después de eso, yo tengo el voucher de transferencia. En el voucher de transferencia a veces hay información, a veces no hay información, a veces tiene fecha, a veces no tiene fecha.
+
+Pero, porque de repente la Santander y la ABCI trabajan de forma distinta. Pero en el voucher de transferencia ya no es JPG. No sé en qué sistema está, pero ya no es una imagen como que sale de un celular.
+
+Además de eso, tengo PDFs que están cerrados que tengo que apretar el link y entrar. Y finalmente, tengo texto o tengo audio. Entonces, todos esos debería poder hacer un análisis para poder tomar de forma individual.
+
+Que es lo que quiero restatar mínimo, que es el monto del proyecto.
+
+[Orador 2]
+Ya, eso sería el requerimiento mínimo, entonces, el monto del proyecto.
+
+[Orador 1]
+Claro. Después de eso, eso como primero. Lo segundo es como número de factura, si es material, fecha.
+
+Porque eso, en el peor de los casos, va a tener que ver alguien que lo cuadre. Pero la información que nosotros estamos muy atrasados en poder obtener es a qué factura va este proyecto. Porque la cartola de banco no te lo va a decir.
+
+Lo tiene que hacer un jefe de obra. Y el jefe de obra tiene la responsabilidad de correr a la ferretería, comprar, salir corriendo de la ferretería, sacar la foto, dejar el audio, llegar ahora y trabajar. Y lo que nosotros estamos tratando de hacer es que, con esa presión, pueden llegar a poder obtener la información de ese momento.
+
+Porque si yo espero a un mes, ya no me acuerdo cuándo se va a cumplir. No, pero creo que... A ver, entonces, lo que dijo Derek es cierto.
+
+El formato, cuando uno adquiere la boleta, puede ser por transferencia, porque yo me metí a mi computador y transferí a la vez. O Sódima, cierto, cierto monto. Entonces, yo, ¿qué es lo que hago?
+
+Descargo y mando la transferencia a Sódima y mando la transferencia a esta aplicación. Y eso, en vez de ir con PDF, Santander es un pantallazo de la foto, como foto. La otra es que yo vaya personalmente a Sódima y compre un listado de cosas y ahí va a estar la foto que acabamos de hablar.
+
+De los productos y todo detallado. Esa es la segunda forma. La tercera forma es mandar el audio.
+
+Fui a la ferretería tanto y compré un todo, gasté tanto para perdí todo tanto. Se abandonó. Se perdió la foto.
+
+Y eso, esas son como las cuatro formas que tenemos de registrar esta información. Entonces, la problemática está para ustedes. ¿Cómo hacemos que estas cuatro formas de compra caigan en una misma planilla?
+
+Esa es la dificultad del problema, creo yo.
+
+[Orador 3]
+No, al final esa parte de captar esa información no es tan complicada.
+
+[Orador 4]
+Ya.
+
+[Orador 3]
+Es lo sencillo.
+
+[Orador 1]
+Ya.
+
+[Orador 2]
+O sea, igual ahora con lo que...
+
+[Orador 1]
+¿Tienen alguna otra duda?
+
+[Orador 2]
+O sea, ahora con lo que nos acaban de decir, creo que entiendo mejor a lo que se refería el profesor. Que creo que era más, lo que dijeron ustedes, el estrés que tiene el trabajador a la hora de hacer estos procesos. Entonces, claro, tal vez por eso él cree que la imagen no es la mejor solución, por lo que dijo Derek también.
+
+Podría estar arrugada, podría estar una foto borrosa. Entonces, creo que va más por ahí lo que nos decía el profesor.
+
+[Orador 1]
+Exacto. Entonces, una cosa, y no estamos 100% de acuerdo de decir la solución o no, pero si, por ejemplo, va el comprador, le saca la foto a Sodima, si el sistema trabaja con un asistente y dice, ah, acabas de hacer una compra, ¿a qué proyecto cae? A este proyecto.
+
+Este proyecto se llama tanto. ¿Ese es correcto? Sí.
+
+Hay una conversación entre el asistente y el comprador que tal vez es tedioso, tal vez come, pero en cuatro minutos o tres minutos o dos minutos ya tengo toda la información que requiere el tema y ahí recién manda la información a la lista.
+
+[Orador 2]
+Sí, eso es muy bien.
+
+[Orador 1]
+¿Dónde se genera un complicado eso? Es que uno está corriendo.
+
+[Orador 2]
+Claro.
+
+[Orador 1]
+Entonces, no tengo tiempo de poder hacerlo. Entonces, el asistente tiene que hacer la menor cantidad de compras posible de una forma que sea amigable al comprador.
+
+[Orador 2]
+Claro, claro, claro. Yo creo que eso igual, porque nosotros en la conversación que tuvimos con él no anduvimos mucho en este tema del trabajador que tiene que estar haciendo el proceso, sino que el sistema en sí lo que va a hacer. Entonces, yo creo que tal vez ese fue nuestro problema en enfocarlo con el procesador.
+
+[Orador 3]
+Nuestra, como la idea del proceso sería como sacar la foto, analizar, que lo analice el IA, luego como que envíe el mensaje de confirmación o de si faltó un detalle, pero igual hay que ver cómo sería ese mensaje. O si envían bien las cosas, capaz que ya no sea necesario hacer como si el dato faltaba tanto y sólo la confirmación. Perfecto.
+
+[Orador 1]
+Sí, claro. Entonces, el ideal es que tengan el prototipo para que después nosotros podamos como llenar la información con lo que estamos utilizando. Porque pasa que esto va a haber una sinergia.
+
+Ustedes van a generar un proyecto que tiene que estar hecho para nosotros, pero como no puede hacerla, las mil formas que nosotros hacemos las cosas, nosotros vamos a empezar a modificar la forma en que empezamos a subir la información para hacerse lo más fácil a la IA. Entonces, eso tiene que ser ya durante octubre una conversación entre los dos donde nosotros nos adaptamos a ustedes y ustedes nos adaptan a nosotros a tener un producto perfecto en noviembre.
+
+[Orador 3]
+¿En noviembre? No, en noviembre es como que quieran hacer las pruebas ellos. Ah, ya.
+
+[Orador 2]
+Claro.
+
+[Orador 1]
+¿Cuándo tienen ese ramo? ¿Hasta cuándo deberían tener esto listo?
+
+[Orador 2]
+En diciembre. 13 de diciembre máximo.
+
+[Orador 1]
+Pero necesitan un mes para hacer las revisiones. El problema es que desde el semestre pasado el grupo llegó con algo hecho. El día de la presentación nunca se pasó el proceso y el grupo lo desechó.
+
+[Orador 3]
+No, no. Si tenemos como considerado enviarle algo como en noviembre a ustedes como para que lo vayan probando y todo.
+
+[Orador 1]
+Oye, igual sería bueno contarnos. Nosotros estamos acá situados en la trinconada para que nos conozcamos y se motiven. Al final, después cuando uno sale al mundo laboral, lo que están haciendo ustedes es lo que necesitamos las empresas que tal vez no son muy grandes.
+
+Pueden quedar trabajando con nuestro equipo. La idea es que nos conozcamos. Nosotros somos igual de jóvenes que ustedes.
+
+Así que, motívense. Motívense. ¿De verdad?
+
+[Orador 2]
+No, sí, sí. Por mí no hay ningún problema en que nos reunamos en una reunión.
+
+[Orador 1]
+Yo estoy en verdad muy motivado con esto. La idea es que hagan un buen producto porque esta forma la tengo que replicar en tres sistemas más para los EPP, para muchas cosas. Y si a ustedes les sale bien esto, después les contratamos el servicio y lo hacemos juntos.
+
+Entonces, traten de que esto salga bien. Y si sale mal, después hacemos la lectura continua. Vemos cómo podemos mejorar el sistema.
+
+¿Les parece?
+
+[Orador 2]
+Sí, sí, sí, completamente. O sea, nosotros también estamos motivados en tener un buen proyecto y un buen producto para ustedes.
+
+[Orador 1]
+Sí, claro. Lo que estaba pensando es que tal vez podemos agregar los grupos de pagos. No, no, no.
+
+Ustedes concéntrense con la primera idea. Piénsenla. Son dos cabezas que están pensando en el problema.
+
+Si quieren juntarse, tenemos las puertas abiertas en un día de trabajo para que más o menos mastiquen qué es lo que hacemos nosotros el día a día. Y se vayan igual incorporando al mundo laboral, ¿cachas? Que igual les va a servir eso.
+
+¿Ya? Y eso. Cuando quieran, juntémonos y hablemos del proyecto.
+
+La idea es que salga algo bueno.
+
+[Orador 3]
+Igual lo otro que le queríamos preguntar era como, de algunos, que al final el profe nos dijo que eran como muchos datos que teníamos que rellenar. Nuestra idea era como rellenarlos todos, pero igual son hartos.
+
+[Orador 2]
+Entonces... ¿Cuáles son los datos más importantes de la tabla que tenemos que llenar? Lo indispensable.
+
+[Orador 1]
+Ya. Es que hay otro sistema que va a estar por el otro lado a llenar los espalzas. Pero la idea es que pueda identificar entre los dos que el autor dice, ah, sí, ese número tiene sentido que sea esto.
+
+[Orador 3]
+Ah, ya, ya. Y eso sería...
+
+[Orador 1]
+Si van a sacar algo de una foto o algo de un audio, entonces probablemente... ¿Cuáles van a ser fáciles? ¿A qué empresa?
+
+[Orador 2]
+Sí, claro, esos son fáciles.
+
+[Orador 1]
+Y esos son datos que el otro ya va a decir, ah, mira, se parece mucho. Y lo único que me sirve es una confirmación de un humano. Para que diga, sí, apruebo que esas dos cosas son las mismas, y entra al último planillo.
+
+[Orador 3]
+Pero, ¿cuál sería ese dato que usted dice para hacer la lista?
+
+[Orador 1]
+¿De qué datos necesitamos, tal vez? ¿El número? ¿El monto?
+
+¿El proyecto? ¿La fecha? No toda tu planilla.
+
+No, no, claro. Por eso yo diría el mínimo para que se pueda cuadrar con el otro. En ese caso sería como fecha, monto y el proyecto.
+
+[Orador 3]
+Igual podríamos intentar... A ver, anotamos como los que creemos que podrían ser como sencillos, que serían como la glosa, el periodo, la fecha, el monto, encargado, cliente, proyecto, categoría, detalle y empresa.
+
+[Orador 1]
+Ya, y el encargado, ¿tú cómo lo sitúas? ¿Por quién manda?
+
+[Orador 2]
+Claro, por el número de teléfono.
+
+[Orador 1]
+Ah, me entiendo.
+
+[Orador 2]
+Por el número de teléfono podemos hacer...
+
+[Orador 1]
+El encargado tiene otro... El encargado no se preocupe. Ah, ¿ya?
+
+¿Ese no? No, es que el encargado es quién es el dueño del tiempo, no es quién hizo la transferencia. La tarjeta es el que a mí me dice quién hizo la transferencia.
+
+Porque si es la V6 es tú, si es la Santander es yo, y si es el cliente es yo. Y si es efectivo, entonces hay como comenzar... El encargado no es una cosa de ver quién está...
+
+[Orador 3]
+No, pero igual se puede hacer con eso. Igual se puede hacer ese juego.
+
+[Orador 1]
+Claro, entonces si yo diría como... El mínimo es como proyecto y monto. Pero si quieres facilitar el trabajo a la persona, sería fecha, monto, proyecto, que es el más importante de todos, porque es el que no puede encontrarlo de otra forma.
+
+Empresa o persona que se le está repasando, y la tarjeta que se usa. Porque ahí, con esas cinco cosas, la otra cartola automáticamente... Ah, ya, esas de mi banco, ese monto lo tengo acá, y esa fecha tiene sentido, y la empresa.
+
+Porque es muy raro que el mismo día, el mismo monto y a la misma persona, se le haga una transferencia... Con esas tres, de la misma forma. Entonces la inteligencia artificial va a encontrar a ese mismo.
+
+Lo único, Jorge, es que las costas y la cartola bancaria, la fecha de banco, no siempre son las mismas. Pero ese es otro problema. Si yo compro un domingo, me va a facturar el lunes en el banco.
+
+Porque el banco no va a aceptar las acciones de ahoro.
+
+[Orador 3]
+Entonces sería el modo de pago el que igual sería importante.
+
+[Orador 1]
+Sí, el modo de pago.
+
+[Orador 2]
+Otra cosa, con respecto a la solución que nosotros le vamos a plantear al profesor. Nosotros tenemos como tres módulos de la solución, los cuales pueden ser intercambiables. En este caso, vendría a ser primero el hosteo de la aplicación que vamos a hacer, en este caso el Chatbot.
+
+El profesor tenía la idea de poder hacerlo dentro de la universidad para tenerlo como modo prototipo. Para que sea más barato para ustedes. La otra opción es que ustedes pongan dinero y dispongan de un servidor.
+
+O sea, de un VPS, que es un servidor virtual. Que uno paga mensualmente para tenerlo corriendo. La otra opción es pagar directamente un hosteo en línea.
+
+Que es más o menos lo mismo que el paso anterior, pero creo que es más barato.
+
+[Orador 1]
+No entendí a qué estamos hablando. Estamos hablando de, supuestamente, el asistente que va a existir.
+
+[Orador 2]
+No, no el asistente. Para tener el asistente, uno tiene que subirlo a internet para que esté en la red. Para hacer eso, uno necesita un servidor.
+
+Ese es el punto que estamos tratando ahora. El servidor. Podemos hacerlo dentro de la U, para que sea en el entorno del proyecto, a modo prototipo, para que ustedes lo prueben y sea un menor costo.
+
+Porque ahí no hay ningún costo. La otra opción es hostearlo en alguna aplicación. Hay aplicaciones para hostear.
+
+Hay versiones gratuitas, pero yo creo que igual una mensualidad son como 15.000 pesos por ahí. Para hostear la aplicación. Y básicamente se desligan de las universidades en ese caso.
+
+La otra opción es lo mismo, pero una VPS, que es más o menos lo mismo, pero un poquito más caro. Más que nada la inversión inicial.
+
+[Orador 1]
+Ya, mira. Nosotros tenemos hosting para la página web. Además de eso, tenemos la nube para guardar todo lo que es nuestro archivo de la empresa.
+
+No sé si alguno de eso permite también espacio como para poder subir este servidor. Por lo que tengo entendido, la inteligencia artificial se va a ocupar de un tipo de inteligencia artificial. Entonces, no sé si estamos ocupando el chat GPT, si vamos a ocupar el pop file.
+
+Nosotros pagamos 20.000 pesos en chat GPT mensual y hacemos las tareas de los hijos, y hacemos planificación, y hacemos parte del marketing. Al final, al parecer pagamos más de lo que necesitamos y solamente se ha habido una vez que hemos superado el límite en uno de los cuartos que estaba conectado en ese momento, que no sé cómo llegó al máximo. Ocupó después mi computador y podía seguir trabajando con ese.
+
+Pero, además de entonces pagar chat GPT, tendría que pagar para la aplicación que va a estar utilizando el chat GPT, que es la que ustedes van a crear.
+
+[Orador 2]
+Más o menos, es que no es la aplicación como tal, pero sí se puede entender de esa forma.
+
+[Orador 1]
+Es que la pregunta es si no es una aplicación y es, por decir, la lista donde cae, porque tiene que estar dentro del servidor, entonces yo creo que eso podría caer en el OneDrive que estamos utilizando, donde tenemos como, no sé, cientos de horas de espacio.
+
+[Orador 3]
+No, no, que al final no es como algo de espacio, es como de potencia. A ver, no, no, no.
+
+[Orador 2]
+Me cuesta aceptarlo a ustedes.
+
+[Orador 3]
+Igual se lo vamos a enviar después. Es como para que vean que puede que haya un coste asociado al proyecto. Más que eso.
+
+Más que nada.
+
+[Orador 1]
+Mira, lo siento no entenderlo, pero es difícil entenderlo antes de pagarlo.
+
+[Orador 2]
+No, sí, sí, es completamente entendible, por eso yo quiero también tratar de explicárselo ahora para que lo traten de entender, pero no... A ver, nosotros vamos a utilizar una herramienta que se llama N8n. N8n no tiene...
+
+[Orador 1]
+Un poquito más lento. Van a ocupar un elemento que se llama, ¿cómo?
+
+[Orador 2]
+N8n.
+
+[Orador 1]
+N8n. ¿Qué es el N8n?
+
+[Orador 2]
+N8n es una herramienta para automatizar procesos.
+
+[Orador 4]
+Ya.
+
+[Orador 2]
+El problema de N8n es que necesita necesariamente un servidor para correr. No se puede correr en... No se puede subir de sí directamente.
+
+Necesitamos un servidor que esté constantemente activo para que eso funcione.
+
+[Orador 1]
+Entiendo, ya.
+
+[Orador 2]
+Ya, entonces ahí es donde entran las opciones que les decía yo. El VPS, que es un servidor virtual, que no... Por ejemplo, hacer una inversión de un servidor físico es caro.
+
+Entonces, un servidor virtual igual es más barato. Tiene un costo inicial por pagarlo y luego una mensualidad. Ese es el costo que tiene un VPS.
+
+[Orador 1]
+Entonces, el VPS es el servidor que todos se ven conectados. Más o menos cómo funcionan muchas de las páginas, pues ya. Y después está el servidor físico, que es carísimo, y el otro sería que quedara en el servidor de la inversión.
+
+[Orador 2]
+O sea, igual la idea es que luego esto salga para afuera. O sea, el contexto de la universidad es más que nada para que ustedes lo prueben y digan si el proyecto funciona o no funciona. Si hace lo que tiene que hacer, no lo hace.
+
+Más que nada para que no tengan este gasto inicial que podría ser una pérdida de dinero para ustedes. Si es que sale mal.
+
+[Orador 1]
+Nosotros, claramente, hicimos software para la empresa, pero les pedí que específicamente lo hicieran en UserForm de Excel porque automáticamente podía tener eso en todos los computadores porque estábamos todos con el Office 365. Pero claro, este es como software totalmente aparte. Necesita estar en algún lugar y por eso el N8N y algo que nosotros no hemos hecho antes.
+
+Por eso la duda. Me dices que sería un valor inicial de hosting más la actualidad que sería $3,000. Claro, existen hosting que son gratuitos pero están todos manchados y solo falta que uno haga un tema criminal y te bloquean todas las paginas.
+
+Sí, mira, yo creo que por lo menos mientras estén trabajando, trabajen con la universidad y después si es algo que vemos lo pasamos al otro lado. Si esto funciona no solamente para pagos, pero para herramientas EPP y materiales no tendría que aumentar el hosting, me imagino.
+
+[Orador 2]
+No, no aumenta, claramente no.
+
+[Orador 1]
+El mismo sistema...
+
+[Orador 2]
+No, no, no. Ahí no hay problema. Básicamente para tener en este caso el N8N que es la herramienta que vamos a utilizar corriendo en algún lado.
+
+Eso es lo más que nada.
+
+[Orador 4]
+¿Ya?
+
+[Orador 2]
+Sí, ¿le parece?
+
+[Orador 1]
+Partamos con la universidad y después tomamos la decisión si tenemos que pasarlo al otro. Es despreciable por la cantidad de apoyo que nos podría ayudar. Me parece.
+
+Un par de cosas. La persona que está digitando todo es una doctora no es informática. Pero sí es ingeniería civil ambiental tiene un máster de energía y además tiene un doctorado donde tuvo que ocupar modelaciones para cómo se mueve un río, etc.
+
+Algo de informática tiene, pero no es informática. Y no es algo que le viene de forma natural. Pero ha estado utilizando chat GPT para ocupar el lenguaje Python para poder ir captando información de las cartolas y pasándola a la lista.
+
+¿Por qué lo digo? Porque probablemente sea ella la mejor persona con quien conversar cómo poder juntar todo y que funcione. Yo estoy digitando todo, pero yo no lo voy a automatizar.
+
+Ella lo puede automatizar porque tiene tiempo y la verdad es que tiene más capacidad informática que yo. Y entonces en algún momento tal vez sería bueno involucrarle a ella para que trabaje con ustedes en cómo pasar, porque si ustedes logran solucionar el primer problema de que el audio pase a una lista el segundo paso va a ser que esa lista pueda conversar con la lista de la cartola y que pueda llegar fácilmente a la lista final de constabilidad. Y que usted se junta todo eso y el trabajo que solía hacer a mandar el audio la reunión para aclarar las dudas, juntarla con la otra cartola, bajar la cartola y llenar la cartola completa verificar que las dos cosas tengan sentido y subirla, ahora lo único que tiene que hacer la persona es bajar la cartola abajo.
+
+Entonces ¿entienden realmente lo que están haciendo en cuanto a ahorro de dinero y cuánto significa eso en cuanto a costo de empresa? Están hablando de probablemente un ahorro de un palo muy suave. Así que si me dice que yo puedo solucionar todo eso por 13 lucas no se puede hacer, no nos va a doler.
+
+Así que eso, creo que tienen el problema les mandé un ejemplo de cada una de las formas de las cosas, entonces como yo les dije, mira, ustedes dijeron, ah, sí, está hablando de esto, está hablando de esto, está hablando de esto.
+
+[Orador 2]
+Y aquí nos mandó, por ejemplo.
+
+[Orador 1]
+Y aquí lo último, cuando estamos hablando de fotos, de sódium, aquí esto ya debiese ser obvio, pero me carga la palabra. Esperar a que la gente entienda lo que es obvio es una estupidez. Entonces cuando hablan de fotos, ustedes van a poder recuperar toda la información que la factura le está dando por factura de sódium, pero no les va a mandar el nombre del proyecto.
+
+Ese es el gran problema. La factura se puede mandar todo lo que vino de la factura de sódium sin el número de facturas y sin los materiales, pero tengo un montón, tengo la fecha. Pero cuál es el problema mío?
+
+Yo tengo 5 o 6 proyectos al mes y tengo que saber si son rentables. Si yo no puedo dividir por proyecto, no funciona. Entonces sacar un foto a una factura no me trae la información clave que es de qué proyecto es.
+
+Si no entienden eso no van a llegar a la solución.
+
+[Orador 3]
+Entendemos como que quiere separar las cosas por proyecto y todo eso que nos comentó en la anterior entrevista.
+
+[Orador 1]
+Les voy a compartir un detalle de nuevo para que vean qué es lo que yo hago después de esa planilla de pagos que les mostré. Entonces, en la planilla de pagos, yo tengo gastos, las que mostré en un lugar. Y tengo ingresos que están registrados por clientes.
+
+Entonces, tengo todos estos ingresos y tengo todos estos proyectos que están ahí, nombres distintos, proyectos distintos, gastos que es lo mismo. Tengo los proyectos, nombres, los presupuestos y después llego a esto. Entonces, tengo el cliente, tengo el proyecto y si se van dando cuenta, la lista no para.
+
+Entonces, cuando yo tengo todo listo, yo hago un par de fórmulas en Excel y puedo obtener la información de cuánto es el bruto, lo que gasté en materiales, lo que gasté en manobras, lo que gasté en gastos generales, lo que gasté en sumas. Y después lo comparo con el presupuesto y estoy viendo la diferencia. Pero si yo voy para atrás y muestro el tamaño de la cantidad de proyectos que están, yo no puedo hacer eso si no está el sistema ordenado, semi-automatizado y ocupar herramientas de extracción que estén funcionando.
+
+Entonces, lo que intentan hacer es la base de donde se tiene toda esa información para que yo pueda llegar acá y decir, Felipe, ¿sabes qué? Ganamos plata. ¿Sabes qué, Felipe?
+
+Nos caímos y perdimos plata. Y pasan las dos cosas. Pero el problema es que nos estamos dando cuenta de esto tres meses después de terminar un proyecto.
+
+[Orador 2]
+Y eso es porque las personas se tardan en mandar las cosas y al final hay que estar buscando de dónde viene la plata. O sea, la plata, dónde se gastó, quién la gastó, para qué proyecto se gastó y eso hay que hacer una reunión específica para eso. Y ahí se pierde tiempo.
+
+[Orador 1]
+Por ejemplo, había momentos donde nos habían imprimido también el peso y no sabíamos en qué proyecto había que cargar. Entonces, si yo solamente selecciono, porque la cartola la llenamos relativamente bien, pero todo lo que está en la T y la H, que está vacío, es plata que no sabemos a qué proyecto estaban asociados. O no la hemos asignado todavía.
+
+Si yo lo sumo, son como seis palos. Son seis millones de pesos que no tienen dueño. Entonces, es como, oh, y ¿sabes qué?
+
+El proyecto estuvo re bien, estuvo re bonito. Ya habrá seis millones que no sabemos qué está y el único proyecto que estaba era el tuyo. Ay, ¿me voy a cagar seis palos?
+
+Sí, bueno. Entonces, ahí es el problema de por qué esto tiene que estar y tiene que estar.
+
+[Orador 2]
+Ya entendí. Creo que acabo de entender así como específicamente lo que quieren. También contrastarlo con lo que decía el profesor.
+
+Creo que ahora podemos trabajar en una mejor solución.
+
+[Orador 1]
+Ya, genial. Entonces, solamente para terminar. La solución que había dado el profe, que había trabajado con nosotros, era eso.
+
+Es como, oye, acá acabas de ocupar una tarjeta o se acaba de generar un pago o subiste unas fotos. Yo como asistente tengo que sacarte la información básica para poder llenar esta barra de información. Entonces, ese fue el profe como pregunta.
+
+¿Y qué proyecto? ¿Y qué empresa? ¿Y qué factura?
+
+Entonces, mucha de esa información tal vez llega de forma natural. Si no, la va a tomar nadie. Y piensen cuánta es la mínima cantidad de información que necesitan para que pueda ser aprobado.
+
+Entonces, se dice, mira, compré, le acabo, el que más nadie le quiere poner nombre de proyecto son los combustibles. Porque no sabe dónde va a ir ese vehículo los próximos cinco días. Entonces, la carga dice combustible.
+
+No, pero ¿a qué proyecto? No sé. Entonces, el sistema te diga, no, tienes que cargar los proyectos ahora.
+
+¿Cuánto es lo mínimo que necesito de información para que el asistente te diga, estás autorizado a subir estos planitos?
+
+[Orador 2]
+Oiga, pero en ese caso, la persona ¿cómo? Si usted dice que no sabría a qué proyecto va, solamente cumple el combustible, ¿cómo sabría?
+
+[Orador 1]
+Lo que pasa ahí es que lo mandan. Llegamos a reunión y si nadie se hace responsable, yo veo la asistencia de ese periodo y digo, acá, durante cinco días, los mejores proyectos que estaban estos, estaban estos, así que lo cargo a ese. Pero, dos semanas después, el Felipe, yo soy en la instación Felipe de Operación.
+
+Felipe dice, claro, después me cargáis a estos proyectos, estos gastos y salgo para atrás. Entonces, tú ponele nombre de proyecto. Pero si llega a mí, yo, nosotros lo podemos tirar a gasto de empresa, pero en este rato tenemos como 43 millones de pesos en gasto de empresa que no están asociados a ningún proyecto.
+
+Entonces, claro, todos los proyectos se ven súper bien, pero hay 43 millones de gasto de empresa que no se están pagando. Entonces, en este momento, yo sé que estamos saliendo a costo, estamos perdiendo porque ha sido un mal año, pero yo tengo que, por lo menos, decir, tratar de reducir el valor de empresa a cero y que todos los proyectos estén pagando todos los gastos generales y que los proyectos tal vez estén saliendo a costo, pero es más fácil saber si tu empresa está mal porque tus proyectos no están tratando de pagar la parte administrativa, quiere decir, oye, todos los proyectos están muy bien, tienen una carga administrativa que te está comiendo los días y cayendo a perder. Pero así es el negocio.
+
+Al final de cuentas, tenés años buenos, tenés años malos y los años buenos te dejan plata si hiciste bien la pega y no la gastaste. Te ayudan a cubrir los años malos, pero ahí estamos. Así que eso.
+
+No necesito más tiempo. Si tienen más dudas, me escriben y ahí generamos la reunión, pero creo que si no tenían claro la película, ahora va a ser un poco más claro.
+
+[Orador 2]
+Yo creo que estamos bien claros. Vamos a redactar todo de nuevo. En estos días vamos a darle el documento a usted, después de mandárselo al profesor, para que usted ahí lo vea.
+
+Y ahí igual si a usted le entran dudas sobre algunas cosas, igual nos puede preguntar sin problema.
+
+[Orador 4]
+Perfecto. ¿Alguna otra cosa?
+
+[Orador 2]
+No.
+
+[Orador 4]
+Muchas gracias.
+
+[Orador 2]
+Muchas gracias. Chao.

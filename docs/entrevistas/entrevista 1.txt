@@ -1,0 +1,267 @@
+00:00
+y
+
+00:26
+No estaba con el interés de hacer el trabajo más allá de tener una nota rápida. que ojalá que no se acertara en usted.  entonces, mi lado,  yo me voy a dar por lo menos una hora a la semana.
+
+00:41
+para poder trabajar con ustedes.  No tengo que fijarla hoy día, que la próxima semana no tenéis clases, probablemente la siguiente tampoco.  ¿O solamente esta semana? La próxima semana no tenemos clase por el 18,  después ya es todo normal.
+
+00:57
+Ah ya, le dieron esta semana, la otra. Perfecto. Entonces entre 21 y 25 ya están haciendo, ya están en casa.  Ok,  no sé si ustedes tienen un listado de preguntas que quieran hacer y yo voy respondiendo o quieren que yo presente el problema.  Primero nos gustaría que presentes el problema para tener una idea más general.
+
+01:16
+Voy a dar dos minutos de la empresa que somos,  de por qué llegamos a este problema y tal vez a hundar en él.  Nosotros somos Constructora Mira.  Constructora Mira partió el 7 de enero del 2022 y nos enfocamos en el trabajo de construcción y remodelación de particulares, contriendo casas, remodeling casas y también por el lado de organizaciones.
+
+01:46
+Entonces,  por ejemplo, el cuarto piso de ingeniería donde están ustedes hoy día, el cuarto piso que se cumplió, eso lo hizo con Tutoramil, eso lo es Mimter.  También el cambio de la cubierta del edificio comercial, Ciencias del Mar,  parte del edificio J, ahora también le hicimos cambio,  hemos remodelado la vicerectoría. Entonces, en la UNICEF,  hemos estado trabajando harto. Además de eso, tenemos como clientes al puerto.
+
+02:16
+de la plaza de Copet en Guayacán.  Hemos trabajado con Aura en el observatorio y le hicimos trabajo de subcontrato a las mineras queros.  Y entonces tenemos esas dos almas. Hemos construido cuatro casas y más o menos...
+
+02:36
+nos dividimos 50 a 50 los trabajos en esos dos lados.  Pero una de cosas que sucede es que nuestra empresa no tiene un gran proyecto en el semestre todos los años.  En el caso de la gatoria norte cuando se los parco piso,  ahí teníamos tres trabajos en paralelo.  Pero hoy día estamos más haciendo con el tema de la economía y como está el tema remodelaciones o quién está gastando plata,  más hemos estado haciendo remodelaciones más cortas. Y eso ha significado que nosotros tenemos
+
+03:06
+que hace tal vez 5, 6, 7 proyectos en un mes.  eso nos genera a nosotros un desorden financiero y logístico.  Y ahí es donde empieza a nacer el problema.
+
+03:19
+Yo,  para que nosotros podamos manejar bien la empresa,  tenemos que manejar los números financieros, es decir, cuánto estamos gastando por proyecto.  Y eso significa dividir los sueldos de los trabajadores, los materiales y saber dónde están nuestros activos como herramientas y equipos, además de dónde se van el LPP,  que son elementos de protección personal de trabajadores, y además, tal vez, dónde van...
+
+03:47
+lo que se llaman fungibles,  que son parte de los equipos que se van gastando.  un taladro, taladro es la herramienta pero tiene una broca, la broca se va gastando, es esta broca fungible.
+
+04:02
+y además nosotros estamos en una situación donde compramos barato porque compramos mucho pero después tenemos que dividir por proyecto si nosotros no dividiremos bien por proyecto ese gasto original entonces nosotros cuando salen los números del proyecto sale súper bonito porque porque tuvo una rentabilidad buena pero la verdad es que no se le tardó todo porque nuestra fiscorretería que tiene tornillo hipopuquíble
+
+04:32
+del material pero no lo está cobrando y al final se llama un gasto en cerretería propia muy grande y nada en los proyectos.  hay un problema de la plata,  cómo la separamos por proyectos en cuanto a material, cuanto a escelgo y...
+
+04:48
+se nos pierden dónde está la herramienta porque vienen, sacan la herramienta y eso no queda anotado.  Tenemos problemas de que sale material de saletería, sí que se anote y tenemos la salida de PP.  Entonces,  hay cuatro problemas que hemos tratado de solucionar a través de registros en el WhatsApp.  Ya.  Y eso ha ayudado por lo menos en un 40 % pero sumamente lento y...
+
+05:16
+y también quita mucho tiempo a los socios que tienen que estar buscando más, ¿oíste? Si no estás tratando de ver esto que...
+
+05:24
+Entonces,  hoy día nosotros tenemos cuatro WhatsApp.  El WhatsApp de pagos, el WhatsApp de materiales, el WhatsApp de PTP y el WhatsApp de herramientas y equipos. Entonces, en cada uno de esos,  nosotros cuando sacamos algo,  decimos,  salen mil tornillos al proyecto de la Católica del Norte y viene alguien por atrás y eso lo pasa a un extra.  En pagos lo mismo, se compra algo en Sodemac, se acaba de comprar algo en Sodemac, costó 24.000 pesos y...
+
+05:54
+sí No tiene los números de los muñecos que está aquí por tanto. me dice,  no sé si tengo el número azul o rojo porque los números me llegan muy tarde.  Sí. yo me enfoco solamente en ver esto y los pongo en la estufa de un trato y los trabajo ahora en estufa de un trabajo. O sea, hay un ciclo no virtual.
+
+06:24
+donde si yo tomo la responsabilidad de tratar de ordenar la empresa, nos tiramos sin prieba. Como no estés trabajando, ciego, sin saber si estamos ganando tanto.  eso ya,  durante los cuatro años hemos estado mejorando. Pero este año ha sido mucho más complicado porque como ha habido muchos más proyectos chicos,  nosotros no podemos tener el tiempo de poder armarlos y es mucho más fácil cuando tienes proyectos solitos a las personas.
+
+06:54
+haciendo toda la imposición de todo de forma cerrada a un solo proyecto.  Si lo está dividiendo en siete en un mes,  no se... Así que, ¿cuál es la problemática en sí?  O, por decir,  ¿dónde podríamos partir un tipo de solución?  que, eso es lo que a hacer, que nosotros estamos en ti.
+
+07:24
+¿A qué? ¿No se puede decir que la solución o que estamos buscando como propuesta es que toda la información que nosotros estamos notando en esos bachas puedan caer automáticamente a un informe colado en nuestras categorías?
+
+07:41
+para que sea más rápido el traspaso de ese informe a un Excel donde estamos equipando la información. Ahora, podría caer directamente al Excel, sí, pero eso significa, aunque el 100 % de la información que está llegando desde el informe o de los audios esté correcta. Yo quiero por lo menos un paso humano antes de tocar el número 7.  Ah, ok.  Vale.
+
+08:07
+Usted recién mencionó que a través del registro en WhatsApp era lento.  ¿Se refiría por el paso después a hacer los traspasos al Excel o directamente usar el WhatsApp es lento?
+
+08:20
+No,  el WhatsApp tiene un problema, pero no es la lentitud, sino que la normalización es que la información llegue exactamente como tiene que llegar.  Y lo segundo es que se acuesten a hacerlo.  por ejemplo,  puede ser que yo suba... o en un día yo he hecho el récord de comprar en 8 a 9 lugares en un solo día.  Y eso es...
+
+08:47
+es que pega porque agarrar el vehículo, pasar y comprar ahí sí, pero no tenían todo ahí, tuviste que ir a Soimex, no tenían todo ahí, tuviste que ir Rotumar y llegaste a la red y después también tienes que comprar las cosas que son específicas de los lugares que apareciste ahí del centro y además de eso tuviste que pasar a servicio de la Policía Interno porque te decían una pregunta, al final visitaste nueve oficinas.  Esa es la pregunta.  Ese camino o a esta persona que tiene que hacer ese recorrido ahora le estoy
+
+09:47
+de eso y que la persona que está corriendo lo hubo que diga a qué proyecto cae.  Hay otros problemas que aparecen en ese sentido, ejemplo cada semana se abre un nuevo proyecto si estamos haciendo remodelación.  Entonces el sistema va a tener que aprender
+
+10:06
+y ser rápido que alguien le avise al sistema de que hay un nuevo proyecto entonces el Felipe, el que un ministorio, va a estar comprando materiales y probablemente va a estar subiéndolo a este nuevo proyecto si el sistema solamente trabaja con los clientes antiguos no va a saber dónde poner a la persona y si solamente pone el nombre del proyecto que se le ocurrió a la persona que está corriendo en el día va a aparecer con... el proyecto va a tener cinco nombres distintos y voy a ejemplo
+
+10:36
+que está en la UCN, nosotros le cambiamos la cubierta, ese trabajo se llamó obras menores, llamó edificio J,  se llamó Jota, se llamó el edificio que está al lado de la biblioteca.  yo como persona puedo identificar ya todos esos, son la católica norte, el único edificio que tengo allá es el edificio J,  y yo en la planilla final le pongo edificio J y puedo filtrar por proyecto y puedo verificar cuánto sacamos de ese proyecto.  Pero el sistema de inteligencia artificial
+
+11:06
+Si no se le pide que cole de acuerdo a los nombres, va a el itisola biblioteca elitisolajota y trabaja con menores y no va a pestañar porque eso fue lo que le dijo la persona en el audio.  O si no, si lo dejo rígido, solamente va a estar los nombres de los proyectos que se cargaron hace un año porque nunca más supimos cómo cargar free.  Claro.  Igual es una situación complicada, o sea...
+
+11:35
+Si constantemente están cambiando el nombre de los proyectos,  no veo que haya una solución como fija para que eso no ocurra. Lo más factible es que traten de mantener una coherencia con los proyectos que tienen. Tipo, se dicen que el proyecto 1 se llama proyecto 1, que se llame siempre proyecto 1.  Porque si no... No, igual se puede... problema ahí es que se tiene que encontrar la forma de que el sistema que se va a hacer...
+
+12:03
+que va a estar colando información,  la posibilidad de que con un audio o con una tabla vayamos nosotros actualizando.  Y el tema acá es... y esto es para todos y si pueden aprender algo de este proyecto, tal vez esto sería lo más importante.  Normalmente la solución de una cosa hace un cambio sistémico en todo lo demás.  Y eso...
+
+12:28
+de pasar en este proyecto.  el sistema es muy bueno en lo básico, la gente se va adaptar a utilizarlo de la forma correcta.  Y te doy un ejemplo. No sé si sea un ejemplo político no, pero es algo que sí funciona.  En Estados Unidos han tenido un problema con inmigración por 20 años.
+
+12:54
+y siempre la excusa era no se puede solucionar porque hay tantos adentros y no se pueden sacar.  Y es verdad,  el tema es que lo único que deberían hacer es ponerse pesados en la frontera y mucha gente se fue sola.  Entonces,  la adaptación humana es muy interesante cuando se trata de soluciones porque están en el beneficio propio.
+
+13:17
+responder de la forma donde tú vas a tener mejores resultados.  Entonces, creo que si ustedes encuentran la forma de poder caspasar la información y también encontrar la forma de que el sistema, por lo menos,  pueda incorporar nuevos nombres,  grupo automáticamente va a empezar a ocupar el nuevo órgano.  Ya.  Sí, sí, sí.
+
+13:40
+Entonces,  el tema acá es... Bueno, ¿y qué significó el tema del ejemplo? yo creo que lo contaron a la mitad. Gente dejó de entrar y que era un gran problema. Tanto que la gente estaba dentro, pero sí había un punto.  La caravana gigante de Santa América pararon.  estoy estimando el punto.  Entonces, esa es nuestra problemática ahora.
+
+14:07
+La pregunta tal que ustedes deberían estar preguntándose ahora es, ¿con qué herramientas estamos trabajando como para poder hacer algo? Estamos trabajando con WhatsApp y estamos trabajando con Excel en una nube.  Estamos ocupando Microsoft para poder hacer ese...
+
+14:25
+eso es Excel, trabajando directamente con la Nube de Office porque es mucho mejor en su trabajo con Excel.  sabemos que WhatsApp cobra en algunas cosas, entonces el profesor igual había comentado para temas de traspasos, cosas,  no sabía.
+
+14:48
+Pero la idea es que yo les mando a ustedes las bases de cómo se ven los que estamos trabajando y cómo poder captar la información desde WhatsApp para que llene ese tipo de paní.  Sí.  Ya.
+
+15:06
+Así que eso,  tal vez hagan un grupo de este tema, me invitan a mí, invitan a Felipe,  como se hablaron anteriormente y ahí voy subiendo yo los exácticos con quienes ya están trabajando ustedes.  La información es confidencial, obviamente,  espero que no la puedan sacar, pero no voy a mandar toda la información, sino que más cómo se divide todo por... Claro, una planilla, o sea, como un ejemplo.
+
+15:35
+y tal vez mandarlo todo en un solo excel para que vayan trabajando las porras para mí en una.  Lo último, que fue lo que... yo le dije al profe que no estaba muy seguro si eras importante de mi parte...
+
+15:53
+para darle a ustedes tal vez una solución o si dejar que ustedes lo trabajen de forma creativa. Me dijo que era mejor que nosotros representáramos qué podía ser la solución para que ustedes analicen esa,  analicen la suya y ustedes hagan un marco de explicar por qué la que se elige es la mejor. Claro,  es el trabajo que tenemos que hacer ahora, hacer un documento que explique una posible solución. Ok.  Entonces, yo le podía...
+
+16:22
+Les voy a más o menos presentar que fue la solución que tenía el profe, porque puede ser muy buena.
+
+16:30
+pero ustedes vean que es un pelo que es práctico, pasible, barato para poder implementar de una forma nosotros no tenemos problema en incorporar tal vez recursos para un futuro RPG para hacer esto pero como está la cosa yo les tengo prohibido a mi socio tratar de gastar más plata en algo que no se ha probado porque hemos comprado cosas que no han funcionado que al final perdemos plata por loteo que no es la idea
+
+17:00
+eso sería y les digo entonces la solución del proceso entonces vamos a volver al ejemplo de Luis Felipe Campuzano, es su nombre, corriendo a Sodimac y él hace una compra y él sale y ahí es que esa procesa acaba de comprar, tiene la factura al mano,  le saco una foto a la factura
+
+17:25
+y después deja un audio o deja un registro escrito.  En ese,  ¿qué debería poder hacer el sistema?  Uno, leer la información de la factura para poder obtener la fecha, el monto,  la empresa al cual se está pagando, el tipo de tarjeta que se utilizó, ojalá, por lo menos con los cuatro dígitos y de identidad que tarjeta es,  y el...
+
+17:54
+y el tipo de categoría que es la compra. Ahora,  el tipo de categoría... A ver,  el monto,  el cliente y la categoría son las tres cosas más importantes de este proceso, porque me dicen en qué se gastó la plata, a cuánto se gastó y en qué proyecto, que es todo lo que se necesita para realizar un proyecto para ver si es diablo o no.  ¿Categoría, a ver qué se refiere?
+
+18:23
+La categoría se sugiere si es un material,  es un sueldo, si es el pago de IVA, si es el pago de PPM, ahora ese IVA no es el de las facturas sino que es una gran empresa,  el pago del honorario contadores,  si es un servicio,  si es marketing, si es combustible y creo que tiene tres o cuatro más,  pero son hijos.  Entonces,  si uno más sobe y compra...
+
+18:50
+con la inteligencia artificial y un modelo de aprendizaje van a entender que cada vez que va a Sódima van a ser materiales.
+
+18:56
+pero si yo voy a un kiosco,  puede que sea un material, o puede ser un gasto general, porque tal vez hago una comida para la piscina.  Pero normalmente va eso, pero una transferencia a un trabajador puede ser un reembolso, puede ser su sueldo, puede ser el combustible que está poniendo en vehículo. Entonces,  hay pagos que sí tienen tres o cuatro, podrían ser tres o cuatro categorías distintas.  la idea es que
+
+19:27
+de la foto pueda identificar lo más posible.  Lo que no vaya a poder identificar tiene que ir en ese texto. Y en ese texto tiene que ser a qué proyecto va. No hay ninguna factura que te va a decir a qué proyecto va.  la persona va a tener que decir la boleta que se envió, la foto que se envió,  o la transacción que se acaba de hacer va al proyecto de Universidad de Católica del Norte, proyecto cubierto del edificio.
+
+19:57
+está en la categoría materiales.
+
+20:00
+Lo que le dice el profe es que con esa información hay una asistente virtual que le dice,  ah, creo que entiendo lo que me estás diciendo.  Esta es una factura que se hizo el 11 de septiembre, que son 20.000 pesos, que es combustible para el proyecto J de la Universidad Católica del Norte y que se pagó a compil con la tarjeta A-B-C-I de la empresa.  ¿Es correcto?  Sí, es correcto. Y esa información, la asistente virtual lo
+
+20:30
+y llega el excel como una línea dividido por todas las columnas que se dividen entre fesas hasta las fesas que te pagan.  la solución que tiene el profe es que en vez de que el sistema lea la información directamente que está mandando la persona,  el...
+
+20:53
+hay una asistente virtual que interactúe con la persona y por qué es tan importante eso?  Porque todos los que están mandando mensajes de TPE, de materiales,  de gastos y de equipos, no están mandando la información completa y a veces incorrecta. Entonces mandan la información sin el proyecto,  mandan el servicio diciendo que es un servicio cuando es un gasto general.  Entonces el asistente virtual debería estar respondido.
+
+21:23
+diciendo mira sabes que me falta la categoría sabes que no dijiste que proyecto iba y eso obliga de forma reactiva al que está utilizando el whatsapp a tener que mandar la información correcta porque el último paso el asistente de la dice oye sabes que toda la información es correcta la persona dice sí entonces le acaba de dar una vuelta se va a demorar cuatro minutos en el proceso antes está que mandaba una foto y se demora 30 segundos en el
+
+21:53
+Pero el problema es que después quedó en el idioma de unos cuatro horas en una reunión donde todos olvidaron en que gastaron la plata. Claro. Entonces,  es un robo de tiempo por goteo a los cuatro minutos versus el robo del lago completo.  Así que eso va a funcionar.
+
+22:12
+pero necesito que sea donde la persona responda de una forma reactiva y no proactiva porque la verdad es que dejar estos mandejas y la verdad es todos se tienen que estar en bandesa cuando trabaja y conciente. Para que hacerse lo difícil.  Les recomiendo que vean la película Margin Call,  el precio, el dinero, seman. Pero hay un monólogo, hay un gerente entre esas que probablemente es lo mejor que escuchado alguien hablar de cuál es la responsabilidad de cual.
+
+22:42
+son la capacidad de la gente que está arriba.  él dice que hay tres cosas,  él quiere decir que hay tres cosas.  Hay tres formas de ganarse la vida.  Ser el primero,  ser inteligente o hacer trampa.  Y él dice no hace trampa.
+
+22:56
+Y si hay mucha gente inteligente sentada acá, siempre es más fácil ser primero.  Entonces,  la alta gerencia de empresas,  mucho más grande que las mías, entienden que la idea no es hacer las cosas específicamente de una forma intelectual, sino que hacerlas de una forma fácil.  Entonces, yo tengo que dejarles en bandeja a la gente que trabaja con este sistema, que sea a prueba de huiones.  Y así sacamos esto adelante.  Vale.
+
+23:26
+Otra cosa,  con respecto al proyecto anterior, ¿qué fue exactamente lo que no terminó de convencerles?  Buena pregunta. El problema del tema anterior no fue que no tenían un sistema que no me habría funcionado por lo menos para solucionar 40 % de los problemas.  El problema es que no fue validado.
+
+23:47
+Probablemente generaba mucho rogues.  Nunca lo pasaron para revisar.  Y realmente fue un tema de tiempo de ellos que generó que no funcionara.
+
+23:58
+entiendo que ustedes tienen otros ramos. Yo que tengo estudiante, tengo un máster,  estudiado tres carreras,  entiendo el poco tiempo que uno tiene como estudiante. Entonces uno no puede decir,  mi problema con Tessa tiene que ser lo más importante para usted, y entiendo que ese no es la realidad.  Pero lo que ustedes están haciendo,  si ustedes le ponen un tiempo, un poquito de tiempo y cariño al principio,  van a tener mejores resultados,  que estamos tratando de hacerlo lo que más me guste. Así que estamos en septiembre,
+
+24:28
+ya creo que tienen que incidir dentro del AU.  Entonces, no estamos del principio, pero tampoco estamos al final.  Siempre sentío que son temas más cortos que el primero también.  el tema fue que no tuvo buen resultado, no porque técnicamente no podían generar algo que sí podíamos utilizar, sino que nunca.
+
+24:53
+Así que por eso quiero darles una hora para que nos podamos juntar. Puede ser en persona.  Yo siempre sentío que en persona se puede avanzar más que a través de computador o teléfono.  Y la idea es que si ustedes van teniendo prototipo, nosotros lo vamos probando en una sola área y si funciona, le dice funcionar para los cuatro. Lo único sí es que las cuatro áreas no tienen la misma categoría.  Cuando yo saco una herramienta, no le estoy preguntando...
+
+25:23
+el valor porque no es una compra sino que la saquen hasta bodegas pero es el mismo sistema que se tiene que utilizar entonces hay gente que se tiene entrenar en ese sentido a cuatro asistentes distintos y que no se mezclen entre ellos para que se vayan pidiendo información que no corresponde porque ya me imagino caer en un loop donde el asistente de herramientas habló con el asistente de pagos y le dijo oye tienes que preguntar el valor y ahora herramienta me está pidiendo el valor y la persona está diciendo que no entonces no llena el
+
+25:53
+y se queda pegado.
+
+25:58
+Entonces la idea es como generar otro tipo de precios con suerte e implementar los cuatro con cuatro agentes distintos y ver cómo se paga eso. Nosotros en este momento ya estamos pagando entre 20, 30 mil pesos mensuales en chat y bt para poder ayudarnos con estos procesos de marketing y de alguna otra cosa.  Pero tenga en cuenta que esto podría costar hasta mucho menos que eso y también estamos a favor de poder apretar costos.
+
+26:28
+Claro que no se, para nosotros sí, porque nos gusta.  el tema acá también es entender que existe en el mercado que nos podría ayudar en cuanto a cómo funciona la implementación real de un buen sistema de inteligencia artificial en la empresa y que no nos deje con altos costos asociados ahí.  Claro, ya.
+
+26:56
+Sería igual importante si al menos cuando van con los de la boleta, si no pueden como enviar algunas.  Ajá. Algunas antiguas. Ya. Y como mostrar como que categoría fue asignada o si puede eso, si no le vamos preguntando.  No, mira, lo que yo puedo hacer es mandar un informe con un ejemplo de algo de cada uno.  Ya.  Y con eso ustedes van a entender que categoría es cual.
+
+27:26
+No lo puedo hablar hoy día, pero es algo que se puede hacer y eso, si ustedes lo tienen que llevar a puesta, bastante un poco mejor.  Hay otras derivadas que vienen de esto, pero esto es para un caso.  Nosotros hicimos un software completo para la empresa con un caso.  Hemos tenido buenos resultados con el Anima Forma, que fue poquito mejor.  si ustedes pueden solucionar esto, me solucionan 70%, 80 % del problema de boletas.
+
+27:56
+y después el 20 % yo tendría que disfrutar de eso.  Pero si ustedes ya no solucionan eso, si hay un troncaso, el 20 % que si es un problema completado, no van a poder terminar solucionando ello ocupando su sistema.  Entonces acá hay la posibilidad de poder generar un crédito de título mejorando el sistema. Y si realmente funciona,  es algo que hasta se podría implementar en otras empresas. Porque hoy día en el mercado existen sistemas que hacen esto,
+
+28:26
+todos están orientados a cómo funciona la empresa grande porque están jugando SAP y tú tienes que amaldarte a ellos pero si ustedes tienen una agencia que les hace análisis de costos que sea de forma HALSCAM como hecho a medida entonces ustedes solucionan un problema de todas las medidas de empresas que no pueden absorber la forma que te gastado la grande porque son pescados, SAP es caro, no te preocupes que SAP es caro.
+
+28:56
+pero si es que tienen gastar.  En un solo viaje,  lo que ellos están utilizando y han utilizado por 20 años,  está seguro que tiene contacto. Porque no pasó a nosotros.  Nosotros queríamos un sistema que pudiera ayudarnos a la cotización de la construcción de casas y de otros proyectos.  El análisis de una casa para construir con planos normalmente es un proceso de tres a cuatro semanas.
+
+29:22
+Entonces, qué se llama... y tienes que analizar qué vale cada cosa. Entonces,  si los valores ya están puestos en un sistema, chuta, yo me meto ahí, ponés agua, voy poner 20 metros cuadrados de cerámico, ya el sistema me dice que vale esto.  Y necesito hacer una zanja más y el sistema dice cuánto vale la zanja.  Yo era de la idea, hagamos algo hecho a nuestra medida.
+
+29:47
+y mis socios y compañeros que hacían la publicación dicen no,  contratemos un servicio y ya esté hecho. Cuando ocuparon el sistema hecho,  los valores no tenían ningún sentido con los valores que ellos estaban cobrando. No tenían ningún sentido las partidas de cómo se analizaban en el sistema, versus cómo las analizábamos nosotros. Al final les duraron dos presupuestos,  un mes y luego tardaron.
+
+30:11
+El sistema que hizo Fastone nosotros ya llevamos un año y medio utilizándolo, ni siquiera nos da los valores,  pero sigue siendo mucho más fácil cotizar de esa forma un proyecto porque nos pide las partidas como nosotros la entendemos y después nosotros pasamos más tiempo poniendo los valores que creemos que el mercado hoy día está entregando. Y cuando tú tienes una estación de 13 % el año 24,  de un 5, 6, 4 % el...
+
+30:39
+en 2025 y este año y de nuevo a ver realmente 6 no te sirve mantener números tienes que ir analizando entonces el proyecto de capson fue muy bueno porque nos permitió poder llevar nuestro orden de partida por proyecto y después nuestro trabajo es poner asignarles válvarez así que ahí tengo fe en trabajar para la universidad soy ingeniero de cine industrial tengo más tenes finanzas
+
+31:09
+El máster de inferencia lo saqué en Francia y cuando estuve allá pude ver como en Francia la unión, universidad y mundo privado era mucho más cercana a la que estaba en Chile.  Y lo que yo estoy viendo es que ahora por fin se están despertando.  Entonces, Inacap tiene un servicio similar,  la OCN tiene un muy buen sistema donde buscan presas y le dicen yo te soluciono un problema pero tú le das el trabajo a los estudiantes para que lo vayan desarrollando. Y ustedes son adultos, entonces...
+
+31:39
+ya están dentro de la tasa de poder que trabajando en una empresa privada y hay que hacer un buen trabajo. Se entiende que es un primer encuentro con una empresa privada,  tiene las capacidades.  Y en Francia,  yo vi cómo los hospitales le pasaban todo el sistema de aire condicionado y ventilación a estudiantes de su edad para que le analizaran cómo instalarlo en una colporma, un hospital.  Entonces...
+
+32:06
+Esto es están haciendo,  es la vanguardia de cómo deberían estar avanzando y por eso a nosotros nos gusta participar y sacar provecho porque es una parte intelectual de Chile que no se está tocando bien.  Y ese es mi mórmolo.  Creo que respondí las preguntas,  les voy a dar unos tips de algunas cosas que tenemos,  pero no sé si hay algo más que necesitan.
+
+32:33
+No,  no, entendemos.  Bien,  entonces me imagino que durante esta semana no van a poder hacer nada. O sea,  si vamos a trabajar,  vamos a estar trabajando en este momento como una posible solución. Ya. Y ya luego de eso vamos a hacer el documento este y después de eso se lo va pasar usted para que usted pueda verlo y decir si la solución le puede satisfacer o no.  Ya,  voy a...
+
+33:01
+Voy a mandarles  por lo menos,  un ex con las categorías que están por cada una,  con algunos ejemplos y después durante la próxima semana les voy a mandar un ejemplo de cada uno de los documentos que podrían hacer, que puede ser una transferencia, una factura, un pago en efectivo, un audio y después cómo se ve en tal y cárcel la pantalla.
+
+33:29
+Hay un paso que usted no tiene que entrar por ahora, que es la mejor forma de saber.  Realmente lo que se gastó son con las cartolas bancarias, no con el audio del WhatsApp.  Porque si fuera por la otra WhatsApp, solamente llegara mitad de la información.  La cartola bancaria te dice exactamente cuánto salió de tus penas. Entonces,  ese es el que manda.  La idea es que yo copio la cartola, la pongo en el Excel y después busco...
+
+33:54
+los pagos que se hicieron en este informe de pago que van a hacer ustedes y yo voy subiendo la información de ese informe a Excel versus la cartola.  Y si esos dos van coincidiendo al 80%, excepcional. Perfecto. Muy bueno.
+
+34:14
+El siguiente tema, que la gasto la noticia que proyecto es, por eso es importante que le informe y queña con la información de cuantos se gastó y con eso.  Ojalá que haya alguna forma de agarrar el número de factura porque ese también a veces lo puedes pillar por servicio impuesto interno pero hoy en día el sistema bancario a veces ni siquiera te dice a qué empresa se pagó.
+
+34:42
+sino que sale por un estado pago. Y si sale en un estado pago no te va nada de información.  Hay que ir adivinando quién es. Pasa también con la pensionera. No se llaman JPS, se llaman Inversiones J &J.  Y uno dice, chuta, ¿dónde gasté 70 lucas? Y después adlan más o menos el valor de combustible.  lo que está en papel y transcedencia normalmente funciona de esa forma.  Pero, por ejemplo, pago de sueldo...
+
+35:09
+Ustedes no se van a meter pago de imposición, pago de IVA, se van a meter porque son pago directo a plataformas y no caen como voucher y además de eso hay que separarlos por personas y por proyectos antes de poder meterlo en la planilla y eso no lo va a poder hacer el asistente porque tendría que leer asistencia,  leer pago de sueldo de la cartola y bajar todas las informaciones y separarlos y no quiero perder tiempo en eso cuando lo más fácil por hacer ahora
+
+35:38
+es pasar una sola factura del suelo de 10 personas.  Sí, sí.
+
+35:48
+Ya, bien,  sería eso. Le agradezco su tiempo.  Javier y Carlos era? Sí, sí,  Ya,  te agradezco. A ver, en el núcleo de WhatsApp, empezamos a comentarnos por ahí.  Me invitan a mí,  me invitan a Felipe para re-invitar a ambas que yo les mandaría contacto.  Y vamos solucionando eso.  Yo quiero que esto funcione. Y yo también quiero decirles que esto funcione. Por supuesto. Y entonces la idea es que ambos seamos proactivos en venir molestándonos cuando tengamos alguna duda.
+
+36:18
+o alguna cosa.  Así que, con esta parte no le puedo decir que le va a dar todo el que tenga,  para nosotros esto tiene que estar operativo en diciembre para poder utilizarlo ya todo el año 2027 y salirnos de este desorden.  Ya.  Muchas gracias.  Y nos estamos a charar. Muchas gracias. Muchas gracias, chau. Gracias, cuídense.
+

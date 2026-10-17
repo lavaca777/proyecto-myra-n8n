@@ -1,0 +1,68 @@
+# =====================================================================
+# Constructora MYRA - stack local
+#   docker compose up -d
+#
+# Servicios:
+#   postgres  -> base de datos de la aplicacion (myra)
+#   n8n       -> orquestador; guarda sus workflows en ./n8n/data (SQLite)
+#
+# La base de datos de n8n sigue siendo SQLite a proposito: asi los
+# workflows y credenciales actuales se conservan tal cual. PostgreSQL
+# se usa solo para los datos del negocio (gastos, proyectos, etc.).
+# =====================================================================
+
+name: myra
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: myra-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      TZ: America/Santiago
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      # Solo se ejecuta cuando el volumen esta vacio (primera vez).
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5433:5432"   # DBeaver / pgAdmin desde el PC
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: myra-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: America/Santiago
+      TZ: America/Santiago
+      # Debe ser la MISMA clave con la que se cifraron las credenciales.
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
+      # URL publica que Telegram usa para llamar al bot.
+      # En local: http://localhost:5678/  |  tunel: lo actualiza scripts/tunnel.ps1
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+    volumes:
+      - ./n8n/data:/home/node/.n8n     # workflows, credenciales y SQLite
+      - ./n8n/workflows:/workflows     # export de workflows para git
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pg_data:
+    # Nombre fijo: no cambia si mueves la carpeta del proyecto.
+    # Se reutiliza el volumen del compose anterior (Myra_db) si existe.
+    # Es external para que Compose no lo recree al cambiar el nombre del proyecto;
+    # scripts/start.ps1 lo crea si no existe.
+    name: myra_db_pg_data
+    external: true
