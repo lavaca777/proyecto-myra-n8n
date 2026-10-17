@@ -10,6 +10,7 @@ confirmación y persiste el gasto.
 - **Diseño de flujos:** [`docs/02-flujos.md`](docs/02-flujos.md)
 - **Base de datos:** [`docs/03-base-de-datos.md`](docs/03-base-de-datos.md)
 - **Despliegue UCN:** [`docs/04-despliegue-ucn.md`](docs/04-despliegue-ucn.md)
+- **Migración desde la carpeta anterior:** [`docs/05-migracion.md`](docs/05-migracion.md)
 
 ---
 
