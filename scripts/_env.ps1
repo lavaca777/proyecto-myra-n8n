@@ -65,6 +65,87 @@ function Wait-PostgresHealthy {
     return $false
 }
 
+function Stop-LegacyContainers {
+    $oldContainers = @('myra_db-postgres-1', 'myra_db-n8n-1', 'n8n_local_myra')
+    foreach ($name in $oldContainers) {
+        if (Test-ContainerRunning -Name $name) {
+            Write-Host "Deteniendo contenedor anterior: $name" -ForegroundColor Yellow
+            docker stop $name | Out-Null
+        }
+    }
+}
+
+function Start-CloudflareTunnel {
+    param(
+        [Parameter(Mandatory = $true)][string]$LogPath,
+        [int]$TimeoutSeconds = 30
+    )
+
+    if (-not (Get-Command cloudflared -ErrorAction SilentlyContinue)) {
+        throw 'No se encontro cloudflared en el PATH. Instalalo o agregalo al PATH.'
+    }
+
+    if (Test-Path $LogPath) { Remove-Item $LogPath -Force }
+
+    $process = Start-Process -FilePath 'cloudflared' `
+        -ArgumentList 'tunnel', '--url', 'http://localhost:5678' `
+        -RedirectStandardError $LogPath `
+        -NoNewWindow -PassThru
+
+    $url = $null
+    $timeout = $TimeoutSeconds
+
+    while ($timeout -gt 0 -and [string]::IsNullOrEmpty($url)) {
+        if ($process.HasExited) {
+            throw "cloudflared termino inesperadamente (codigo $($process.ExitCode)). Revisa $LogPath."
+        }
+        Start-Sleep -Seconds 1
+        $timeout--
+        if (Test-Path $LogPath) {
+            $content = Get-Content $LogPath -Raw
+            if ($content -match 'https://[a-zA-Z0-9-]+\.trycloudflare\.com') {
+                $url = $Matches[0]
+            }
+        }
+    }
+
+    if ([string]::IsNullOrEmpty($url)) {
+        Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+        throw 'No se pudo obtener la URL de Cloudflare. Revisa cloudflared.log.'
+    }
+
+    return [pscustomobject]@{
+        Process = $process
+        Url     = $url
+        LogPath = $LogPath
+    }
+}
+
+function Set-WebhookUrl {
+    param(
+        [Parameter(Mandatory = $true)][string]$EnvPath,
+        [Parameter(Mandatory = $true)][string]$Url
+    )
+
+    $urlWithSlash = if ($Url.EndsWith('/')) { $Url } else { "$Url/" }
+
+    $content = Get-Content -Path $EnvPath -Raw
+    if ($content -match '(?m)^WEBHOOK_URL=') {
+        $content = $content -replace '(?m)^WEBHOOK_URL=.*$', "WEBHOOK_URL=$urlWithSlash"
+    } else {
+        $content = $content.TrimEnd() + "`nWEBHOOK_URL=$urlWithSlash`n"
+    }
+    Write-Utf8NoBom -Path $EnvPath -Content $content
+
+    # CRITICO: Docker Compose prioriza las variables del proceso sobre el .env.
+    # Si no actualizamos $env:WEBHOOK_URL, el contenedor queda con la URL vieja
+    # (por ejemplo, http://localhost:5678/) aunque el .env ya tenga el tunel.
+    $env:WEBHOOK_URL = $urlWithSlash
+    [Environment]::SetEnvironmentVariable('WEBHOOK_URL', $urlWithSlash, 'Process')
+
+    return $urlWithSlash
+}
+
 function Write-Utf8NoBom {
     param(
         [Parameter(Mandatory = $true)][string]$Path,

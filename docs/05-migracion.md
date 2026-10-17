@@ -49,8 +49,9 @@ histórico.
 
 ## Importante
 
-- **No uses más los scripts de la carpeta anterior.** El nuevo punto de entrada es
-  `scripts\start.ps1`.
+- **No uses más los scripts de la carpeta anterior.** El nuevo punto de entrada para
+  desarrollo es `scripts\dev.ps1` (túnel + stack + migraciones). Si quieres levantar
+  solo la base y n8n sin túnel, usa `scripts\start.ps1`.
 - El stack anterior (`myra_db-postgres-1`) se detuvo para liberar el puerto 5433 y
   reutilizar el volumen. No se borró nada.
 - Hay commits locales pendientes de `git push` (requiere tus credenciales de GitHub).

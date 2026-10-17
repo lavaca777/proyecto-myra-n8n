@@ -24,8 +24,14 @@ confirmación y persiste el gasto.
 
 ### Levantar todo (modo desarrollo)
 
-Este es el equivalente al antiguo `start-all.ps1`: levanta PostgreSQL, n8n, aplica
-migraciones, abre el túnel de Cloudflare y actualiza el webhook automáticamente.
+Este es el equivalente al antiguo `start-all.ps1`. Abre **primero** el túnel,
+actualiza `WEBHOOK_URL` en `.env` y en la sesión, y **después** levanta PostgreSQL +
+n8n, para que el Telegram Trigger nazca con la URL pública correcta. Finalmente aplica
+las migraciones.
+
+> ¿Por qué ese orden? Docker Compose prioriza las variables de entorno del proceso
+> sobre el archivo `.env`. `dev.ps1` actualiza ambas antes de crear el contenedor;
+> si solo se edita `.env`, n8n puede quedar apuntando a `localhost`.
 
 ```powershell
 # Crear el .env solo si no existe (NO sobrescribir el actual: contiene la key)
@@ -66,9 +72,9 @@ esté corriendo (o lo levanta, pero no aplica migraciones).
 
 | Script | Cuándo usarlo |
 |---|---|
-| `scripts\dev.ps1` | Todo en uno para desarrollo (stack + túnel + webhook) |
-| `scripts\start.ps1` | Solo levantar PostgreSQL + n8n y migrar |
-| `scripts\tunnel.ps1` | Solo abrir el túnel y actualizar el webhook |
+| `scripts\dev.ps1` | Todo en uno: túnel primero, luego stack + migraciones + webhook |
+| `scripts\start.ps1` | Solo levantar PostgreSQL + n8n (sin túnel) y migrar |
+| `scripts\tunnel.ps1` | Abrir el túnel, actualizar el webhook y reiniciar n8n |
 | `scripts\stop.ps1` | Apagar los contenedores sin borrar datos |
 | `scripts\db-migrate.ps1` | Aplicar migraciones pendientes |
 | `scripts\psql.ps1` | Consola SQL |
@@ -88,8 +94,12 @@ El script:
 
 1. Levanta `cloudflared` contra `localhost:5678`.
 2. Detecta la URL `https://....trycloudflare.com`.
-3. Actualiza `WEBHOOK_URL` en `.env`.
-4. Reinicia n8n para que registre el webhook con Telegram.
+3. Actualiza `WEBHOOK_URL` en `.env` **y** en la sesión de PowerShell.
+4. Reinicia n8n para que use la URL pública en los webhooks.
+
+> El webhook de Telegram se registra cuando **activas el workflow** o cuando usas
+> **Test workflow** en el Telegram Trigger. Tener la URL pública configurada no
+> registra el webhook por sí solo.
 
 La URL cambia cada vez que reinicias el túnel. En la UCN se debe usar un dominio
 fijo o un túnel nombrado (ver [`docs/04-despliegue-ucn.md`](docs/04-despliegue-ucn.md)).
@@ -260,6 +270,26 @@ docker stop myra_db-postgres-1
 1. Verifica que `WEBHOOK_URL` en `.env` sea la URL pública actual.
 2. Ejecuta `.\scripts\tunnel.ps1` de nuevo (la URL del túnel cambia).
 3. Revisa en n8n: **Workflow → Telegram Trigger → Webhook** y los logs de ejecución.
+
+### El contenedor quedó apuntando a localhost
+
+Revisa la variable real del contenedor:
+
+```powershell
+docker inspect myra-n8n --format '{{range .Config.Env}}{{println .}}{{end}}' | Select-String WEBHOOK
+```
+
+Debe mostrar `N8N_WEBHOOK_URL=https://....trycloudflare.com/`. Si muestra
+`http://localhost:5678/`, ejecuta:
+
+```powershell
+.\scripts\dev.ps1
+```
+
+No basta con editar el `.env` y reiniciar: Docker Compose prioriza la variable
+`WEBHOOK_URL` que ya está cargada en la sesión de PowerShell. `dev.ps1` y
+`tunnel.ps1` actualizan el archivo **y** la variable del proceso antes de recrear
+el contenedor.
 
 ### Las credenciales no se pueden descifrar
 

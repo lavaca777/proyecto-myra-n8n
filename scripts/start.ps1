@@ -13,13 +13,7 @@ Assert-Docker
 Import-DotEnv (Join-Path $root '.env')
 
 # Detener el stack anterior si quedo corriendo (no borra nada).
-$oldContainers = @('myra_db-postgres-1', 'myra_db-n8n-1', 'n8n_local_myra')
-foreach ($name in $oldContainers) {
-    if (Test-ContainerRunning -Name $name) {
-        Write-Host "Deteniendo contenedor anterior: $name" -ForegroundColor Yellow
-        docker stop $name | Out-Null
-    }
-}
+Stop-LegacyContainers
 
 Ensure-PgVolume
 
