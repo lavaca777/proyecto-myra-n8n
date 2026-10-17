@@ -22,18 +22,37 @@ confirmación y persiste el gasto.
 - PowerShell 5.1 o superior
 - `cloudflared` instalado y en el `PATH` (solo para probar Telegram desde internet)
 
-### Levantar el entorno
+### Levantar todo (modo desarrollo)
+
+Este es el equivalente al antiguo `start-all.ps1`: levanta PostgreSQL, n8n, aplica
+migraciones, abre el túnel de Cloudflare y actualiza el webhook automáticamente.
 
 ```powershell
-# 1. Crear el .env solo si no existe (NO sobrescribir el actual: contiene la key)
+# Crear el .env solo si no existe (NO sobrescribir el actual: contiene la key)
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 
-# 2. Levantar PostgreSQL + n8n
-.\scripts\start.ps1
+# Un solo comando: stack + migraciones + tunel + webhook
+.\scripts\dev.ps1
 ```
 
+Al terminar verás:
+
 - n8n: <http://localhost:5678>
-- PostgreSQL: `localhost:5433` (usuario `myra`, base `myra`) para DBeaver/pgAdmin
+- PostgreSQL: `localhost:5433` (usuario `myra`, base `myra`)
+- URL pública del túnel, ya configurada como webhook de Telegram
+
+Deja esa ventana abierta mientras pruebas el bot. `Ctrl+C` cierra el túnel, pero
+**no** apaga los contenedores.
+
+### Si prefieres hacerlo por pasos
+
+```powershell
+.\scripts\start.ps1     # PostgreSQL + n8n + migraciones
+.\scripts\tunnel.ps1    # tunel + actualiza WEBHOOK_URL + reinicia n8n
+```
+
+El orden importa: primero el stack, después el túnel. `tunnel.ps1` necesita que n8n
+esté corriendo (o lo levanta, pero no aplica migraciones).
 
 ### Detener
 
@@ -43,10 +62,23 @@ if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 
 > `stop.ps1` **no** borra los datos: los volúmenes y `n8n/data/` se conservan.
 
+### Resumen de scripts
+
+| Script | Cuándo usarlo |
+|---|---|
+| `scripts\dev.ps1` | Todo en uno para desarrollo (stack + túnel + webhook) |
+| `scripts\start.ps1` | Solo levantar PostgreSQL + n8n y migrar |
+| `scripts\tunnel.ps1` | Solo abrir el túnel y actualizar el webhook |
+| `scripts\stop.ps1` | Apagar los contenedores sin borrar datos |
+| `scripts\db-migrate.ps1` | Aplicar migraciones pendientes |
+| `scripts\psql.ps1` | Consola SQL |
+| `scripts\export-workflows.ps1` | Exportar workflows a JSON antes de commitear |
+| `scripts\backup.ps1` | Respaldo de PostgreSQL + workflows + credenciales |
+
 ### Probar el bot de Telegram
 
 Telegram necesita una URL pública HTTPS. En desarrollo se usa un túnel rápido de
-Cloudflare:
+Cloudflare. `dev.ps1` ya lo hace; si el stack ya estaba corriendo, basta con:
 
 ```powershell
 .\scripts\tunnel.ps1

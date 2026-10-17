@@ -33,6 +33,9 @@ $url = $null
 $timeout = 30
 
 while ($timeout -gt 0 -and [string]::IsNullOrEmpty($url)) {
+    if ($tunnel.HasExited) {
+        throw "cloudflared termino inesperadamente (codigo $($tunnel.ExitCode)). Revisa $logPath."
+    }
     Start-Sleep -Seconds 1
     $timeout--
     if (Test-Path $logPath) {
