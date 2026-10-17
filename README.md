@@ -24,8 +24,8 @@ confirmación y persiste el gasto.
 ### Levantar el entorno
 
 ```powershell
-# 1. Crear el .env (solo la primera vez; el repo ya trae uno local)
-Copy-Item .env.example .env
+# 1. Crear el .env solo si no existe (NO sobrescribir el actual: contiene la key)
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 
 # 2. Levantar PostgreSQL + n8n
 .\scripts\start.ps1

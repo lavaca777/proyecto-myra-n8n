@@ -48,7 +48,8 @@ services:
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY}
       # URL publica que Telegram usa para llamar al bot.
       # En local: http://localhost:5678/  |  tunel: lo actualiza scripts/tunnel.ps1
-      WEBHOOK_URL: ${WEBHOOK_URL}
+      # n8n 2.x recomienda N8N_WEBHOOK_URL; en el .env lo seguimos llamando WEBHOOK_URL.
+      N8N_WEBHOOK_URL: ${WEBHOOK_URL}
       N8N_DIAGNOSTICS_ENABLED: "false"
       N8N_PERSONALIZATION_ENABLED: "false"
     volumes:
