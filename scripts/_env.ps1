@@ -29,8 +29,13 @@ function Import-DotEnv {
 }
 
 function Assert-Docker {
+    $oldPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'SilentlyContinue'
     docker info *> $null
-    if ($LASTEXITCODE -ne 0) {
+    $dockerExitCode = $LASTEXITCODE
+    $ErrorActionPreference = $oldPreference
+
+    if ($dockerExitCode -ne 0) {
         throw 'Docker Desktop no esta corriendo o no responde. Abrelo y vuelve a intentar.'
     }
 }
@@ -46,9 +51,15 @@ function Test-ContainerRunning {
 }
 
 function Ensure-PgVolume {
-    docker volume inspect myra_db_pg_data *> $null
-    if ($LASTEXITCODE -ne 0) {
-        docker volume create myra_db_pg_data | Out-Null
+    $oldPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'SilentlyContinue'
+    # "docker volume create" es idempotente: si ya existe, no falla.
+    docker volume create myra_db_pg_data *> $null
+    $dockerExitCode = $LASTEXITCODE
+    $ErrorActionPreference = $oldPreference
+
+    if ($dockerExitCode -ne 0) {
+        throw 'No se pudo crear el volumen myra_db_pg_data. Revisa Docker Desktop.'
     }
 }
 
