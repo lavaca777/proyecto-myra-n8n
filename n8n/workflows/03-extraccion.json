@@ -63,25 +63,12 @@
     },
     {
       "parameters": {
-        "jsCode": "const original = $('Cuando se ejecuta').first().json;\nconst catalogo = $('Maestras').first().json;\nconst registroId = $input.first().json.id;\n\n// MOCK TEMPORAL: luego se reemplaza por Gemini.\nconst extraido = {\n  proyecto: 'Obra Peñuelas',\n  monto_total: 45990,\n  fecha: '2026-10-31',\n  proveedor: 'Sodimac',\n  medio_pago: 'Tarjeta de débito',\n  categoria: 'Materiales',\n  descripcion: 'tornillos y silicona',\n  confianza: {\n    proyecto: 0.95,\n    monto_total: 0.99,\n    fecha: 0.8,\n    proveedor: 0.99,\n    medio_pago: 0.95\n  }\n};\n\nreturn [{ json: { registro_id: registroId, original, catalogo, extraido } }];"
+        "jsCode": "const payload = $input.first().json;\nconst original = payload.original;\nconst catalogo = payload.catalogo;\nconst extraido = payload.extraido;\nconst registroId = payload.registro_id;\n\nconst normalizar = (texto) => String(texto || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .trim();\n\nlet monto = extraido.monto_total;\nif (typeof monto === 'string') {\n  monto = Number(monto.replace(/\\./g, '').replace(/,/g, '').replace(/[^\\d-]/g, ''));\n}\nif (typeof monto === 'number' && !Number.isInteger(monto)) {\n  const match = String(original.texto || '').match(/(\\d{1,3}(?:\\.\\d{3})+)/);\n  if (match) monto = Number(match[1].replace(/\\./g, ''));\n  else monto = Math.round(monto);\n}\nif (!Number.isFinite(monto) || monto <= 0) monto = null;\n\nconst hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());\nlet fecha = extraido.fecha || hoy;\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(fecha))) fecha = hoy;\n\nconst buscar = (lista, valor) => {\n  const objetivo = normalizar(valor);\n  if (!objetivo) return null;\n  return lista.find(item => normalizar(item.nombre) === objetivo) || null;\n};\n\nconst medio = buscar(catalogo.medios_pago, extraido.medio_pago);\nconst categoria = buscar(catalogo.categorias, extraido.categoria);\nconst proveedor = (extraido.proveedor || '').trim() || null;\nconst proyectoTexto = (extraido.proyecto || '').trim() || null;\n\nconst datos = {\n  proyecto_texto: proyectoTexto,\n  proyecto_id: null,\n  proyecto_nombre: null,\n  proyecto_score: 0,\n  monto_total: monto,\n  fecha,\n  proveedor,\n  medio_pago_id: medio ? medio.id : null,\n  medio_pago_nombre: medio ? medio.nombre : null,\n  categoria_id: categoria ? categoria.id : null,\n  categoria_nombre: categoria ? categoria.nombre : null,\n  descripcion: (extraido.descripcion || '').trim() || null,\n  confianza: (extraido.confianza && typeof extraido.confianza === 'object') ? extraido.confianza : {}\n};\n\nconst faltantes = [];\nif (!proyectoTexto) faltantes.push('proyecto');\nif (!monto) faltantes.push('monto_total');\nif (!fecha) faltantes.push('fecha');\nif (!proveedor) faltantes.push('proveedor');\nif (!medio) faltantes.push('medio_pago');\n\nreturn [{ json: { registro_id: registroId, original, catalogo, datos, faltantes, proyecto_texto: proyectoTexto } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        300,
-        0
-      ],
-      "id": "ef813178-2dac-4567-97a9-5c7394ae2ae1",
-      "name": "Extraer datos"
-    },
-    {
-      "parameters": {
-        "jsCode": "const payload = $input.first().json;\nconst original = payload.original;\nconst catalogo = payload.catalogo;\nconst extraido = payload.extraido;\nconst registroId = payload.registro_id;\n\nconst normalizar = (texto) => String(texto || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .trim();\n\nlet monto = extraido.monto_total;\nif (typeof monto === 'string') {\n  monto = Number(monto.replace(/\\./g, '').replace(/,/g, '').replace(/[^\\d-]/g, ''));\n}\nif (!Number.isFinite(monto) || monto <= 0) monto = null;\n\nconst hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());\nlet fecha = extraido.fecha || hoy;\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(fecha))) fecha = hoy;\n\nconst buscar = (lista, valor) => {\n  const objetivo = normalizar(valor);\n  if (!objetivo) return null;\n  return lista.find(item => normalizar(item.nombre) === objetivo) || null;\n};\n\nconst medio = buscar(catalogo.medios_pago, extraido.medio_pago);\nconst categoria = buscar(catalogo.categorias, extraido.categoria);\nconst proveedor = (extraido.proveedor || '').trim() || null;\nconst proyectoTexto = (extraido.proyecto || '').trim() || null;\n\nconst datos = {\n  proyecto_texto: proyectoTexto,\n  proyecto_id: null,\n  proyecto_nombre: null,\n  proyecto_score: 0,\n  monto_total: monto,\n  fecha,\n  proveedor,\n  medio_pago_id: medio ? medio.id : null,\n  medio_pago_nombre: medio ? medio.nombre : null,\n  categoria_id: categoria ? categoria.id : null,\n  categoria_nombre: categoria ? categoria.nombre : null,\n  descripcion: (extraido.descripcion || '').trim() || null,\n  confianza: extraido.confianza || {}\n};\n\nconst faltantes = [];\nif (!proyectoTexto) faltantes.push('proyecto');\nif (!monto) faltantes.push('monto_total');\nif (!fecha) faltantes.push('fecha');\nif (!proveedor) faltantes.push('proveedor');\nif (!medio) faltantes.push('medio_pago');\n\nreturn [{ json: { registro_id: registroId, original, catalogo, datos, faltantes, proyecto_texto: proyectoTexto } }];"
-      },
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        540,
+        1020,
         0
       ],
       "id": "9d9cdaac-052f-40ba-98a8-aad107e175c6",
@@ -99,7 +86,7 @@
       "typeVersion": 2.7,
       "executeOnce": true,
       "position": [
-        780,
+        1260,
         0
       ],
       "id": "3031a966-cbab-4797-a30f-ce36928cd0d8",
@@ -118,7 +105,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1020,
+        1500,
         0
       ],
       "id": "63f3640c-7128-4af6-826d-ffae1ba84754",
@@ -131,7 +118,7 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1260,
+        1740,
         0
       ],
       "id": "989001b2-469c-41aa-a349-594d35575cf0",
@@ -149,7 +136,7 @@
       "typeVersion": 2.7,
       "executeOnce": true,
       "position": [
-        1500,
+        1980,
         0
       ],
       "id": "1a64ed93-6496-4666-ba3a-d0e9c8c0e3d7",
@@ -189,7 +176,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1980,
+        2460,
         -120
       ],
       "id": "880d6edf-5adf-4de5-8616-e962f91167ee",
@@ -243,7 +230,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1980,
+        2460,
         160
       ],
       "id": "82d8f014-3300-44bf-8bc4-077eff4d859e",
@@ -254,6 +241,98 @@
           "name": "Telegram account"
         }
       }
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Cuando se ejecuta').first().json;\nconst catalogo = $('Maestras').first().json;\nconst registroId = $input.first().json.id;\n\nconst hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());\nconst proyectos = catalogo.proyectos.map(p => `- ${p.nombre} | ${(p.alias || []).join(', ')}`).join('\n');\nconst medios = catalogo.medios_pago.map(m => `- ${m.nombre}`).join('\n');\nconst categorias = catalogo.categorias.map(c => `- ${c.nombre}`).join('\n');\n\nconst prompt = `Eres el m?dulo de extracci?n de datos de compras de Constructora MYRA.\nRecibes la transcripci?n de una nota de voz o un mensaje de texto de un jefe de obra chileno.\nTu ?nica tarea es extraer los datos del gasto y devolver un JSON v?lido.\n\nREGLAS OBLIGATORIAS\n1. No inventes datos. Si un campo no aparece, usa null.\n2. No escribas explicaciones, markdown ni texto fuera del JSON.\n3. Los montos son pesos chilenos (CLP), enteros y sin puntos ni decimales.\n   - \"45 mil\" -> 45000\n   - \"45.990\" -> 45990\n   - \"cuarenta y cinco mil novecientos noventa\" -> 45990\n4. La fecha debe ser ISO 8601 (YYYY-MM-DD). Usa FECHA_ACTUAL si dice \"hoy\".\n5. El proyecto debe ser uno de PROYECTOS o un alias. Si no se menciona, usa null.\n6. El medio de pago debe ser uno de MEDIOS_PAGO. Si no coincide, usa null.\n7. La categor?a debe ser una de CATEGORIAS. Si no est?s seguro, usa null.\n8. La descripci?n es breve: qu? se compr?.\n9. La confianza es un n?mero entre 0 y 1 por cada campo.\n10. Si el mensaje no describe una compra, devuelve todos los campos en null.\n\nFECHA_ACTUAL: ${hoy}\n\nPROYECTOS (nombre oficial | alias):\n${proyectos}\n\nMEDIOS_PAGO:\n${medios}\n\nCATEGORIAS:\n${categorias}\n\nTEXTO DEL USUARIO:\n\"\"\"\n${original.texto}\n\"\"\"\n\nDevuelve solo el JSON.`;\n\nreturn [{ json: { registro_id: registroId, original, catalogo, prompt } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "3cc38fbd-119c-4e9c-9561-e4fe381f0654",
+      "name": "Preparar prompt"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "hasOutputParser": true
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        540,
+        0
+      ],
+      "id": "1e6c5aa0-6716-48b3-8847-e035787f8245",
+      "name": "Extraer con Gemini"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {
+          "temperature": 0
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        540,
+        260
+      ],
+      "id": "03ee988a-05c9-4f0a-93e9-c33005e9e193",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pPXUaQysenaOvzy1",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "fromJson",
+        "jsonSchemaExample": {
+          "proyecto": "Obra Pe?uelas",
+          "monto_total": 45990,
+          "fecha": "2026-10-31",
+          "proveedor": "Sodimac",
+          "medio_pago": "Tarjeta de d?bito",
+          "categoria": "Materiales",
+          "descripcion": "tornillos y silicona",
+          "confianza": {
+            "proyecto": 0.95,
+            "monto_total": 0.99,
+            "fecha": 0.8,
+            "proveedor": 0.99,
+            "medio_pago": 0.95
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        540,
+        440
+      ],
+      "id": "a946738f-37a7-4ff3-96e8-158a7790d2b5",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar prompt').first().json;\nconst raw = $input.first().json;\n\nconst parsePosible = (value) => {\n  if (typeof value !== 'string') return value;\n  const limpio = value.replace(/```json/gi, '').replace(/```/g, '').trim();\n  try {\n    return JSON.parse(limpio);\n  } catch (error) {\n    return {};\n  }\n};\n\nlet extraido = raw && raw.output ? raw.output : raw;\nif (extraido && typeof extraido.text === 'string') extraido = extraido.text;\nextraido = parsePosible(extraido);\nif (!extraido || typeof extraido !== 'object' || Array.isArray(extraido)) extraido = {};\n\nreturn [{ json: { registro_id: base.registro_id, original: base.original, catalogo: base.catalogo, extraido } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        780,
+        0
+      ],
+      "id": "d1e5bf7c-b200-4eb9-bf16-edfb7f0a548f",
+      "name": "Armar extraccion"
     }
   ],
   "connections": {
@@ -283,18 +362,7 @@
       "main": [
         [
           {
-            "node": "Extraer datos",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Extraer datos": {
-      "main": [
-        [
-          {
-            "node": "Normalizar extraccion",
+            "node": "Preparar prompt",
             "type": "main",
             "index": 0
           }
@@ -373,6 +441,61 @@
           }
         ]
       ]
+    },
+    "Preparar prompt": {
+      "main": [
+        [
+          {
+            "node": "Extraer con Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer con Gemini": {
+      "main": [
+        [
+          {
+            "node": "Armar extraccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar extraccion": {
+      "main": [
+        [
+          {
+            "node": "Normalizar extraccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extraer con Gemini",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Extraer con Gemini",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -381,7 +504,7 @@
   "staticData": null,
   "pinData": {},
   "meta": {},
-  "versionId": "61f8de73-a0cd-4958-9e03-16635497f3a5",
+  "versionId": "1c0260ec-4ba9-4813-a6c0-927855e4b715",
   "createdAt": "2026-10-31T00:00:00.000Z",
   "updatedAt": "2026-10-31T00:00:00.000Z",
   "tags": []
