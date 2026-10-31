@@ -1,0 +1,296 @@
+{
+  "id": "0af28059-7545-448c-9aa6-1dd7927e79a4",
+  "name": "[MYRA] 01 · Telegram Router",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message",
+          "callback_query"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -360,
+        0
+      ],
+      "id": "591c9b9e-f432-497d-b66b-809dd95346fe",
+      "name": "Telegram Trigger",
+      "webhookId": "80031f9f-e3e5-4a1b-84f8-3c4b5c770b4c",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const update = $json;\nconst msg = update.message;\nconst cb = update.callback_query;\nconst from = (msg && msg.from) || (cb && cb.from) || {};\nconst chat = (msg && msg.chat) || (cb && cb.message && cb.message.chat) || {};\nconst texto = (msg && msg.text) || '';\nconst esComando = texto.startsWith('/');\n\nlet tipo = 'texto';\nif (cb) tipo = 'callback';\nelse if (msg && msg.voice) tipo = 'voz';\nelse if (msg && msg.photo) tipo = 'foto';\nelse if (esComando) tipo = 'comando';\n\nreturn [{\n  json: {\n    tipo,\n    telegram_chat_id: chat.id,\n    telegram_user_id: from.id,\n    telegram_message_id: (msg && msg.message_id) || (cb && cb.message && cb.message.message_id) || null,\n    texto,\n    comando: esComando ? texto.split(' ')[0].replace('/', '').toLowerCase() : null,\n    callback_data: (cb && cb.data) || null,\n    file_id: (msg && msg.voice && msg.voice.file_id) || null,\n    duracion_seg: (msg && msg.voice && msg.voice.duration) || null,\n    nombre_usuario: [from.first_name, from.last_name].filter(Boolean).join(' '),\n    update_id: update.update_id\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -120,
+        0
+      ],
+      "id": "628274ed-9c06-4bfd-a2ea-c35866f368fe",
+      "name": "Normalizar update"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH usuario AS (\n  SELECT id, nombre, rol\n  FROM usuarios\n  WHERE telegram_chat_id = {{ Number($json.telegram_chat_id) }}\n    AND activo\n  LIMIT 1\n)\nSELECT u.id, u.nombre, u.rol\nFROM (SELECT 1) AS dummy\nLEFT JOIN usuario u ON TRUE;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "position": [
+        120,
+        0
+      ],
+      "id": "3a988775-94ac-414d-bdc5-4ab83a653745",
+      "name": "Buscar usuario",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Normalizar update').first().json;\nconst usuario = $input.first().json;\nconst autorizado = usuario.id !== null && usuario.id !== undefined;\n\nreturn [{\n  json: {\n    ...original,\n    usuario: {\n      id: usuario.id ?? null,\n      nombre: usuario.nombre ?? null,\n      rol: usuario.rol ?? null\n    },\n    autorizado\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        0
+      ],
+      "id": "112ead4f-2a52-4fea-9b04-ea7ef45bab21",
+      "name": "Evaluar autorizacion"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.autorizado ? 0 : 1 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        600,
+        0
+      ],
+      "id": "39615119-da21-4625-92a2-6460f9ce828a",
+      "name": "Autorizado"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 5,
+        "output": "={{ $json.tipo === 'texto' ? 0 : $json.tipo === 'comando' ? 1 : $json.tipo === 'voz' ? 2 : $json.tipo === 'callback' ? 3 : 4 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        840,
+        -120
+      ],
+      "id": "129be551-794b-4953-8153-5d371cdd4a31",
+      "name": "Router"
+    },
+    {
+      "parameters": {
+        "jsCode": "const tipo = $json.tipo;\nlet respuesta = 'Recibí tu mensaje. Usuario autorizado.';\nif (tipo === 'comando') respuesta = `Comando recibido: /${$json.comando}. Todavía no está implementado.`;\nif (tipo === 'voz') respuesta = 'Recibí tu audio. El procesamiento de voz todavía no está implementado.';\nif (tipo === 'callback') respuesta = `Recibí el botón: ${$json.callback_data || '(sin dato)'}.`;\nif (tipo === 'foto') respuesta = 'Recibí una foto. El OCR todavía no está implementado.';\nreturn [{ json: { ...$json, respuesta } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1080,
+        -120
+      ],
+      "id": "25ae285d-2075-4d98-b506-bc06a02d8be3",
+      "name": "Armar respuesta"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.respuesta }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1320,
+        -120
+      ],
+      "id": "5b41b808-458a-4251-9f3d-1c926b31ca67",
+      "name": "Responder",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "No estás autorizado para usar este bot. Contacta al administrador.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        840,
+        160
+      ],
+      "id": "41b4b9b1-3b9a-4f58-9813-b39a1292ec60",
+      "name": "Responder no autorizado",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Normalizar update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar update": {
+      "main": [
+        [
+          {
+            "node": "Buscar usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar usuario": {
+      "main": [
+        [
+          {
+            "node": "Evaluar autorizacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evaluar autorizacion": {
+      "main": [
+        [
+          {
+            "node": "Autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Autorizado": {
+      "main": [
+        [
+          {
+            "node": "Router",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder no autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Router": {
+      "main": [
+        [
+          {
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar respuesta": {
+      "main": [
+        [
+          {
+            "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": {},
+  "versionId": "d2f2e4af-5120-40a8-9208-c739de522cb8",
+  "createdAt": "2026-10-31T00:00:00.000Z",
+  "updatedAt": "2026-10-31T00:00:00.000Z",
+  "tags": []
+}
