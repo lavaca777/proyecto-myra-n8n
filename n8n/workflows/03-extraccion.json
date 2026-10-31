@@ -258,8 +258,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.prompt }}",
-        "hasOutputParser": true
+        "text": "={{ $json.prompt }}"
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
@@ -272,9 +271,10 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.5-flash",
+        "modelName": "models/gemini-3.1-flash-lite",
         "options": {
-          "temperature": 0
+          "temperature": 0,
+          "maxOutputTokens": 2048
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
@@ -291,35 +291,6 @@
           "name": "Google Gemini(PaLM) Api account"
         }
       }
-    },
-    {
-      "parameters": {
-        "schemaType": "fromJson",
-        "jsonSchemaExample": {
-          "proyecto": "Obra Pe?uelas",
-          "monto_total": 45990,
-          "fecha": "2026-10-31",
-          "proveedor": "Sodimac",
-          "medio_pago": "Tarjeta de d?bito",
-          "categoria": "Materiales",
-          "descripcion": "tornillos y silicona",
-          "confianza": {
-            "proyecto": 0.95,
-            "monto_total": 0.99,
-            "fecha": 0.8,
-            "proveedor": 0.99,
-            "medio_pago": 0.95
-          }
-        }
-      },
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.3,
-      "position": [
-        540,
-        440
-      ],
-      "id": "a946738f-37a7-4ff3-96e8-158a7790d2b5",
-      "name": "Structured Output Parser"
     },
     {
       "parameters": {
@@ -485,17 +456,6 @@
           }
         ]
       ]
-    },
-    "Structured Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "Extraer con Gemini",
-            "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
     }
   },
   "settings": {
@@ -504,7 +464,7 @@
   "staticData": null,
   "pinData": {},
   "meta": {},
-  "versionId": "b8e1a97f-9805-4de9-9fc2-35509b837470",
+  "versionId": "cc89a421-814b-4d81-9daa-fe434033eb20",
   "createdAt": "2026-10-31T00:00:00.000Z",
   "updatedAt": "2026-10-31T00:00:00.000Z",
   "tags": []
