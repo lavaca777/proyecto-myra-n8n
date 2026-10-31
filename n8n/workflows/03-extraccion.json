@@ -1,0 +1,388 @@
+{
+  "id": "1232930e-38d8-4f18-b5a4-667760438170",
+  "name": "[MYRA] 03 · Extracción",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -420,
+        0
+      ],
+      "id": "1930d712-09c6-439f-946d-55c1f057f24d",
+      "name": "Cuando se ejecuta"
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "b0350943-6f40-4ee2-873a-b4e4a26d3ff5",
+          "mode": "list",
+          "cachedResultName": "[MYRA] 00 · Maestras"
+        },
+        "mode": "once",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        -180,
+        0
+      ],
+      "id": "0a6c021f-3ff2-4d01-9c58-16bcc7b69823",
+      "name": "Maestras"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO registros_entrada (usuario_id, tipo, telegram_message_id, transcripcion, estado)\nVALUES ($1, 'texto', $2, $3, 'procesando')\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario.id, $('Cuando se ejecuta').first().json.telegram_message_id, $('Cuando se ejecuta').first().json.texto ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "position": [
+        60,
+        0
+      ],
+      "id": "0a0f8b59-8d8d-47a6-a646-c59e54708e36",
+      "name": "Crear registro",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Cuando se ejecuta').first().json;\nconst catalogo = $('Maestras').first().json;\nconst registroId = $input.first().json.id;\n\n// MOCK TEMPORAL: luego se reemplaza por Gemini.\nconst extraido = {\n  proyecto: 'Obra Peñuelas',\n  monto_total: 45990,\n  fecha: '2026-10-31',\n  proveedor: 'Sodimac',\n  medio_pago: 'Tarjeta de débito',\n  categoria: 'Materiales',\n  descripcion: 'tornillos y silicona',\n  confianza: {\n    proyecto: 0.95,\n    monto_total: 0.99,\n    fecha: 0.8,\n    proveedor: 0.99,\n    medio_pago: 0.95\n  }\n};\n\nreturn [{ json: { registro_id: registroId, original, catalogo, extraido } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "ef813178-2dac-4567-97a9-5c7394ae2ae1",
+      "name": "Extraer datos"
+    },
+    {
+      "parameters": {
+        "jsCode": "const payload = $input.first().json;\nconst original = payload.original;\nconst catalogo = payload.catalogo;\nconst extraido = payload.extraido;\nconst registroId = payload.registro_id;\n\nconst normalizar = (texto) => String(texto || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .trim();\n\nlet monto = extraido.monto_total;\nif (typeof monto === 'string') {\n  monto = Number(monto.replace(/\\./g, '').replace(/,/g, '').replace(/[^\\d-]/g, ''));\n}\nif (!Number.isFinite(monto) || monto <= 0) monto = null;\n\nconst hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());\nlet fecha = extraido.fecha || hoy;\nif (!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(fecha))) fecha = hoy;\n\nconst buscar = (lista, valor) => {\n  const objetivo = normalizar(valor);\n  if (!objetivo) return null;\n  return lista.find(item => normalizar(item.nombre) === objetivo) || null;\n};\n\nconst medio = buscar(catalogo.medios_pago, extraido.medio_pago);\nconst categoria = buscar(catalogo.categorias, extraido.categoria);\nconst proveedor = (extraido.proveedor || '').trim() || null;\nconst proyectoTexto = (extraido.proyecto || '').trim() || null;\n\nconst datos = {\n  proyecto_texto: proyectoTexto,\n  proyecto_id: null,\n  proyecto_nombre: null,\n  proyecto_score: 0,\n  monto_total: monto,\n  fecha,\n  proveedor,\n  medio_pago_id: medio ? medio.id : null,\n  medio_pago_nombre: medio ? medio.nombre : null,\n  categoria_id: categoria ? categoria.id : null,\n  categoria_nombre: categoria ? categoria.nombre : null,\n  descripcion: (extraido.descripcion || '').trim() || null,\n  confianza: extraido.confianza || {}\n};\n\nconst faltantes = [];\nif (!proyectoTexto) faltantes.push('proyecto');\nif (!monto) faltantes.push('monto_total');\nif (!fecha) faltantes.push('fecha');\nif (!proveedor) faltantes.push('proveedor');\nif (!medio) faltantes.push('medio_pago');\n\nreturn [{ json: { registro_id: registroId, original, catalogo, datos, faltantes, proyecto_texto: proyectoTexto } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        0
+      ],
+      "id": "9d9cdaac-052f-40ba-98a8-aad107e175c6",
+      "name": "Normalizar extraccion"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH candidatos AS (\n  SELECT p.id,\n         p.nombre,\n         c.nombre AS cliente,\n         GREATEST(\n           similarity(unaccent(lower(p.nombre)), unaccent(lower($1::text))),\n           COALESCE(MAX(similarity(unaccent(lower(pa.alias)), unaccent(lower($1::text)))), 0)\n         ) AS score\n  FROM proyectos p\n  JOIN clientes c ON c.id = p.cliente_id\n  LEFT JOIN proyecto_alias pa ON pa.proyecto_id = p.id\n  WHERE p.activo\n  GROUP BY p.id, p.nombre, c.nombre\n)\nSELECT id, nombre, cliente, score\nFROM candidatos\nWHERE score >= 0.35\nORDER BY score DESC\nLIMIT 3;",
+        "options": {
+          "queryReplacement": "={{ [ $json.proyecto_texto ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "position": [
+        780,
+        0
+      ],
+      "id": "3031a966-cbab-4797-a30f-ce36928cd0d8",
+      "name": "Buscar proyecto",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Normalizar extraccion').first().json;\nconst candidatos = $input.all().map(item => item.json);\nconst datos = { ...base.datos };\nconst faltantes = [...base.faltantes];\n\nlet proyectoId = null;\nlet proyectoNombre = null;\nlet proyectoScore = 0;\nlet candidatosParaPregunta = [];\n\nif (candidatos.length > 0) {\n  const best = candidatos[0];\n  const second = candidatos[1];\n  const score = Number(best.score);\n  const gap = second ? score - Number(second.score) : 1;\n\n  if (score >= 0.55 && gap >= 0.10) {\n    proyectoId = best.id;\n    proyectoNombre = best.nombre;\n    proyectoScore = score;\n    const idx = faltantes.indexOf('proyecto');\n    if (idx >= 0) faltantes.splice(idx, 1);\n  } else {\n    candidatosParaPregunta = candidatos.slice(0, 3);\n  }\n}\n\nif (proyectoId === null && !faltantes.includes('proyecto')) {\n  faltantes.push('proyecto');\n}\n\ndatos.proyecto_id = proyectoId;\ndatos.proyecto_nombre = proyectoNombre;\ndatos.proyecto_score = proyectoScore;\n\nreturn [{ json: { ...base, datos, faltantes, candidatos: candidatosParaPregunta } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        0
+      ],
+      "id": "63f3640c-7128-4af6-826d-ffae1ba84754",
+      "name": "Resolver proyecto"
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $input.first().json;\nconst datos = base.datos;\nconst faltantes = base.faltantes;\nconst original = base.original;\nconst registroId = base.registro_id;\n\nconst prioridad = ['proyecto', 'monto_total', 'fecha', 'proveedor', 'medio_pago'];\nconst campoPendiente = prioridad.find(campo => faltantes.includes(campo)) || null;\n\nconst money = new Intl.NumberFormat('es-CL', {\n  style: 'currency',\n  currency: 'CLP',\n  maximumFractionDigits: 0\n}).format(datos.monto_total || 0);\nconst fecha = datos.fecha ? datos.fecha.split('-').reverse().join('-') : '(sin fecha)';\n\nconst resumen = [\n  'Registraré este gasto:',\n  '',\n  `🏗️ Proyecto: ${datos.proyecto_nombre || '(sin proyecto)'}`,\n  `💵 Monto: ${money}`,\n  `📅 Fecha: ${fecha}`,\n  `🏪 Proveedor: ${datos.proveedor || '(sin proveedor)'}`,\n  `💳 Pago: ${datos.medio_pago_nombre || '(sin medio de pago)'}`,\n  `📂 Categoría: ${datos.categoria_nombre || '(sin categoría)'}`\n].join('\\n');\n\nlet pregunta = null;\nif (campoPendiente === 'proyecto') {\n  const opciones = (base.candidatos || [])\n    .map(c => `- ${c.nombre} (${Math.round(Number(c.score) * 100)}%)`)\n    .join('\\n');\n  pregunta = opciones\n    ? `¿A qué proyecto corresponde este gasto?\\n\\n${opciones}`\n    : '¿A qué proyecto corresponde este gasto?';\n}\nif (campoPendiente === 'monto_total') pregunta = '¿Cuál fue el monto total del gasto?';\nif (campoPendiente === 'fecha') pregunta = '¿Qué fecha tiene el gasto?';\nif (campoPendiente === 'proveedor') pregunta = '¿En qué proveedor o local fue la compra?';\nif (campoPendiente === 'medio_pago') pregunta = '¿Con qué medio de pago se realizó?';\n\nconst estado = campoPendiente ? 'falta_dato' : 'pendiente_confirmacion';\n\nreturn [{\n  json: {\n    ...base,\n    registro_id: registroId,\n    telegram_chat_id: original.telegram_chat_id,\n    estado,\n    campo_pendiente: campoPendiente,\n    resumen,\n    pregunta\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1260,
+        0
+      ],
+      "id": "989001b2-469c-41aa-a349-594d35575cf0",
+      "name": "Decidir estado"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE registros_entrada\nSET json_extraido = $1::jsonb,\n    estado = $2,\n    campo_pendiente = $3,\n    modelo_ia = 'mock-v1',\n    actualizado_en = now()\nWHERE id = $4\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ JSON.stringify($json.datos), $json.estado, $json.campo_pendiente, $json.registro_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "position": [
+        1500,
+        0
+      ],
+      "id": "1a64ed93-6496-4666-ba3a-d0e9c8c0e3d7",
+      "name": "Guardar borrador",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $('Decidir estado').first().json.estado === 'falta_dato' ? 0 : 1 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1740,
+        0
+      ],
+      "id": "ea2c352d-5782-43d3-8550-e43004afe64b",
+      "name": "¿Faltan datos?"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Decidir estado').first().json.telegram_chat_id }}",
+        "text": "={{ $('Decidir estado').first().json.pregunta }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        -120
+      ],
+      "id": "880d6edf-5adf-4de5-8616-e962f91167ee",
+      "name": "Enviar pregunta",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Decidir estado').first().json.telegram_chat_id }}",
+        "text": "={{ $('Decidir estado').first().json.resumen }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Confirmar",
+                    "additionalFields": {
+                      "callback_data": "={{ 'confirm:' + $('Decidir estado').first().json.registro_id }}"
+                    }
+                  },
+                  {
+                    "text": "✏️ Corregir",
+                    "additionalFields": {
+                      "callback_data": "={{ 'edit:' + $('Decidir estado').first().json.registro_id }}"
+                    }
+                  },
+                  {
+                    "text": "❌ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "={{ 'cancel:' + $('Decidir estado').first().json.registro_id }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1980,
+        160
+      ],
+      "id": "82d8f014-3300-44bf-8bc4-077eff4d859e",
+      "name": "Enviar confirmacion",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cuando se ejecuta": {
+      "main": [
+        [
+          {
+            "node": "Maestras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Maestras": {
+      "main": [
+        [
+          {
+            "node": "Crear registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear registro": {
+      "main": [
+        [
+          {
+            "node": "Extraer datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer datos": {
+      "main": [
+        [
+          {
+            "node": "Normalizar extraccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar extraccion": {
+      "main": [
+        [
+          {
+            "node": "Buscar proyecto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar proyecto": {
+      "main": [
+        [
+          {
+            "node": "Resolver proyecto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver proyecto": {
+      "main": [
+        [
+          {
+            "node": "Decidir estado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decidir estado": {
+      "main": [
+        [
+          {
+            "node": "Guardar borrador",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar borrador": {
+      "main": [
+        [
+          {
+            "node": "¿Faltan datos?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Faltan datos?": {
+      "main": [
+        [
+          {
+            "node": "Enviar pregunta",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar confirmacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": {},
+  "versionId": "61f8de73-a0cd-4958-9e03-16635497f3a5",
+  "createdAt": "2026-10-31T00:00:00.000Z",
+  "updatedAt": "2026-10-31T00:00:00.000Z",
+  "tags": []
+}

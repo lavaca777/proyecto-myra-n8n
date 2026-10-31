@@ -107,6 +107,27 @@
     },
     {
       "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "1232930e-38d8-4f18-b5a4-667760438170",
+          "mode": "list",
+          "cachedResultName": "[MYRA] 03 · Extracción"
+        },
+        "mode": "once",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1080,
+        -320
+      ],
+      "id": "c647ff67-5b65-4781-981c-776024e40a5a",
+      "name": "Enviar a extraccion"
+    },
+    {
+      "parameters": {
         "jsCode": "const tipo = $json.tipo;\nlet respuesta = 'Recibí tu mensaje. Usuario autorizado.';\nif (tipo === 'comando') respuesta = `Comando recibido: /${$json.comando}. Todavía no está implementado.`;\nif (tipo === 'voz') respuesta = 'Recibí tu audio. El procesamiento de voz todavía no está implementado.';\nif (tipo === 'callback') respuesta = `Recibí el botón: ${$json.callback_data || '(sin dato)'}.`;\nif (tipo === 'foto') respuesta = 'Recibí una foto. El OCR todavía no está implementado.';\nreturn [{ json: { ...$json, respuesta } }];"
       },
       "type": "n8n-nodes-base.code",
@@ -236,7 +257,7 @@
       "main": [
         [
           {
-            "node": "Armar respuesta",
+            "node": "Enviar a extraccion",
             "type": "main",
             "index": 0
           }
