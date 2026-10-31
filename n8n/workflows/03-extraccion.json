@@ -96,11 +96,12 @@
           "id": "ufn1vDeGKOcqMtep",
           "name": "Postgres account"
         }
-      }
+      },
+      "alwaysOutputData": true
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Normalizar extraccion').first().json;\nconst candidatos = $input.all().map(item => item.json);\nconst datos = { ...base.datos };\nconst faltantes = [...base.faltantes];\n\nlet proyectoId = null;\nlet proyectoNombre = null;\nlet proyectoScore = 0;\nlet candidatosParaPregunta = [];\n\nif (candidatos.length > 0) {\n  const best = candidatos[0];\n  const second = candidatos[1];\n  const score = Number(best.score);\n  const gap = second ? score - Number(second.score) : 1;\n\n  if (score >= 0.55 && gap >= 0.10) {\n    proyectoId = best.id;\n    proyectoNombre = best.nombre;\n    proyectoScore = score;\n    const idx = faltantes.indexOf('proyecto');\n    if (idx >= 0) faltantes.splice(idx, 1);\n  } else {\n    candidatosParaPregunta = candidatos.slice(0, 3);\n  }\n}\n\nif (proyectoId === null && !faltantes.includes('proyecto')) {\n  faltantes.push('proyecto');\n}\n\ndatos.proyecto_id = proyectoId;\ndatos.proyecto_nombre = proyectoNombre;\ndatos.proyecto_score = proyectoScore;\n\nreturn [{ json: { ...base, datos, faltantes, candidatos: candidatosParaPregunta } }];"
+        "jsCode": "const base = $('Normalizar extraccion').first().json;\nconst candidatos = $input.all().map(item => item.json).filter(c => c && c.nombre);\nconst datos = { ...base.datos };\nconst faltantes = [...base.faltantes];\n\nlet proyectoId = null;\nlet proyectoNombre = null;\nlet proyectoScore = 0;\nlet candidatosParaPregunta = [];\n\nif (candidatos.length > 0) {\n  const best = candidatos[0];\n  const second = candidatos[1];\n  const score = Number(best.score);\n  const gap = second ? score - Number(second.score) : 1;\n\n  if (score >= 0.55 && gap >= 0.10) {\n    proyectoId = best.id;\n    proyectoNombre = best.nombre;\n    proyectoScore = score;\n    const idx = faltantes.indexOf('proyecto');\n    if (idx >= 0) faltantes.splice(idx, 1);\n  } else {\n    candidatosParaPregunta = candidatos.slice(0, 3);\n  }\n}\n\nif (proyectoId === null && !faltantes.includes('proyecto')) {\n  faltantes.push('proyecto');\n}\n\ndatos.proyecto_id = proyectoId;\ndatos.proyecto_nombre = proyectoNombre;\ndatos.proyecto_score = proyectoScore;\n\nreturn [{ json: { ...base, datos, faltantes, candidatos: candidatosParaPregunta } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -496,7 +497,7 @@
   "staticData": null,
   "pinData": {},
   "meta": {},
-  "versionId": "59779ed9-32a1-4a61-a7c4-965ffb08c3f2",
+  "versionId": "c4ed39f7-50d2-43be-9444-75c65441e171",
   "createdAt": "2026-10-31T00:00:00.000Z",
   "updatedAt": "2026-10-31T00:00:00.000Z",
   "tags": []
