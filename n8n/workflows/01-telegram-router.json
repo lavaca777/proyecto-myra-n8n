@@ -188,6 +188,27 @@
           "name": "Telegram account"
         }
       }
+    },
+    {
+      "parameters": {
+        "source": "database",
+        "workflowId": {
+          "__rl": true,
+          "value": "44952e4c-c434-49f7-9a1b-8ec4d1a904a1",
+          "mode": "list",
+          "cachedResultName": "[MYRA] 04 ? Confirmaci?n"
+        },
+        "mode": "once",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1080,
+        200
+      ],
+      "id": "b7892b30-95b3-4912-b3e8-3e29d4571df1",
+      "name": "Enviar a confirmacion"
     }
   ],
   "connections": {
@@ -278,7 +299,7 @@
         ],
         [
           {
-            "node": "Armar respuesta",
+            "node": "Enviar a confirmacion",
             "type": "main",
             "index": 0
           }

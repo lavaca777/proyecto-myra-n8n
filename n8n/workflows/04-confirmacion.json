@@ -1,0 +1,378 @@
+{
+  "id": "44952e4c-c434-49f7-9a1b-8ec4d1a904a1",
+  "name": "[MYRA] 04 · Confirmación",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -420,
+        0
+      ],
+      "id": "89d6583c-d941-49bc-8ccd-2384e742db11",
+      "name": "Cuando se ejecuta"
+    },
+    {
+      "parameters": {
+        "jsCode": "const callback = String($json.callback_data || '');\nconst partes = callback.split(':');\nconst accion = partes[0];\nconst registroId = Number(partes[1]);\n\nreturn [{\n  json: {\n    ...$json,\n    accion: ['confirm', 'edit', 'cancel'].includes(accion) ? accion : 'otro',\n    registro_id: Number.isFinite(registroId) ? registroId : null,\n    usuario_id: $json.usuario && $json.usuario.id ? $json.usuario.id : null\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -180,
+        0
+      ],
+      "id": "2722b466-045a-4986-901c-e6abfc2c8b30",
+      "name": "Parsear callback"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH reg AS (\n  SELECT r.id, r.usuario_id, r.estado, r.json_extraido,\n         u.nombre AS usuario_nombre, u.rol\n  FROM registros_entrada r\n  JOIN usuarios u ON u.id = r.usuario_id\n  WHERE r.id = $1 AND r.usuario_id = $2\n  LIMIT 1\n)\nSELECT reg.*\nFROM (SELECT 1) AS dummy\nLEFT JOIN reg ON TRUE;",
+        "options": {
+          "queryReplacement": "={{ [ $json.registro_id, $json.usuario_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "position": [
+        60,
+        0
+      ],
+      "id": "5c2f7071-57e3-43f8-896a-f1ee4470ceee",
+      "name": "Buscar registro",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Parsear callback').first().json;\nconst reg = $input.first().json;\nconst registroId = original.registro_id;\nconst usuarioId = original.usuario_id;\nlet accion = original.accion;\n\nconst normalizar = (texto) => String(texto || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nlet extraido = {};\nif (reg.json_extraido) {\n  try {\n    extraido = typeof reg.json_extraido === 'string'\n      ? JSON.parse(reg.json_extraido)\n      : reg.json_extraido;\n  } catch (error) {\n    extraido = {};\n  }\n}\n\nconst datos = {\n  proyecto_id: extraido.proyecto_id ?? null,\n  proveedor: extraido.proveedor ?? null,\n  medio_pago_id: extraido.medio_pago_id ?? null,\n  categoria_id: extraido.categoria_id ?? null,\n  descripcion: extraido.descripcion ?? null,\n  monto_total: extraido.monto_total ?? null,\n  fecha: extraido.fecha ?? null\n};\n\nif (!reg.id) accion = 'otro';\nif (['confirm', 'edit', 'cancel'].includes(accion) && reg.estado !== 'pendiente_confirmacion') accion = 'otro';\nif (accion === 'confirm' && (!datos.proyecto_id || !datos.proveedor || !datos.medio_pago_id || !datos.monto_total || !datos.fecha)) accion = 'otro';\n\nconst mensajeCierre = accion === 'edit'\n  ? 'Para corregir, envía el gasto completo de nuevo. El registro anterior quedó cancelado.'\n  : 'Registro cancelado.';\n\nreturn [{\n  json: {\n    ...original,\n    accion,\n    registro_id: registroId,\n    usuario_id: usuarioId,\n    estado_registro: reg.estado ?? null,\n    datos,\n    proveedor_normalizado: normalizar(datos.proveedor),\n    mensaje_cierre: mensajeCierre,\n    mensaje_otro: 'No encontré un registro pendiente para ese botón. Puede que ya esté confirmado o cancelado.'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        300,
+        0
+      ],
+      "id": "c39a6f5e-16c4-4413-aa9b-ab0f810408a8",
+      "name": "Preparar datos"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 4,
+        "output": "={{ $json.accion === 'confirm' ? 0 : $json.accion === 'edit' ? 1 : $json.accion === 'cancel' ? 2 : 3 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        540,
+        0
+      ],
+      "id": "eb63def8-14e3-4a3c-ad1a-b7c437d19805",
+      "name": "¿Acción?"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH prov AS (\n  INSERT INTO proveedores (nombre, nombre_normalizado)\n  VALUES ($2, $3)\n  ON CONFLICT (nombre_normalizado)\n  DO UPDATE SET nombre = EXCLUDED.nombre\n  RETURNING id\n), reg AS (\n  UPDATE registros_entrada\n  SET estado = 'confirmado', campo_pendiente = NULL\n  WHERE id = $1 AND usuario_id = $4 AND estado = 'pendiente_confirmacion'\n  RETURNING id, usuario_id\n)\nINSERT INTO gastos (\n  proyecto_id, usuario_id, proveedor_id, medio_pago_id, categoria_id,\n  descripcion, monto_total, fecha_gasto, origen, registro_entrada_id\n)\nSELECT $5, r.usuario_id, prov.id, $6, $7, $8, $9, $10, 'texto', r.id\nFROM reg r CROSS JOIN prov\nON CONFLICT (registro_entrada_id) DO NOTHING\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $json.registro_id, $json.datos.proveedor, $json.proveedor_normalizado, $json.usuario_id, $json.datos.proyecto_id, $json.datos.medio_pago_id, $json.datos.categoria_id, $json.datos.descripcion, $json.datos.monto_total, $json.datos.fecha ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        780,
+        -80
+      ],
+      "id": "5139db2f-bc2b-44fb-a11f-735a347d73b7",
+      "name": "Confirmar gasto",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.id ? 0 : 1 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1020,
+        -80
+      ],
+      "id": "c8e96a81-707e-47c7-8b32-0c65fdcdd9e6",
+      "name": "¿Se insertó?"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Preparar datos').first().json.telegram_chat_id }}",
+        "text": "={{ 'Gasto registrado correctamente. ID: ' + $json.id }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1260,
+        -160
+      ],
+      "id": "74d186ff-72fd-4447-bbc3-931a7f1e2aab",
+      "name": "Responder confirmado",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Preparar datos').first().json.telegram_chat_id }}",
+        "text": "Ese gasto ya estaba registrado o el registro ya no está pendiente.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1260,
+        40
+      ],
+      "id": "5a93edea-b767-44d7-8746-b91d87950101",
+      "name": "Responder duplicado",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE registros_entrada\nSET estado = 'cancelado', campo_pendiente = NULL\nWHERE id = $1 AND usuario_id = $2 AND estado = 'pendiente_confirmacion'\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $json.registro_id, $json.usuario_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        780,
+        180
+      ],
+      "id": "fdb541bb-2066-4ef5-aa71-9de683b1752f",
+      "name": "Cerrar registro",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Preparar datos').first().json.telegram_chat_id }}",
+        "text": "={{ $('Preparar datos').first().json.mensaje_cierre }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1020,
+        180
+      ],
+      "id": "faf055cb-0afe-4951-8906-9d86802fc1c3",
+      "name": "Responder cierre",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Preparar datos').first().json.telegram_chat_id }}",
+        "text": "={{ $('Preparar datos').first().json.mensaje_otro }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        780,
+        320
+      ],
+      "id": "f2c58245-8e70-4388-90ac-815a2e04548b",
+      "name": "Responder otro",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cuando se ejecuta": {
+      "main": [
+        [
+          {
+            "node": "Parsear callback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear callback": {
+      "main": [
+        [
+          {
+            "node": "Buscar registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar registro": {
+      "main": [
+        [
+          {
+            "node": "Preparar datos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar datos": {
+      "main": [
+        [
+          {
+            "node": "¿Acción?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Acción?": {
+      "main": [
+        [
+          {
+            "node": "Confirmar gasto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cerrar registro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Cerrar registro",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder otro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Confirmar gasto": {
+      "main": [
+        [
+          {
+            "node": "¿Se insertó?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Se insertó?": {
+      "main": [
+        [
+          {
+            "node": "Responder confirmado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder duplicado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cerrar registro": {
+      "main": [
+        [
+          {
+            "node": "Responder cierre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "pinData": {},
+  "meta": {},
+  "versionId": "bcb469d0-bdfd-48be-814d-71379e61a575",
+  "createdAt": "2026-10-31T00:00:00.000Z",
+  "updatedAt": "2026-10-31T00:00:00.000Z",
+  "tags": []
+}
