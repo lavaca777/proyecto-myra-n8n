@@ -209,6 +209,71 @@
       ],
       "id": "b7892b30-95b3-4912-b3e8-3e29d4571df1",
       "name": "Enviar a confirmacion"
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.comando === 'cancelar' ? 0 : 1 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1080,
+        40
+      ],
+      "id": "b6533004-44df-4f73-955f-fc308fcd1820",
+      "name": "Comando"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE registros_entrada\nSET estado = 'cancelado', campo_pendiente = NULL\nWHERE usuario_id = $1\n  AND estado IN ('falta_dato', 'pendiente_confirmacion')\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $json.usuario.id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        1320,
+        40
+      ],
+      "id": "53b7fc8f-cbb5-4eb9-bbbd-d3abd3478ac0",
+      "name": "Cancelar pendientes",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Comando').first().json.telegram_chat_id }}",
+        "text": "Listo. Cancel? los registros pendientes.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1560,
+        40
+      ],
+      "id": "afb8ffd4-3c0f-435c-8961-0c9e04ca1fcd",
+      "name": "Responder cancelar",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
     }
   ],
   "connections": {
@@ -285,7 +350,7 @@
         ],
         [
           {
-            "node": "Armar respuesta",
+            "node": "Comando",
             "type": "main",
             "index": 0
           }
@@ -318,6 +383,35 @@
         [
           {
             "node": "Responder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comando": {
+      "main": [
+        [
+          {
+            "node": "Cancelar pendientes",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cancelar pendientes": {
+      "main": [
+        [
+          {
+            "node": "Responder cancelar",
             "type": "main",
             "index": 0
           }
