@@ -58,6 +58,6 @@ desktop.ini
 .vscode/
 .idea/
 
-# Referencia local (no publicar)
+# Referencia local
 assets/referencia/*.xlsx
-
+AGENTS.md
