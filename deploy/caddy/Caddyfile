@@ -1,0 +1,24 @@
+# =====================================================================
+# Caddy para n8n - Constructora MYRA
+# Caddy gestiona el certificado HTTPS automaticamente.
+#
+#   sudo apt install caddy
+#   sudo cp deploy/caddy/Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+#
+# Reemplaza myra.ucn.cl por tu dominio real.
+# =====================================================================
+
+myra.ucn.cl {
+    request_body {
+        max_size 25MB
+    }
+
+    reverse_proxy 127.0.0.1:5678 {
+        # n8n puede tardar en responder por las llamadas a IA.
+        transport http {
+            read_timeout 5m
+            write_timeout 5m
+        }
+    }
+}

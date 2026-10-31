@@ -68,7 +68,7 @@ esté corriendo (o lo levanta, pero no aplica migraciones).
 
 > `stop.ps1` **no** borra los datos: los volúmenes y `n8n/data/` se conservan.
 
-### Resumen de scripts
+### Resumen de scripts · Windows (desarrollo)
 
 | Script | Cuándo usarlo |
 |---|---|
@@ -80,6 +80,23 @@ esté corriendo (o lo levanta, pero no aplica migraciones).
 | `scripts\psql.ps1` | Consola SQL |
 | `scripts\export-workflows.ps1` | Exportar workflows a JSON antes de commitear |
 | `scripts\backup.ps1` | Respaldo de PostgreSQL + workflows + credenciales |
+
+### Resumen de scripts · Linux (servidor)
+
+| Script | Cuándo usarlo |
+|---|---|
+| `scripts/linux/setup.sh` | Primer arranque: `.env`, volumen, carpetas y permisos |
+| `scripts/linux/start.sh` | Levantar el stack y aplicar migraciones |
+| `scripts/linux/stop.sh` | Apagar sin borrar datos |
+| `scripts/linux/status.sh` | Ver contenedores, webhook y migraciones |
+| `scripts/linux/logs.sh` | Logs en vivo (`n8n` o `postgres`) |
+| `scripts/linux/db-migrate.sh` | Aplicar migraciones pendientes |
+| `scripts/linux/export-workflows.sh` | Exportar workflows a JSON |
+| `scripts/linux/backup.sh` | Respaldo completo |
+| `scripts/linux/restore-db.sh` | Restaurar un `pg_dump` (destructivo) |
+
+> Los `.ps1` son solo para Windows. En el servidor Linux usa `.sh`. Los scripts de
+> túnel no se usan en producción: allí hay un dominio fijo y HTTPS.
 
 ### Probar el bot de Telegram
 
@@ -112,7 +129,8 @@ fijo o un túnel nombrado (ver [`docs/04-despliegue-ucn.md`](docs/04-despliegue-
 .
 ├─ docker-compose.yml          # postgres + n8n (unica fuente de verdad)
 ├─ .env                        # secretos locales (ignorado por git)
-├─ .env.example                # plantilla versionada
+├─ .env.example                # plantilla de desarrollo
+├─ .env.production.example     # plantilla para el servidor Linux
 ├─ db/
 │  ├─ migrations/              # esquema y cambios, en orden (000, 001, ...)
 │  ├─ seeds/                   # datos de ejemplo para desarrollo
@@ -121,13 +139,19 @@ fijo o un túnel nombrado (ver [`docs/04-despliegue-ucn.md`](docs/04-despliegue-
 │  ├─ data/                    # volumen real de n8n: SQLite, credenciales, storage
 │  └─ workflows/               # workflows exportados a JSON (versionados)
 ├─ scripts/
-│  ├─ start.ps1                # levanta todo
-│  ├─ stop.ps1                 # apaga sin borrar datos
-│  ├─ tunnel.ps1               # cloudflared + actualiza WEBHOOK_URL
-│  ├─ db-migrate.ps1           # aplica migraciones pendientes
-│  ├─ psql.ps1                 # consola SQL rapida
-│  ├─ export-workflows.ps1     # n8n -> n8n/workflows/*.json
-│  └─ backup.ps1               # pg_dump + workflows + credenciales (cifradas)
+│  ├─ *.ps1                    # Windows: desarrollo local
+│  └─ linux/
+│     ├─ setup.sh              # preparacion del servidor
+│     ├─ start.sh / stop.sh
+│     ├─ db-migrate.sh
+│     ├─ export-workflows.sh
+│     ├─ backup.sh / restore-db.sh
+│     ├─ status.sh / logs.sh
+│     └─ _common.sh
+├─ deploy/
+│  ├─ nginx/myra.conf          # proxy inverso + WebSockets
+│  ├─ caddy/Caddyfile          # alternativa con TLS automatico
+│  └─ systemd/myra.service     # arranque opcional al boot
 ├─ docs/
 │  ├─ charter/                 # Project Charter e imagenes
 │  ├─ entrevistas/             # transcripciones (los audios no se versionan)
@@ -221,7 +245,11 @@ Consola SQL:
 ## Respaldos
 
 ```powershell
-.\scripts\backup.ps1
+.\scripts\backup.ps1      # Windows
+```
+
+```bash
+./scripts/linux/backup.sh  # Linux / servidor
 ```
 
 Genera en `db/backups/`:
@@ -231,6 +259,43 @@ Genera en `db/backups/`:
 - Actualiza `n8n/workflows/*.json`
 
 Retención automática: 14 días. **No** se versionan los respaldos.
+
+---
+
+## Servidor Linux (UCN)
+
+En el servidor **no se usan los `.ps1` ni el túnel rápido**. Hay un dominio fijo y
+los scripts son `.sh`.
+
+```bash
+git clone https://github.com/lavaca777/proyecto-myra-n8n.git
+cd proyecto-myra-n8n
+
+cp .env.production.example .env
+chmod 600 .env
+nano .env          # DB_PASSWORD, N8N_ENCRYPTION_KEY, WEBHOOK_URL
+
+./scripts/linux/setup.sh
+./scripts/linux/start.sh
+./scripts/linux/status.sh
+```
+
+Configuración típica detrás de Nginx/Caddy en el mismo host:
+
+```dotenv
+WEBHOOK_URL=https://myra.ucn.cl/
+N8N_BIND=127.0.0.1
+PG_BIND=127.0.0.1
+N8N_PROXY_HOPS=1
+```
+
+- Proxy inverso: `deploy/nginx/myra.conf` o `deploy/caddy/Caddyfile`.
+- Arranque al boot: `restart: unless-stopped` o `deploy/systemd/myra.service`.
+- Respaldo diario: `./scripts/linux/backup.sh` desde cron.
+- Guía completa: [`docs/04-despliegue-ucn.md`](docs/04-despliegue-ucn.md).
+
+> Si migras `n8n/data/` desde el PC, mantén la misma `N8N_ENCRYPTION_KEY` y ajusta
+> permisos con `sudo chown -R 1000:1000 n8n/data n8n/workflows`.
 
 ---
 

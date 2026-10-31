@@ -1,0 +1,29 @@
+# =====================================================================
+# Servicio systemd opcional para levantar el stack al bootear.
+# Docker con "restart: unless-stopped" ya lo hace; usa esto si prefieres
+# controlar el ciclo de vida con systemd.
+#
+#   sudo cp deploy/systemd/myra.service /etc/systemd/system/myra.service
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now myra
+#   sudo systemctl status myra
+# =====================================================================
+
+[Unit]
+Description=MYRA n8n + PostgreSQL (Docker Compose)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/proyecto-myra-n8n
+ExecStart=/usr/bin/docker compose up -d --remove-orphans
+ExecStop=/usr/bin/docker compose down
+TimeoutStartSec=0
+Restart=on-failure
+RestartSec=15
+
+[Install]
+WantedBy=multi-user.target

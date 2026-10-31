@@ -1,177 +1,291 @@
-# Despliegue en servidores UCN
+# Despliegue en servidores UCN (Linux)
 
 El objetivo del charter es operar con **costo $0** en infraestructura universitaria.
-Este documento separa claramente el entorno de desarrollo (PC) del de producción (UCN).
+Este documento cubre el despliegue en un servidor Linux fijo.
 
-## 1. Diferencias entre entornos
+## 1. Desarrollo vs producción
 
-| Aspecto | Desarrollo (PC) | Producción (UCN) |
+| Aspecto | Desarrollo (Windows) | Producción (Linux/UCN) |
 |---|---|---|
-| n8n | Docker Compose local | Docker Compose en servidor |
+| n8n | Docker Compose local | Docker Compose en el servidor |
 | PostgreSQL | Contenedor local, puerto 5433 | Contenedor interno, **sin** puerto público |
-| URL pública | Quick tunnel de Cloudflare (cambia) | Dominio fijo + proxy inverso HTTPS |
-| Credenciales | `.env` local | `.env` del servidor + secretos institucionales |
-| Respaldos | Manual (`scripts/backup.ps1`) | Cron diario + copia externa |
-| Logs | Consola | Rotación de logs / journald |
-| Usuarios | Uno o dos de prueba | Jefes de obra reales |
+| URL pública | Quick tunnel de Cloudflare (cambia) | Dominio fijo + HTTPS (Nginx/Caddy o túnel nombrado) |
+| Scripts | `scripts/*.ps1` | `scripts/linux/*.sh` |
+| Respaldos | Manual (`backup.ps1`) | Cron diario (`backup.sh`) |
+| Logs | Consola | `docker compose logs` + rotación de Docker |
 
-## 2. Requisitos del servidor
+> Los scripts `.ps1` **no funcionan en Linux**. Usan rutas de Windows, `Start-Process`
+> y PowerShell. En el servidor usa los `.sh`. Si tienes `pwsh` instalado podrían
+> ejecutarse algunos, pero no es el camino recomendado.
 
-- Docker Engine + Docker Compose v2.
-- Puerto 80/443 para el proxy inverso (o el que asigne la UCN).
+## 2. Qué scripts necesitas en el servidor
+
+| Script | Para qué |
+|---|---|
+| `scripts/linux/setup.sh` | Primer arranque: `.env`, volumen, carpetas y permisos |
+| `scripts/linux/start.sh` | Levantar el stack y aplicar migraciones |
+| `scripts/linux/stop.sh` | Apagar sin borrar datos |
+| `scripts/linux/status.sh` | Ver contenedores, webhook y migraciones |
+| `scripts/linux/logs.sh` | Ver logs en vivo |
+| `scripts/linux/db-migrate.sh` | Aplicar migraciones pendientes |
+| `scripts/linux/export-workflows.sh` | Exportar workflows a JSON para git |
+| `scripts/linux/backup.sh` | Respaldo de PostgreSQL + workflows + credenciales |
+| `scripts/linux/restore-db.sh` | Restaurar un `pg_dump` (destructivo) |
+
+Los scripts de túnel (`dev.ps1`, `tunnel.ps1`) **no se usan en producción**. En el
+servidor hay una URL fija y no hace falta tunel rápido.
+
+## 3. Requisitos del servidor
+
+- Linux con Docker Engine + Docker Compose v2.
+- Git.
+- Puerto 80 y 443 para el proxy inverso (o túnel saliente si no hay IP pública).
 - Salida a internet para Telegram y Gemini.
-- Un dominio o subdominio institucional, por ejemplo `myra.ucn.cl`.
-- Acceso SSH y permisos para levantar contenedores.
+- Un dominio o subdominio, por ejemplo `myra.ucn.cl`.
+- Acceso SSH y permisos para Docker (`sudo` o grupo `docker`).
 
-## 3. Pasos de instalación
-
-### 3.1 Clonar y configurar
+Verificar:
 
 ```bash
-git clone https://github.com/lavaca777/proyecto-myra-n8n.git
-cd proyecto-myra-n8n
-cp .env.example .env
+docker --version
+docker compose version
+git --version
+```
+
+## 4. Primer despliegue
+
+### 4.1 Clonar
+
+```bash
+sudo mkdir -p /opt/proyecto-myra-n8n
+sudo chown "$USER":"$USER" /opt/proyecto-myra-n8n
+git clone https://github.com/lavaca777/proyecto-myra-n8n.git /opt/proyecto-myra-n8n
+cd /opt/proyecto-myra-n8n
+```
+
+### 4.2 Configurar `.env`
+
+```bash
+cp .env.production.example .env
+chmod 600 .env
 nano .env
 ```
 
-En `.env` de producción:
+Completar:
 
-- `DB_PASSWORD`: clave fuerte, distinta de `postgres`.
-- `N8N_ENCRYPTION_KEY`: **la misma** que usa la instancia que tiene las credenciales.
-  Si se migra desde el PC, copiar el valor exacto.
-- `WEBHOOK_URL`: `https://myra.ucn.cl/` (con barra final).
+- `DB_PASSWORD`: clave larga y distinta de `postgres`.
+- `N8N_ENCRYPTION_KEY`:
+  - Si migras las credenciales del PC: la **misma** clave exacta.
+  - Si empiezas de cero: `openssl rand -hex 32`.
+- `WEBHOOK_URL`: `https://myra.ucn.cl/` (HTTPS y con barra final).
+- `N8N_BIND=127.0.0.1` y `PG_BIND=127.0.0.1` si el proxy está en el mismo host.
+- `N8N_PROXY_HOPS=1` con Nginx/Caddy en el host; `2` si hay Cloudflare delante.
 
-### 3.2 Levantar
+### 4.3 Preparar y arrancar
 
 ```bash
-docker compose up -d
+./scripts/linux/setup.sh
+./scripts/linux/start.sh
+```
+
+`setup.sh` crea el volumen `myra_db_pg_data`, las carpetas y ajusta permisos. Si lo
+corres como root, deja `n8n/data` y `n8n/workflows` con UID/GID `1000` (el usuario
+`node` de la imagen n8n). Si no eres root, revisa el aviso.
+
+`start.sh` levanta PostgreSQL + n8n y aplica las migraciones.
+
+Verificar:
+
+```bash
+./scripts/linux/status.sh
 docker compose ps
 docker compose logs -f n8n
 ```
 
-### 3.3 Aplicar migraciones
+- n8n local: `http://127.0.0.1:5678`
+- PostgreSQL: `127.0.0.1:5433` (solo para administración local)
 
-En una base nueva se aplican solas. Si se restauró un respaldo:
+### 4.4 Primer login de n8n
 
-```bash
-docker compose exec -T postgres psql -U myra -d myra -c "SELECT filename FROM schema_migrations ORDER BY filename;"
-```
+Abre `https://myra.ucn.cl` (después de configurar el proxy) y crea la cuenta de
+propietario. Si migraste `n8n/data` desde el PC, usa el usuario que ya existía.
 
-Si faltan archivos, aplicar el `.sql` correspondiente con `psql -f`.
+## 5. HTTPS y dominio
 
-### 3.4 Proxy inverso con HTTPS
+Telegram exige una URL HTTPS válida. Elige una opción:
 
-Ejemplo con Caddy (gestiona certificados automáticamente):
-
-```caddyfile
-myra.ucn.cl {
-    reverse_proxy localhost:5678
-}
-```
-
-Con Nginx:
-
-```nginx
-server {
-    listen 80;
-    server_name myra.ucn.cl;
-
-    location / {
-        proxy_pass http://127.0.0.1:5678;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-> n8n usa WebSockets para la UI. Sin `Upgrade`/`Connection` la interfaz se queda
-> cargando.
-
-### 3.5 Webhook de Telegram
-
-1. Verificar que `WEBHOOK_URL` sea la URL pública.
-2. Reiniciar n8n:
+### Opción A · Nginx + Certbot (recomendado si hay IP pública)
 
 ```bash
-docker compose up -d --force-recreate n8n
+sudo apt update
+sudo apt install nginx certbot python3-certbot-nginx
+sudo cp deploy/nginx/myra.conf /etc/nginx/sites-available/myra
+sudo ln -s /etc/nginx/sites-available/myra /etc/nginx/sites-enabled/myra
+sudo nginx -t
+sudo systemctl reload nginx
+sudo certbot --nginx -d myra.ucn.cl
 ```
 
-3. Abrir el workflow del Telegram Trigger y guardarlo; n8n registra el webhook.
-4. Probar con `/start` desde un chat autorizado.
+El archivo ya incluye los headers de WebSocket que n8n necesita. Certbot agrega el
+bloque HTTPS y la redirección. El dominio debe apuntar al servidor y el puerto 80
+debe estar accesible desde internet para que Certbot valide.
 
-Si el webhook queda "colgado", se puede consultar:
+### Opción B · Caddy
 
 ```bash
-curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+sudo apt install caddy
+sudo cp deploy/caddy/Caddyfile /etc/caddy/Caddyfile
+sudo systemctl reload caddy
 ```
 
-No hace falta borrar el webhook manualmente: n8n lo administra.
+Caddy obtiene el certificado automáticamente.
 
-## 4. Seguridad
+### Opción C · Cloudflare Tunnel (si no hay IP pública)
 
-- No publicar `5433` en producción. En el compose, eliminar el bloque `ports` de
-  PostgreSQL o dejarlo como `127.0.0.1:5433:5432` solo si se necesita administración local.
-- El puerto `5678` puede quedar en `127.0.0.1:5678:5678` si el proxy corre en el mismo
-  host. Si el proxy está en otro contenedor, usar una red interna de Docker.
-- Cambiar `DB_PASSWORD` y no reutilizar la de desarrollo.
-- Mantener `N8N_ENCRYPTION_KEY` fuera del repositorio.
-- Configurar el firewall: solo 80/443 y SSH.
-- n8n incluye autenticación de usuario; crear una cuenta institucional y no compartirla.
-- Revisar permisos de los archivos `.env` (`chmod 600`).
+Sirve si el servidor está detrás de NAT o la UCN no abre puertos. El servidor hace
+una conexión saliente y no necesita abrir 80/443.
 
-## 5. Respaldos en producción
+```bash
+# En el servidor
+cloudflared tunnel login
+cloudflared tunnel create myra
+cloudflared tunnel route dns myra myra.ucn.cl
+```
 
-Cron diario (ejemplo a las 03:00):
+`~/.cloudflared/config.yml`:
+
+```yaml
+tunnel: <UUID-del-tunel>
+credentials-file: /home/<usuario>/.cloudflared/<UUID>.json
+ingress:
+  - hostname: myra.ucn.cl
+    service: http://127.0.0.1:5678
+  - service: http_status:404
+```
+
+```bash
+sudo cloudflared service install
+sudo systemctl enable --now cloudflared
+```
+
+En este caso `WEBHOOK_URL=https://myra.ucn.cl/` y `N8N_PROXY_HOPS=2` (Cloudflare +
+n8n). No uses `trycloudflare.com` en producción.
+
+## 6. Migraciones
+
+En una base nueva, Docker ejecuta `db/migrations/*.sql` al inicializar el volumen.
+Para una base existente o después de un `git pull`:
+
+```bash
+./scripts/linux/db-migrate.sh
+```
+
+El script revisa `schema_migrations` y solo aplica lo pendiente. Es idempotente.
+
+## 7. Respaldos
+
+```bash
+./scripts/linux/backup.sh
+```
+
+Genera en `db/backups/`:
+
+- `myra_YYYYMMDD_HHMMSS.dump` → PostgreSQL (`pg_dump -Fc`)
+- `credentials_YYYYMMDD_HHMMSS.json` → credenciales de n8n (cifradas)
+- Actualiza `n8n/workflows/*.json`
+
+Retención automática: 14 días.
+
+Cron diario a las 03:00:
 
 ```cron
-0 3 * * * cd /opt/proyecto-myra-n8n && ./scripts/backup.sh >> /var/log/myra-backup.log 2>&1
+0 3 * * * cd /opt/proyecto-myra-n8n && ./scripts/linux/backup.sh >> /var/log/myra-backup.log 2>&1
 ```
 
-Como los scripts están en PowerShell (Windows), en Linux conviene un `backup.sh`
-equivalente:
+Además, copia `db/backups/` y `n8n/workflows/` a un almacenamiento externo (OneDrive
+institucional, otro servidor, etc.). Un respaldo en el mismo disco no protege ante
+falla de hardware.
+
+> La `N8N_ENCRYPTION_KEY` **no** se guarda en el repositorio. Anótala en un gestor de
+> secretos institucional. Sin ella, el respaldo de credenciales no sirve.
+
+## 8. Seguridad
+
+- `N8N_BIND=127.0.0.1` y `PG_BIND=127.0.0.1`: n8n y PostgreSQL no se exponen directo.
+- Firewall: solo SSH, 80 y 443. No abras 5678 ni 5433.
+- `chmod 600 .env`.
+- No reutilices la contraseña de desarrollo.
+- Crea la cuenta de n8n con el correo institucional y no la compartas.
+- Si usas Cloudflare Tunnel, no necesitas abrir 80/443.
+- Revisa los logs y el espacio en disco:
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-cd "$(dirname "$0")/.."
-STAMP=$(date +%Y%m%d_%H%M%S)
-mkdir -p backups
-docker compose exec -T postgres pg_dump -U myra -d myra -Fc > "backups/myra_${STAMP}.dump"
-docker compose exec -T n8n n8n export:workflow --all --separate --output=/workflows
-docker compose exec -T n8n n8n export:credentials --all --output=/tmp/credentials.json
-docker compose cp n8n:/tmp/credentials.json "backups/credentials_${STAMP}.json"
-find backups -type f -mtime +14 -delete
+df -h
+docker system df
 ```
 
-Además, copiar `backups/` y `n8n/workflows/` a un almacenamiento externo (OneDrive
-institucional, servidor de respaldo, etc.). Un respaldo en el mismo servidor no protege
-ante falla de disco.
+## 9. Operación diaria
 
-## 6. Migrar los datos desde el PC
+```bash
+./scripts/linux/status.sh          # estado general
+./scripts/linux/logs.sh            # logs de n8n
+./scripts/linux/logs.sh postgres   # logs de PostgreSQL
+./scripts/linux/db-migrate.sh      # migraciones pendientes
+./scripts/linux/export-workflows.sh
+./scripts/linux/backup.sh
+./scripts/linux/stop.sh
+./scripts/linux/start.sh
+```
 
-Si ya hay datos reales en desarrollo y se quieren llevar a la UCN:
+Docker con `restart: unless-stopped` levanta los contenedores al bootear. Si prefieres
+systemd:
 
-1. En el PC: `.\scripts\backup.ps1` y copiar el `.dump` más reciente.
-2. En el servidor: restaurar el dump (ver `docs/03-base-de-datos.md`).
-3. Copiar `n8n/data/` completo (con n8n detenido) o importar los workflows JSON y
-   volver a crear las credenciales.
-4. Mantener la misma `N8N_ENCRYPTION_KEY`.
+```bash
+sudo cp deploy/systemd/myra.service /etc/systemd/system/myra.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now myra
+sudo systemctl status myra
+```
 
-> Si se copia `n8n/data/`, las credenciales siguen cifradas y funcionan. Si se importan
-> los workflows en una instancia nueva, hay que recrear las 3 credenciales.
+## 10. Migrar los datos desde el PC
 
-## 7. Checklist de salida a producción
+Si quieres conservar los workflows, credenciales y datos de prueba:
+
+1. En el PC, detén n8n y haz un respaldo:
+   ```powershell
+   .\scripts\stop.ps1
+   .\scripts\backup.ps1
+   ```
+2. Copia al servidor:
+   - `n8n/data/` completo (SQLite, `config`, storage)
+   - El `.dump` más reciente de `db/backups/`
+3. En el servidor:
+   ```bash
+   # Detener n8n antes de copiar datos
+   ./scripts/linux/stop.sh
+
+   # Copiar n8n/data (scp/rsync) y ajustar permisos
+   sudo chown -R 1000:1000 n8n/data
+
+   # Restaurar PostgreSQL
+   ./scripts/linux/start.sh
+   ./scripts/linux/restore-db.sh db/backups/myra_AAAAAMMDD_HHMMSS.dump
+   ```
+4. Mantén la **misma** `N8N_ENCRYPTION_KEY` en el `.env` del servidor. Si no, las
+   credenciales de `n8n/data` no se descifran.
+
+Si empiezas de cero en el servidor, no copies `n8n/data`: n8n crea su base nueva y
+tendrás que recrear las 3 credenciales (Telegram, Gemini, Postgres).
+
+## 11. Checklist de salida a producción
 
 - [ ] `.env` con clave de base fuerte y `N8N_ENCRYPTION_KEY` correcta.
 - [ ] `WEBHOOK_URL` con dominio HTTPS y barra final.
+- [ ] `N8N_BIND=127.0.0.1` y `PG_BIND=127.0.0.1`.
 - [ ] Proxy inverso con WebSockets funcionando.
+- [ ] `./scripts/linux/status.sh` sin errores.
 - [ ] Telegram webhook registrado y `/start` responde.
-- [ ] Usuarios reales cargados en `usuarios` (whitelist).
+- [ ] Usuarios reales cargados en `usuarios`.
 - [ ] Proyectos, alias, medios de pago y categorías cargados.
 - [ ] Migraciones aplicadas (`schema_migrations` al día).
 - [ ] Respaldo automático probado (restaurar en una base de prueba).
@@ -180,19 +294,67 @@ Si ya hay datos reales en desarrollo y se quieren llevar a la UCN:
 - [ ] Monitoreo básico: `docker compose ps`, logs y espacio en disco.
 - [ ] Documento de operación entregado a MYRA.
 
-## 8. Rollback
+## 12. Problemas comunes
 
-Si una actualización rompe el servicio:
+### n8n no puede escribir en `n8n/data`
+
+```bash
+sudo chown -R 1000:1000 n8n/data n8n/workflows
+```
+
+La imagen n8n corre como usuario `node` (UID 1000).
+
+### Error de permisos con SELinux (RHEL/CentOS/Rocky)
+
+```bash
+getenforce
+```
+
+Si está en `Enforcing`, agrega `:z` a los bind mounts en `docker-compose.yml`:
+
+```yaml
+- ./n8n/data:/home/node/.n8n:z
+- ./n8n/workflows:/workflows:z
+```
+
+### El webhook de Telegram no llega
+
+1. Verifica `WEBHOOK_URL` con `./scripts/linux/status.sh`.
+2. Prueba el dominio desde fuera: `curl -I https://myra.ucn.cl/`.
+3. Revisa que el proxy tenga los headers de WebSocket.
+4. Revisa `docker compose logs n8n`.
+5. Consulta Telegram:
+   ```bash
+   curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+   ```
+
+### `port is already allocated`
+
+Puede quedar un stack anterior o un contenedor suelto:
+
+```bash
+docker ps -a
+docker stop <nombre>
+```
+
+### El contenedor quedó con `N8N_WEBHOOK_URL` viejo
+
+```bash
+docker compose up -d --force-recreate n8n
+```
+
+Si cambiaste `.env`, Compose debe recrear el contenedor para tomar la variable.
+
+## 13. Rollback
 
 ```bash
 git log --oneline -5
 git checkout <commit-anterior>
-docker compose up -d --build
+./scripts/linux/start.sh
 ```
 
 Si el problema es de datos:
 
-1. Detener n8n.
-2. Restaurar el último `pg_dump`.
-3. Volver a levantar.
-4. Verificar `schema_migrations` y los workflows.
+1. Detén n8n.
+2. Restaura el último `pg_dump` con `restore-db.sh`.
+3. Verifica `schema_migrations` y los workflows.
