@@ -85,6 +85,7 @@ esté corriendo (o lo levanta, pero no aplica migraciones).
 
 | Script | Cuándo usarlo |
 |---|---|
+| `scripts/linux/check-server.sh` | Diagnóstico previo: Docker, Node, red, puertos y permisos |
 | `scripts/linux/setup.sh` | Primer arranque: `.env`, volumen, carpetas y permisos |
 | `scripts/linux/start.sh` | Levantar el stack y aplicar migraciones |
 | `scripts/linux/stop.sh` | Apagar sin borrar datos |

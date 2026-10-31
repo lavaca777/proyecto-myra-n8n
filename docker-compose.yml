@@ -42,7 +42,8 @@ services:
         max-file: "3"
 
   n8n:
-    image: docker.n8n.io/n8nio/n8n
+    # Version probada en desarrollo. Actualizar deliberadamente, no con :latest.
+    image: docker.n8n.io/n8nio/n8n:2.42.6
     container_name: myra-n8n
     restart: unless-stopped
     ports:

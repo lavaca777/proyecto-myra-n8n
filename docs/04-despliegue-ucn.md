@@ -22,6 +22,7 @@ Este documento cubre el despliegue en un servidor Linux fijo.
 
 | Script | Para qué |
 |---|---|
+| `scripts/linux/check-server.sh` | Diagnóstico previo: Docker, Node, red, puertos y permisos |
 | `scripts/linux/setup.sh` | Primer arranque: `.env`, volumen, carpetas y permisos |
 | `scripts/linux/start.sh` | Levantar el stack y aplicar migraciones |
 | `scripts/linux/stop.sh` | Apagar sin borrar datos |
@@ -51,6 +52,59 @@ docker --version
 docker compose version
 git --version
 ```
+
+### 3.1 Diagnóstico antes de instalar
+
+Si no sabes qué tiene el servidor o no tienes sudo, ejecuta:
+
+```bash
+bash scripts/linux/check-server.sh
+```
+
+Revisa especialmente:
+
+- `groups` y `docker ps`: si apareces en el grupo `docker` y `docker ps`
+  funciona, puedes usar contenedores sin sudo.
+- `docker compose version`: debe existir el plugin v2.
+- `node --version`: n8n 2.x necesita Node 20.19–24.x (solo si no usarás Docker).
+- `curl` a `api.telegram.org` y `generativelanguage.googleapis.com`: confirma
+  salida a internet.
+- `ss -ltn | grep 5678`: confirma que el puerto está libre.
+- `systemctl --user` y `tmux`: opciones para dejar n8n corriendo tras cerrar SSH.
+
+### 3.2 Si no hay Docker ni acceso de administrador
+
+Para **probar** n8n no necesitas Docker ni root. n8n 2.x se puede ejecutar en el
+espacio del usuario con Node.js:
+
+```bash
+# Requiere Node 20.19 a 24.x
+node --version
+
+mkdir -p ~/n8n-test && cd ~/n8n-test
+npx n8n@2.42.6
+```
+
+- Abre la UI desde tu PC con un túnel SSH:
+  ```bash
+  ssh -L 5678:localhost:5678 usuario@servidor
+  ```
+  y visita `http://localhost:5678`.
+- Para Telegram necesitas HTTPS público. Puedes usar un túnel de Cloudflare
+  ejecutado como usuario (sin sudo):
+  ```bash
+  cloudflared tunnel --url http://localhost:5678
+  ```
+  Luego inicia n8n con `WEBHOOK_URL=https://....trycloudflare.com/ npx n8n@2.42.6`.
+- Para que siga corriendo al cerrar SSH, usa `tmux`:
+  ```bash
+  tmux new -s n8n
+  npx n8n@2.42.6
+  # Ctrl+B, luego D para desconectarte
+  ```
+
+> n8n 3.x ya no soporta `npx`/`npm`; por eso fijamos `2.42.6`. Para el proyecto
+> completo (PostgreSQL + credenciales compartidas) sí conviene Docker.
 
 ## 4. Primer despliegue
 
