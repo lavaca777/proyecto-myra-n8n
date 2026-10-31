@@ -49,8 +49,8 @@
       "typeVersion": 2.7,
       "executeOnce": true,
       "position": [
-        60,
-        0
+        540,
+        -80
       ],
       "id": "0a0f8b59-8d8d-47a6-a646-c59e54708e36",
       "name": "Crear registro",
@@ -68,8 +68,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1020,
-        0
+        1500,
+        120
       ],
       "id": "9d9cdaac-052f-40ba-98a8-aad107e175c6",
       "name": "Normalizar extraccion"
@@ -86,8 +86,8 @@
       "typeVersion": 2.7,
       "executeOnce": true,
       "position": [
-        1260,
-        0
+        1740,
+        120
       ],
       "id": "3031a966-cbab-4797-a30f-ce36928cd0d8",
       "name": "Buscar proyecto",
@@ -106,8 +106,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1500,
-        0
+        1980,
+        120
       ],
       "id": "63f3640c-7128-4af6-826d-ffae1ba84754",
       "name": "Resolver proyecto"
@@ -119,8 +119,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1740,
-        0
+        2220,
+        120
       ],
       "id": "989001b2-469c-41aa-a349-594d35575cf0",
       "name": "Decidir estado"
@@ -137,8 +137,8 @@
       "typeVersion": 2.7,
       "executeOnce": true,
       "position": [
-        1980,
-        0
+        2460,
+        120
       ],
       "id": "1a64ed93-6496-4666-ba3a-d0e9c8c0e3d7",
       "name": "Guardar borrador",
@@ -158,8 +158,8 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        1740,
-        0
+        2700,
+        120
       ],
       "id": "ea2c352d-5782-43d3-8550-e43004afe64b",
       "name": "¿Faltan datos?"
@@ -177,8 +177,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2460,
-        -120
+        2940,
+        0
       ],
       "id": "880d6edf-5adf-4de5-8616-e962f91167ee",
       "name": "Enviar pregunta",
@@ -231,7 +231,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2460,
+        2940,
         160
       ],
       "id": "82d8f014-3300-44bf-8bc4-077eff4d859e",
@@ -245,13 +245,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const original = $('Cuando se ejecuta').first().json;\nconst catalogo = $('Maestras').first().json;\nconst registroId = $input.first().json.id;\n\nconst hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());\nconst proyectos = catalogo.proyectos.map(p => `- ${p.nombre} | ${(p.alias || []).join(', ')}`).join('\\n');\nconst medios = catalogo.medios_pago.map(m => `- ${m.nombre}`).join('\\n');\nconst categorias = catalogo.categorias.map(c => `- ${c.nombre}`).join('\\n');\n\nconst prompt = `Eres el m?dulo de extracci?n de datos de compras de Constructora MYRA.\nRecibes la transcripci?n de una nota de voz o un mensaje de texto de un jefe de obra chileno.\nTu ?nica tarea es extraer los datos del gasto y devolver un JSON v?lido.\n\nREGLAS OBLIGATORIAS\n1. No inventes datos. Si un campo no aparece, usa null.\n2. No escribas explicaciones, markdown ni texto fuera del JSON.\n3. Los montos son pesos chilenos (CLP), enteros y sin puntos ni decimales.\n   - \"45 mil\" -> 45000\n   - \"45.990\" -> 45990\n   - \"cuarenta y cinco mil novecientos noventa\" -> 45990\n4. La fecha debe ser ISO 8601 (YYYY-MM-DD). Usa FECHA_ACTUAL si dice \"hoy\".\n5. El proyecto debe ser uno de PROYECTOS o un alias. Si no se menciona, usa null.\n6. El medio de pago debe ser uno de MEDIOS_PAGO. Si no coincide, usa null.\n7. La categor?a debe ser una de CATEGORIAS. Si no est?s seguro, usa null.\n8. La descripci?n es breve: qu? se compr?.\n9. La confianza es un n?mero entre 0 y 1 por cada campo.\n10. Si el mensaje es un saludo, una pregunta o no describe una compra, devuelve todas las claves en null, incluida descripcion.\n\nFORMATO EXACTO DE SALIDA (no cambies las claves):\n{\n  \"proyecto\": \"nombre oficial o alias, o null\",\n  \"monto_total\": 12500,\n  \"fecha\": \"YYYY-MM-DD o null\",\n  \"proveedor\": \"nombre del local o null\",\n  \"medio_pago\": \"nombre exacto del cat?logo o null\",\n  \"categoria\": \"nombre exacto del cat?logo o null\",\n  \"descripcion\": \"qu? se compr?, sin incluir el proveedor\"\n}\nNo uses la clave \"monto\"; usa \"monto_total\".\nNo incluyas el proveedor dentro de \"descripcion\"; usa el campo \"proveedor\".\n\nFECHA_ACTUAL: ${hoy}\n\nPROYECTOS (nombre oficial | alias):\n${proyectos}\n\nMEDIOS_PAGO:\n${medios}\n\nCATEGORIAS:\n${categorias}\n\nTEXTO DEL USUARIO:\n\"\"\"\n${original.texto}\n\"\"\"\n\nDevuelve solo el JSON.`;\n\nreturn [{ json: { registro_id: registroId, original, catalogo, prompt } }];"
+        "jsCode": "const input = $input.first().json;\nconst original = input.original;\nconst catalogo = input.catalogo;\nconst registroId = input.registro_id;\nconst contexto = input.contexto || {};\nconst campoPendiente = input.campo_pendiente || null;\nconst esContinuacion = !!input.es_continuacion;\n\nconst hoy = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Santiago' }).format(new Date());\nconst proyectos = catalogo.proyectos.map(p => `- ${p.nombre} | ${(p.alias || []).join(', ')}`).join('\\n');\nconst medios = catalogo.medios_pago.map(m => `- ${m.nombre}`).join('\\n');\nconst categorias = catalogo.categorias.map(c => `- ${c.nombre}`).join('\\n');\n\nconst contextoTexto = esContinuacion\n  ? `\\nEST?S COMPLETANDO UN GASTO YA INICIADO.\nDATOS ACTUALES:\n${JSON.stringify(contexto, null, 2)}\nCAMPO_PENDIENTE: ${campoPendiente}\nEl usuario responde: \"${original.texto}\"\nDevuelve el JSON completo, manteniendo los datos actuales que no cambien y actualizando el campo pendiente.\\n`\n  : '';\n\nconst prompt = `Eres el m?dulo de extracci?n de datos de compras de Constructora MYRA.\nRecibes la transcripci?n de una nota de voz o un mensaje de texto de un jefe de obra chileno.\nTu ?nica tarea es extraer los datos del gasto y devolver un JSON v?lido.\n\nREGLAS OBLIGATORIAS\n1. No inventes datos. Si un campo no aparece, usa null.\n2. No escribas explicaciones, markdown ni texto fuera del JSON.\n3. Los montos son pesos chilenos (CLP), enteros y sin puntos ni decimales.\n   - \"45 mil\" -> 45000\n   - \"45.990\" -> 45990\n   - \"cuarenta y cinco mil novecientos noventa\" -> 45990\n4. La fecha debe ser ISO 8601 (YYYY-MM-DD). Usa FECHA_ACTUAL si dice \"hoy\".\n5. El proyecto debe ser uno de PROYECTOS o un alias. Si no se menciona, usa null.\n6. El medio de pago debe ser uno de MEDIOS_PAGO. Si no coincide, usa null.\n7. La categor?a debe ser una de CATEGORIAS. Si no est?s seguro, usa null.\n8. La descripci?n es breve: qu? se compr?.\n9. La confianza es un n?mero entre 0 y 1 por cada campo.\n10. Si el mensaje es un saludo, una pregunta o no describe una compra, devuelve todas las claves en null, incluida descripcion.\n\nFORMATO EXACTO DE SALIDA (no cambies las claves):\n{\n  \"proyecto\": \"nombre oficial o alias, o null\",\n  \"monto_total\": 12500,\n  \"fecha\": \"YYYY-MM-DD o null\",\n  \"proveedor\": \"nombre del local o null\",\n  \"medio_pago\": \"nombre exacto del cat?logo o null\",\n  \"categoria\": \"nombre exacto del cat?logo o null\",\n  \"descripcion\": \"qu? se compr?, sin incluir el proveedor\"\n}\nNo uses la clave \"monto\"; usa \"monto_total\".\nNo incluyas el proveedor dentro de \"descripcion\"; usa el campo \"proveedor\".\n${contextoTexto}\nFECHA_ACTUAL: ${hoy}\n\nPROYECTOS (nombre oficial | alias):\n${proyectos}\n\nMEDIOS_PAGO:\n${medios}\n\nCATEGORIAS:\n${categorias}\n\nTEXTO DEL USUARIO:\n\"\"\"\n${original.texto}\n\"\"\"\n\nDevuelve solo el JSON.`;\n\nreturn [{ json: { registro_id: registroId, original, catalogo, contexto, campo_pendiente: campoPendiente, es_continuacion: esContinuacion, prompt } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        300,
-        0
+        780,
+        120
       ],
       "id": "3cc38fbd-119c-4e9c-9561-e4fe381f0654",
       "name": "Preparar prompt"
@@ -264,8 +264,8 @@
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
       "position": [
-        540,
-        0
+        1020,
+        120
       ],
       "id": "1e6c5aa0-6716-48b3-8847-e035787f8245",
       "name": "Extraer con Gemini"
@@ -281,8 +281,8 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1.2,
       "position": [
-        540,
-        260
+        1020,
+        320
       ],
       "id": "03ee988a-05c9-4f0a-93e9-c33005e9e193",
       "name": "Google Gemini Chat Model",
@@ -295,13 +295,13 @@
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Preparar prompt').first().json;\nconst raw = $input.first().json;\n\nconst parsePosible = (value) => {\n  if (typeof value !== 'string') return value;\n  const limpio = value.replace(/```json/gi, '').replace(/```/g, '').trim();\n  try {\n    return JSON.parse(limpio);\n  } catch (error) {\n    return {};\n  }\n};\n\nlet extraido = raw && raw.output ? raw.output : raw;\nif (extraido && typeof extraido.text === 'string') extraido = extraido.text;\nextraido = parsePosible(extraido);\nif (!extraido || typeof extraido !== 'object' || Array.isArray(extraido)) extraido = {};\n\nreturn [{ json: { registro_id: base.registro_id, original: base.original, catalogo: base.catalogo, extraido } }];"
+        "jsCode": "const base = $('Preparar prompt').first().json;\nconst raw = $input.first().json;\n\nconst parsePosible = (value) => {\n  if (typeof value !== 'string') return value;\n  const limpio = value.replace(/```json/gi, '').replace(/```/g, '').trim();\n  try {\n    return JSON.parse(limpio);\n  } catch (error) {\n    return {};\n  }\n};\n\nlet parsed = raw && raw.output ? raw.output : raw;\nif (parsed && typeof parsed.text === 'string') parsed = parsed.text;\nparsed = parsePosible(parsed);\nif (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) parsed = {};\n\nconst prev = base.contexto || {};\nconst merged = {\n  proyecto: prev.proyecto_nombre || prev.proyecto_texto || null,\n  monto_total: prev.monto_total ?? null,\n  fecha: prev.fecha ?? null,\n  proveedor: prev.proveedor ?? null,\n  medio_pago: prev.medio_pago_nombre ?? null,\n  categoria: prev.categoria_nombre ?? null,\n  descripcion: prev.descripcion ?? null\n};\nconst incoming = {\n  proyecto: parsed.proyecto ?? parsed.proyecto_nombre ?? null,\n  monto_total: parsed.monto_total ?? parsed.monto ?? null,\n  fecha: parsed.fecha ?? parsed.fecha_gasto ?? null,\n  proveedor: parsed.proveedor ?? parsed.comercio ?? parsed.local ?? parsed.tienda ?? null,\n  medio_pago: parsed.medio_pago ?? parsed.medioPago ?? null,\n  categoria: parsed.categoria ?? parsed.categoria_gasto ?? null,\n  descripcion: parsed.descripcion ?? parsed.detalle ?? null\n};\nfor (const key of Object.keys(merged)) {\n  if (incoming[key] !== undefined && incoming[key] !== null && incoming[key] !== '') merged[key] = incoming[key];\n}\n\nreturn [{ json: { registro_id: base.registro_id, original: base.original, catalogo: base.catalogo, extraido: merged } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        780,
-        0
+        1260,
+        120
       ],
       "id": "d1e5bf7c-b200-4eb9-bf16-edfb7f0a548f",
       "name": "Armar extraccion"
@@ -319,8 +319,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2460,
-        40
+        2940,
+        80
       ],
       "id": "af7d5a32-968e-4942-af38-6c93d5add91f",
       "name": "Responder no gasto",
@@ -330,6 +330,58 @@
           "name": "Telegram account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH pendiente AS (\n  SELECT id, usuario_id, estado, campo_pendiente, json_extraido\n  FROM registros_entrada\n  WHERE usuario_id = $1 AND estado = 'falta_dato'\n  ORDER BY id DESC\n  LIMIT 1\n)\nSELECT p.*\nFROM (SELECT 1) AS dummy\nLEFT JOIN pendiente p ON TRUE;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario.id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "position": [
+        60,
+        0
+      ],
+      "id": "3a762925-6ef5-464b-a01e-655d35f6b713",
+      "name": "Buscar pendiente",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.id ? 0 : 1 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        300,
+        0
+      ],
+      "id": "4dfb4468-f854-4371-90c5-db27c525b320",
+      "name": "Continuacion"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst original = $('Cuando se ejecuta').first().json;\nconst catalogo = $('Maestras').first().json;\nconst esContinuacion = input.json_extraido !== undefined && input.estado === 'falta_dato';\nlet contexto = {};\nif (esContinuacion) {\n  try {\n    contexto = typeof input.json_extraido === 'string' ? JSON.parse(input.json_extraido) : input.json_extraido;\n  } catch (error) {\n    contexto = {};\n  }\n}\nreturn [{\n  json: {\n    registro_id: input.id,\n    original,\n    catalogo,\n    contexto,\n    campo_pendiente: esContinuacion ? input.campo_pendiente : null,\n    es_continuacion: esContinuacion\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        540,
+        120
+      ],
+      "id": "4834d816-ea42-4c0d-8b79-65834c5e0525",
+      "name": "Preparar contexto"
     }
   ],
   "connections": {
@@ -348,7 +400,7 @@
       "main": [
         [
           {
-            "node": "Crear registro",
+            "node": "Buscar pendiente",
             "type": "main",
             "index": 0
           }
@@ -359,7 +411,7 @@
       "main": [
         [
           {
-            "node": "Preparar prompt",
+            "node": "Preparar contexto",
             "type": "main",
             "index": 0
           }
@@ -489,6 +541,46 @@
           }
         ]
       ]
+    },
+    "Buscar pendiente": {
+      "main": [
+        [
+          {
+            "node": "Continuacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar contexto": {
+      "main": [
+        [
+          {
+            "node": "Preparar prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Continuacion": {
+      "main": [
+        [
+          {
+            "node": "Preparar contexto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Crear registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "settings": {
@@ -497,7 +589,7 @@
   "staticData": null,
   "pinData": {},
   "meta": {},
-  "versionId": "c4ed39f7-50d2-43be-9444-75c65441e171",
+  "versionId": "80a193b6-a693-4eed-b8e0-e767a4c61f9a",
   "createdAt": "2026-10-31T00:00:00.000Z",
   "updatedAt": "2026-10-31T00:00:00.000Z",
   "tags": []
