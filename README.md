@@ -140,7 +140,6 @@ producción n8n Cloud entrega una URL HTTPS fija.
 ├─ scripts/
 │  ├─ *.ps1                    # Windows: desarrollo local
 │  └─ linux/                   # legado: servidor Linux, no usado en Cloud
-├─ deploy/                     # legado: Nginx, Caddy y systemd (no usado en Cloud)
 ├─ docs/
 │  ├─ charter/                 # Project Charter e imagenes
 │  ├─ entrevistas/             # transcripciones (los audios no se versionan)
