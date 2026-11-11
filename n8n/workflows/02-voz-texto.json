@@ -67,7 +67,7 @@
             },
             {
               "name": "model",
-              "value": "whisper-large-v3-turbo"
+              "value": "whisper-large-v3"
             },
             {
               "name": "language",
@@ -75,7 +75,11 @@
             },
             {
               "name": "response_format",
-              "value": "json"
+              "value": "verbose_json"
+            },
+            {
+              "name": "temperature",
+              "value": "0"
             }
           ]
         },
@@ -101,7 +105,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst transcripcion = (response.text || '').trim();\nconst base = $('When Executed by Another Workflow').first().json;\n\nreturn [{\n  json: {\n    ...base,\n    texto_transcrito: transcripcion,\n    transcripcion_ok: transcripcion.length > 0\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst base = $('When Executed by Another Workflow').first().json;\nconst texto = (response.text || '').trim();\nconst segmentos = Array.isArray(response.segments) ? response.segments : [];\nconst noSpeech = segmentos.length\n  ? Math.max(...segmentos.map(s => Number(s.no_speech_prob ?? 0)))\n  : 0;\nconst logprob = segmentos.length\n  ? Math.min(...segmentos.map(s => Number(s.avg_logprob ?? 0)))\n  : 0;\nconst transcripcionOk = texto.length > 0 && noSpeech < 0.5 && logprob > -0.8;\n\nreturn [{\n  json: {\n    ...base,\n    texto_transcrito: transcripcionOk ? texto : '',\n    texto_stt_original: texto,\n    transcripcion_ok: transcripcionOk,\n    stt_no_speech_prob: noSpeech,\n    stt_avg_logprob: logprob\n  }\n}];"
       },
       "id": "ac2ddc1b-1935-4330-b524-ea696786a57d",
       "name": "Extraer transcripcion",
