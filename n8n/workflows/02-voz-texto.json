@@ -96,11 +96,12 @@
           "id": "VVhBLX5oxp93tEHF",
           "name": "Groq account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "const response = $input.first().json;\nconst transcripcion = (response.text || '').trim() || 'No se pudo transcribir el audio.';\n\nreturn [{\n  json: {\n    ... $('When Executed by Another Workflow').first().json,\n    texto_transcrito: transcripcion\n  }\n}];"
+        "jsCode": "const response = $input.first().json;\nconst transcripcion = (response.text || '').trim();\nconst base = $('When Executed by Another Workflow').first().json;\n\nreturn [{\n  json: {\n    ...base,\n    texto_transcrito: transcripcion,\n    transcripcion_ok: transcripcion.length > 0\n  }\n}];"
       },
       "id": "ac2ddc1b-1935-4330-b524-ea696786a57d",
       "name": "Extraer transcripcion",
@@ -109,6 +110,71 @@
       "position": [
         880,
         0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.transcripcion_ok ? 0 : 1 }}"
+      },
+      "id": "b6f6b1a2-3c1e-4f7a-9d2b-5e8c1a4f7b90",
+      "name": "Transcripcion OK?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1104,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all();"
+      },
+      "id": "c7a7c2b3-4d2f-4a8b-8e3c-6f9d2b5a8c01",
+      "name": "Devolver transcripcion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        -112
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "No pude escuchar bien el audio. Intenta de nuevo o escribe el gasto.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "d8b8d3c4-5e3a-4b9c-9f4d-7a0e3c6b9d12",
+      "name": "Responder error audio",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1328,
+        112
+      ],
+      "webhookId": "f0daf5e6-7a5c-4dbe-b16f-9c2a5e8d1f34",
+      "credentials": {
+        "telegramApi": {
+          "id": "5417ZlcyBFHgxQ8J",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "throw new Error('STT_FAILED: no se pudo transcribir el audio');"
+      },
+      "id": "e9c9e4d5-6f4b-4cad-a05e-8b1f4d7c0e23",
+      "name": "Lanzar error STT",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        112
       ]
     }
   ],
@@ -152,6 +218,46 @@
         [
           {
             "node": "Extraer transcripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer transcripcion": {
+      "main": [
+        [
+          {
+            "node": "Transcripcion OK?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcripcion OK?": {
+      "main": [
+        [
+          {
+            "node": "Devolver transcripcion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder error audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder error audio": {
+      "main": [
+        [
+          {
+            "node": "Lanzar error STT",
             "type": "main",
             "index": 0
           }
