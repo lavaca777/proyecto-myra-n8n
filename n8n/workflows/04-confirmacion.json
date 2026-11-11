@@ -32,7 +32,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH reg AS (\n  SELECT r.id, r.usuario_id, r.estado, r.json_extraido,\n         u.nombre AS usuario_nombre, u.rol\n  FROM registros_entrada r\n  JOIN usuarios u ON u.id = r.usuario_id\n  WHERE r.id = $1 AND r.usuario_id = $2\n  LIMIT 1\n)\nSELECT reg.*\nFROM (SELECT 1) AS dummy\nLEFT JOIN reg ON TRUE;",
+        "query": "WITH reg AS (\n  SELECT r.id, r.usuario_id, r.estado, r.campo_pendiente, r.json_extraido,\n         u.nombre AS usuario_nombre, u.rol\n  FROM registros_entrada r\n  JOIN usuarios u ON u.id = r.usuario_id\n  WHERE r.id = $1 AND r.usuario_id = $2\n  LIMIT 1\n)\nSELECT reg.*\nFROM (SELECT 1) AS dummy\nLEFT JOIN reg ON TRUE;",
         "options": {
           "queryReplacement": "={{ [ $json.registro_id, $json.usuario_id ] }}"
         }
@@ -55,7 +55,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const original = $('Parsear callback').first().json;\nconst reg = $input.first().json;\nconst registroId = original.registro_id;\nconst usuarioId = original.usuario_id;\nlet accion = original.accion;\n\nconst normalizar = (texto) => String(texto || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nlet extraido = {};\nif (reg.json_extraido) {\n  try {\n    extraido = typeof reg.json_extraido === 'string'\n      ? JSON.parse(reg.json_extraido)\n      : reg.json_extraido;\n  } catch (error) {\n    extraido = {};\n  }\n}\n\nconst datos = {\n  proyecto_id: extraido.proyecto_id ?? null,\n  proveedor: extraido.proveedor ?? null,\n  medio_pago_id: extraido.medio_pago_id ?? null,\n  categoria_id: extraido.categoria_id ?? null,\n  descripcion: extraido.descripcion ?? null,\n  monto_total: extraido.monto_total ?? null,\n  fecha: extraido.fecha ?? null\n};\n\nif (!reg.id) accion = 'otro';\nif (['confirm', 'edit', 'cancel'].includes(accion) && reg.estado !== 'pendiente_confirmacion') accion = 'otro';\nif (accion === 'confirm' && (!datos.proyecto_id || !datos.proveedor || !datos.medio_pago_id || !datos.monto_total || !datos.fecha)) accion = 'otro';\n\nconst mensajeCierre = accion === 'edit'\n  ? 'Para corregir, envía el gasto completo de nuevo. El registro anterior quedó cancelado.'\n  : 'Registro cancelado.';\n\nreturn [{\n  json: {\n    ...original,\n    accion,\n    registro_id: registroId,\n    usuario_id: usuarioId,\n    estado_registro: reg.estado ?? null,\n    datos,\n    proveedor_normalizado: normalizar(datos.proveedor),\n    mensaje_cierre: mensajeCierre,\n    mensaje_otro: 'No encontré un registro pendiente para ese botón. Puede que ya esté confirmado o cancelado.'\n  }\n}];"
+        "jsCode": "const original = $('Parsear callback').first().json;\nconst reg = $input.first().json;\nconst registroId = original.registro_id;\nconst usuarioId = original.usuario_id;\nlet accion = original.accion;\n\nconst normalizar = (texto) => String(texto || '')\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '')\n  .toLowerCase()\n  .replace(/\\s+/g, ' ')\n  .trim();\n\nlet extraido = {};\nif (reg.json_extraido) {\n  try {\n    extraido = typeof reg.json_extraido === 'string'\n      ? JSON.parse(reg.json_extraido)\n      : reg.json_extraido;\n  } catch (error) {\n    extraido = {};\n  }\n}\n\nconst datos = {\n  proyecto_id: extraido.proyecto_id ?? null,\n  proveedor: extraido.proveedor ?? null,\n  medio_pago_id: extraido.medio_pago_id ?? null,\n  categoria_id: extraido.categoria_id ?? null,\n  descripcion: extraido.descripcion ?? null,\n  monto_total: extraido.monto_total ?? null,\n  fecha: extraido.fecha ?? null\n};\n\nif (!reg.id) accion = 'otro';\nconst esCorreccion = reg.estado === 'falta_dato' && reg.campo_pendiente === 'correccion';\nif (['confirm', 'edit', 'cancel'].includes(accion) && reg.estado !== 'pendiente_confirmacion' && !(accion === 'cancel' && esCorreccion)) accion = 'otro';\nif (accion === 'confirm' && (!datos.proyecto_id || !datos.proveedor || !datos.medio_pago_id || !datos.monto_total || !datos.fecha)) accion = 'otro';\n\nconst mensajeCierre = 'Registro cancelado.';\nconst mensajeCorreccion = '¿Qué quieres corregir? Dime solo el dato correcto, por ejemplo:\\n\"el monto era 15.000\"\\n\"el proveedor era Copec\"\\nEl resto del gasto se mantiene. También puedes usar /cancelar.';\n\nreturn [{\n  json: {\n    ...original,\n    accion,\n    registro_id: registroId,\n    usuario_id: usuarioId,\n    estado_registro: reg.estado ?? null,\n    datos,\n    proveedor_normalizado: normalizar(datos.proveedor),\n    mensaje_cierre: mensajeCierre,\n    mensaje_correccion: mensajeCorreccion,\n    mensaje_otro: 'No encontré un registro pendiente para ese botón. Puede que ya esté confirmado o cancelado.'\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -174,7 +174,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE registros_entrada\nSET estado = 'cancelado', campo_pendiente = NULL\nWHERE id = $1 AND usuario_id = $2 AND estado = 'pendiente_confirmacion'\nRETURNING id;",
+        "query": "UPDATE registros_entrada\nSET estado = 'cancelado', campo_pendiente = NULL\nWHERE id = $1 AND usuario_id = $2\n  AND (\n    estado = 'pendiente_confirmacion'\n    OR (estado = 'falta_dato' AND campo_pendiente = 'correccion')\n  )\nRETURNING id;",
         "options": {
           "queryReplacement": "={{ [ $json.registro_id, $json.usuario_id ] }}"
         }
@@ -245,6 +245,72 @@
           "name": "Telegram account"
         }
       }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE registros_entrada\nSET estado = 'falta_dato',\n    campo_pendiente = 'correccion',\n    actualizado_en = now()\nWHERE id = $1 AND usuario_id = $2 AND estado = 'pendiente_confirmacion'\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $json.registro_id, $json.usuario_id ] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        780,
+        0
+      ],
+      "id": "a1b2c3d4-1111-4222-8333-944455556666",
+      "name": "Preparar correccion",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.id ? 0 : 1 }}"
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1020,
+        0
+      ],
+      "id": "b2c3d4e5-2222-4333-8444-a55566667777",
+      "name": "¿Quedó en corrección?"
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Preparar datos').first().json.telegram_chat_id }}",
+        "text": "={{ $('Preparar datos').first().json.mensaje_correccion }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1260,
+        -80
+      ],
+      "id": "c3d4e5f6-3333-4444-8555-b66677778888",
+      "name": "Responder correccion",
+      "webhookId": "d4e5f6a7-4444-4555-8666-c77788889999",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
     }
   ],
   "connections": {
@@ -303,7 +369,7 @@
         ],
         [
           {
-            "node": "Cerrar registro",
+            "node": "Preparar correccion",
             "type": "main",
             "index": 0
           }
@@ -358,6 +424,35 @@
         [
           {
             "node": "Responder cierre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar correccion": {
+      "main": [
+        [
+          {
+            "node": "¿Quedó en corrección?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Quedó en corrección?": {
+      "main": [
+        [
+          {
+            "node": "Responder correccion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder otro",
             "type": "main",
             "index": 0
           }
