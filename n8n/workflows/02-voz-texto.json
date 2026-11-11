@@ -1,0 +1,175 @@
+{
+  "name": "[MYRA] 02 · Voz a Texto",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "jsonExample",
+        "jsonExample": "{\n  \"file_id\": \"AwACAgEAAxkBAAM5audGvNqpxDHBG5of6oELGwJRhz4AAmEJAALzvDlHcG57ZxEaLTw9BA\",\n  \"duracion_seg\": 2,\n  \"telegram_chat_id\": 1840722123,\n  \"telegram_message_id\": 57,\n  \"usuario_id\": 1,\n  \"usuario_nombre\": \"Usuario Demo\",\n  \"usuario_rol\": \"jefe_obra\"\n}"
+      },
+      "id": "096dd1e8-8ea3-401f-aa5c-42392be113f9",
+      "name": "When Executed by Another Workflow",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.file_id }}",
+        "additionalFields": {}
+      },
+      "id": "f120d5db-0f6a-4ac3-92dd-144a70989b9f",
+      "name": "Descargar audio",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "61713231-fdfe-4825-ba04-a643e99533b5",
+      "credentials": {
+        "telegramApi": {
+          "id": "5417ZlcyBFHgxQ8J",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('When Executed by Another Workflow').first().json;\nconst binary = $input.first().binary;\nbinary.data.fileName = 'audio.ogg';\nbinary.data.mimeType = 'audio/ogg';\nreturn [{ json: { ...base }, binary }];"
+      },
+      "id": "3dfdadd5-1347-4178-a82b-1c647581d999",
+      "name": "Preparar audio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/audio/transcriptions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "groqApi",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "data"
+            },
+            {
+              "name": "model",
+              "value": "whisper-large-v3-turbo"
+            },
+            {
+              "name": "language",
+              "value": "es"
+            },
+            {
+              "name": "response_format",
+              "value": "json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7e283097-e4b6-477b-8bca-8113aeeb0f9b",
+      "name": "Transcribir con Groq",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        672,
+        0
+      ],
+      "retryOnFail": true,
+      "waitBetweenTries": 1000,
+      "credentials": {
+        "groqApi": {
+          "id": "VVhBLX5oxp93tEHF",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.first().json;\nconst transcripcion = (response.text || '').trim() || 'No se pudo transcribir el audio.';\n\nreturn [{\n  json: {\n    ... $('When Executed by Another Workflow').first().json,\n    texto_transcrito: transcripcion\n  }\n}];"
+      },
+      "id": "ac2ddc1b-1935-4330-b524-ea696786a57d",
+      "name": "Extraer transcripcion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Descargar audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descargar audio": {
+      "main": [
+        [
+          {
+            "node": "Preparar audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribir con Groq",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribir con Groq": {
+      "main": [
+        [
+          {
+            "node": "Extraer transcripcion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7ae37f56-d712-4361-9b51-b90b0ffc8885",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b724f3d2c455bf1380b52ca65524760bdf7f5b5d17ee929f407b51437fe7ea42"
+  },
+  "nodeGroups": [],
+  "id": "wFt0pQy181bd0O0u",
+  "tags": []
+}

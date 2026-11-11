@@ -43,5 +43,5 @@ ON CONFLICT DO NOTHING;
 -- Reemplaza 123456789 por tu chat_id real de Telegram.
 -- Puedes obtenerlo escribiendo al bot y mirando el update en n8n.
 INSERT INTO usuarios (telegram_chat_id, nombre, rol)
-VALUES (123456789, 'Usuario Demo', 'jefe_obra')
+VALUES (1840722123, 'Usuario Demo', 'jefe_obra')
 ON CONFLICT (telegram_chat_id) DO NOTHING;
