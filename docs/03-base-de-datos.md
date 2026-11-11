@@ -1,7 +1,8 @@
 # Base de datos
 
-Motor: **PostgreSQL 16**. Modelo relacional orientado a la trazabilidad del gasto y a
-la conversación del bot. Diagrama: [`modelo-relacional.png`](db/modelo-relacional.png).
+Motor: **PostgreSQL administrado en Supabase**. En desarrollo local se usa PostgreSQL
+16 en Docker. El modelo relacional está orientado a la trazabilidad del gasto y a la
+conversación del bot. Diagrama: [`modelo-relacional.png`](db/modelo-relacional.png).
 
 ## 1. Tablas
 
@@ -45,7 +46,8 @@ procesando → falta_dato → pendiente_confirmacion → confirmado
 - `campo_pendiente`: `proyecto`, `monto_total`, `fecha`, `proveedor` o `medio_pago`.
 - `json_extraido` (`JSONB`): lo que entendió la IA, para auditoría y para medir precisión.
 - `transcripcion`: texto del audio o mensaje.
-- `modelo_ia`: `gemini-2.0-flash`, etc.
+- `modelo_ia`: modelo usado para extraer o transcribir (por ejemplo,
+  `gemini-3.1-flash-lite` o `whisper-large-v3`).
 - `duracion_ms`: para verificar la meta de < 60 s.
 - `telegram_message_id` y `telegram_file_id`: trazabilidad con Telegram.
 
@@ -71,12 +73,30 @@ Los archivos viven en `db/migrations/` y se ejecutan en orden alfabético:
 | `002_seed_catalogos.sql` | Medios de pago y categorías |
 | `003_fuzzy_proyectos.sql` | `pg_trgm`, `unaccent` e índices |
 
-### Base nueva
+### Supabase (producción)
+
+Ejecutar los archivos en orden desde el **SQL Editor** de Supabase o con `psql` y la
+cadena de conexión del proyecto:
+
+```text
+000_migrations.sql
+001_schema_inicial.sql
+002_seed_catalogos.sql
+003_fuzzy_proyectos.sql
+```
+
+Verificar:
+
+```sql
+SELECT filename FROM schema_migrations ORDER BY filename;
+```
+
+No usar Docker para aplicar migraciones en producción.
+
+### Desarrollo local
 
 Docker ejecuta automáticamente todo `db/migrations/` cuando el volumen de PostgreSQL
-está vacío. No hay que hacer nada más.
-
-### Base existente
+está vacío. Para una base local existente:
 
 ```powershell
 .\scripts\db-migrate.ps1
@@ -98,7 +118,8 @@ VALUES ('004_descripcion.sql')
 ON CONFLICT (filename) DO NOTHING;
 ```
 
-4. Ejecuta `.\scripts\db-migrate.ps1`.
+4. Aplícala en Supabase desde el SQL Editor o, en local, con
+   `.\scripts\db-migrate.ps1`.
 5. Commit del archivo.
 
 ## 6. Maestras
@@ -193,13 +214,27 @@ ORDER BY creado_en DESC;
 
 ## 9. Respaldos
 
+### Supabase (producción)
+
+1. Revisar la retención de backups incluida en el plan.
+2. Exportar periódicamente con `pg_dump` usando la cadena de conexión de Supabase:
+
+```bash
+pg_dump "postgresql://.../postgres?sslmode=require" -Fc -f myra_YYYYMMDD.dump
+```
+
+3. Guardar el archivo fuera de Supabase (disco local, Drive, S3, etc.).
+4. Probar una restauración en un proyecto de prueba antes de confiar en el respaldo.
+
+### Desarrollo local
+
 ```powershell
 .\scripts\backup.ps1
 ```
 
 Genera `db/backups/myra_YYYYMMDD_HHmmss.dump` con `pg_dump -Fc`.
 
-Restaurar en una base limpia:
+Restaurar en una base local limpia:
 
 ```powershell
 # Detener n8n para que no escriba durante la restauración
@@ -217,7 +252,29 @@ docker compose start n8n
 > El `--clean` con `dropdb/createdb` es para una base vacía. En producción, validar
 > siempre el respaldo antes de restaurar.
 
-## 10. Decisiones y pendientes
+## 10. Heartbeat de Supabase
+
+El plan gratuito de Supabase pausa el proyecto después de **7 días sin actividad**
+(verificar la política vigente). Para evitarlo, el workflow `[MYRA] 08 · Heartbeat`
+se ejecuta cada 3 días y hace una consulta simple:
+
+```sql
+SELECT 1;
+```
+
+Si se prefiere una señal de escritura explícita, usar una tabla `heartbeat` y un
+upsert:
+
+```sql
+INSERT INTO heartbeat (id, last_ping)
+VALUES (1, now())
+ON CONFLICT (id) DO UPDATE SET last_ping = now();
+```
+
+En ese caso, agregar la tabla con una migración nueva. El heartbeat no reemplaza los
+respaldos ni el monitoreo de errores.
+
+## 11. Decisiones y pendientes
 
 - **Montos en CLP como `BIGINT`**: no se usan decimales. Si más adelante se requiere
   UF o moneda extranjera, agregar una tabla de monedas y tipo de cambio.

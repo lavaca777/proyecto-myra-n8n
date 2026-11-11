@@ -1,5 +1,7 @@
 # Diseño de flujos
 
+> **Producción actual:** la base es PostgreSQL administrado en Supabase. Los nodos `Postgres` y las consultas SQL de este documento se mantienen; solo cambia la conexión/credencial.
+
 Este documento es la especificación para construir los workflows en n8n. El orden
 recomendado es: **00 → 01 → 03 (solo texto) → 04 → 02 (voz) → 05 → 06 → 07**.
 

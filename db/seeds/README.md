@@ -5,6 +5,13 @@ desarrollo; no deben usarse en producción.
 
 ## Cargar un seed
 
+### Supabase (producción)
+
+Copiar el contenido de `dev_demo.sql` en el **SQL Editor** de Supabase y ejecutarlo,
+después de reemplazar el `telegram_chat_id` de ejemplo por el real.
+
+### Desarrollo local
+
 ```powershell
 docker compose cp .\db\seeds\dev_demo.sql postgres:/tmp/dev_demo.sql
 docker compose exec -T postgres psql -U myra -d myra -v ON_ERROR_STOP=1 -f /tmp/dev_demo.sql

@@ -1,5 +1,9 @@
 # Migración desde la carpeta anterior
 
+> **Documento histórico.** Describe la migración inicial entre carpetas locales. El
+> despliegue de producción actual es n8n Cloud + Supabase; ver
+> [`04-despliegue-cloud.md`](04-despliegue-cloud.md).
+
 Fecha: 2026-10-17
 Origen: `C:\Users\HP\Downloads\UCN 2026-2\gestion de proyectos de I.A\proyecto`
 Destino: `C:\Users\HP\Downloads\GitHub\proyecto-myra-n8n`
@@ -50,8 +54,8 @@ histórico.
 ## Importante
 
 - **No uses más los scripts de la carpeta anterior.** En Windows, el punto de entrada
-  para desarrollo es `scripts\dev.ps1` (túnel + stack + migraciones). En el servidor
-  Linux usa `scripts/linux/setup.sh` y `scripts/linux/start.sh`.
+  para desarrollo es `scripts\dev.ps1` (túnel + stack + migraciones). Producción ya no
+  usa servidor Linux: se despliega en n8n Cloud + Supabase.
 - El stack anterior (`myra_db-postgres-1`) se detuvo para liberar el puerto 5433 y
   reutilizar el volumen. No se borró nada.
 - Hay commits locales pendientes de `git push` (requiere tus credenciales de GitHub).

@@ -296,6 +296,8 @@ duración del audio.
 - [ ] Un audio fuera de contexto no genera un gasto.
 - [ ] Un error de STT responde al usuario y no deja el flujo colgado.
 
+> **Nota:** este handoff fue escrito para el entorno local. En producción, WF-02 se importa y publica desde la UI de n8n Cloud; no se usa el comando local `publish:workflow` ni se copian IDs/credenciales locales.
+
 ## 10. Publicación y export
 
 - En n8n 2.x, `Test workflow` usa el **draft**; el bot activo usa la **versión
@@ -312,9 +314,12 @@ duración del audio.
 
 ## 11. IDs y credenciales
 
+> Estos IDs corresponden al entorno local de desarrollo. En n8n Cloud se recrean las
+> credenciales y se remapean los nodos; no se reutilizan los IDs locales.
+
 | Elemento | Valor |
 |---|---|
-| n8n | `2.42.6` en `http://localhost:5678` |
+| n8n local | `2.42.6` en `http://localhost:5678` |
 | WF-01 Router | `0af28059-7545-448c-9aa6-1dd7927e79a4` |
 | WF-03 Extracción | `1232930e-38d8-4f18-b5a4-667760438170` |
 | Credencial Telegram | `Telegram account` (`telegramApi`) |

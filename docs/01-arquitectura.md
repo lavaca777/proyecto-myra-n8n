@@ -12,27 +12,28 @@ en el punto de compra y lo imputa a un proyecto antes de persistirlo.
 
 ```text
 ┌──────────────┐   HTTPS (webhook)   ┌─────────────────────────────┐
-│   Telegram   │ ──────────────────► │            n8n              │
+│   Telegram   │ ──────────────────► │         n8n Cloud           │
 │  (jefe obra) │ ◄────────────────── │  orquestador de flujos      │
 └──────────────┘   mensajes/botones   └──────────┬──────────────────┘
                                                  │
-                    ┌────────────────────────────┼────────────────────────────┐
-                    │                            │                            │
-                    ▼                            ▼                            ▼
-           ┌─────────────────┐          ┌─────────────────┐          ┌─────────────────┐
-           │  Gemini (LLM)   │          │   PostgreSQL    │          │  Cloudflare     │
-           │  STT + NLU      │          │  datos negocio  │          │  túnel / proxy  │
-           └─────────────────┘          └─────────────────┘          └─────────────────┘
+                                     ┌───────────┴───────────┐
+                                     │                       │
+                                     ▼                       ▼
+                            ┌─────────────────┐     ┌─────────────────┐
+                            │ Gemini / Groq   │     │    Supabase     │
+                            │  NLU + STT      │     │  PostgreSQL     │
+                            └─────────────────┘     └─────────────────┘
 ```
 
 | Componente | Tecnología | Rol |
 |---|---|---|
 | Interfaz | Telegram Bot API | Canal de voz, texto, fotos y botones inline |
-| Orquestador | n8n (self-hosted) | Router, estado, validaciones, persistencia |
-| STT + NLU | Google Gemini (capa gratuita) | Transcripción y extracción de campos |
-| Datos | PostgreSQL 16 | Modelo relacional y auditoría |
-| Exposición | Cloudflare Tunnel (dev) / proxy UCN (prod) | HTTPS para el webhook |
-| Contenedores | Docker Compose | Reproducibilidad y despliegue |
+| Orquestador | n8n Cloud (administrado) | Router, estado, validaciones, persistencia |
+| STT + NLU | Groq Whisper + Google Gemini | Transcripción y extracción de campos |
+| Datos | Supabase (PostgreSQL administrado) | Modelo relacional y auditoría |
+| Exposición | HTTPS de n8n Cloud | Webhook estable de Telegram |
+| Disponibilidad | Workflow `[MYRA] 08 · Heartbeat` | Evita la pausa por inactividad de Supabase |
+| Contenedores | Docker Compose solo en desarrollo local | Reproducibilidad del entorno de pruebas |
 
 ## 3. Decisiones de diseño
 
@@ -150,27 +151,33 @@ Nunca se asigna un proyecto "parecido" sin confirmación cuando la confianza es 
 
 ## 5. Despliegue
 
-### Desarrollo (PC)
+### Desarrollo local (PC)
 
 - Docker Compose: `myra-postgres` + `myra-n8n`.
 - n8n en `http://localhost:5678`.
-- Cloudflare quick tunnel para el webhook de Telegram (URL dinámica).
+- Cloudflare quick tunnel para probar el webhook de Telegram desde internet.
+- Este entorno es solo para desarrollo y pruebas; no es producción.
 
-### Producción (UCN)
+### Producción (n8n Cloud + Supabase)
 
-- Mismo compose en el servidor, con `WEBHOOK_URL` fija.
-- Proxy inverso (Nginx/Caddy) con HTTPS y dominio institucional.
-- Respaldos diarios (`scripts/backup.ps1` adaptado a cron) y copia externa.
-- Sin exponer PostgreSQL a internet (solo red interna).
-- Ver [`04-despliegue-ucn.md`](04-despliegue-ucn.md).
+- n8n Cloud con URL HTTPS fija; sin servidor propio ni túnel de Cloudflare.
+- Supabase como PostgreSQL administrado, con conexión SSL.
+- Workflow `[MYRA] 08 · Heartbeat` cada 3 días para evitar la pausa por inactividad
+  del plan gratuito de Supabase.
+- Respaldos periódicos de Supabase y exportación de workflows a git.
+- Sin servidor UCN, sin VPS, sin Nginx/Caddy y sin Docker Compose en producción.
+- Ver [`04-despliegue-cloud.md`](04-despliegue-cloud.md).
 
 ## 6. Riesgos técnicos y mitigación
 
 | Riesgo | Mitigación |
 |---|---|
-| Ruido en faena afecta el STT | Prompt tolerante + resumen de confirmación + reintento |
-| Gemini no acepta OGG/Opus de Telegram | Probar formato; si falla, convertir con ffmpeg o usar Whisper |
-| URL del quick tunnel cambia | Script `tunnel.ps1`; en prod, dominio fijo |
+| Ruido en faena afecta el STT | `no_speech_prob` + mensaje de reintento + confirmación |
+| El proveedor de STT no acepta OGG/Opus de Telegram | Groq Whisper para STT; Gemini solo para extracción |
+| URL del quick tunnel cambia | Solo afecta desarrollo; en producción n8n Cloud da URL fija |
 | Reinicio de n8n pierde contexto | Estado en PostgreSQL, no en memoria |
 | Proyecto mal asignado | Fuzzy match + confirmación obligatoria si la confianza es baja |
-| Volumen de n8n corrupto | Export de workflows a git + backup de credenciales y `pg_dump` |
+| Supabase free se pausa por inactividad | Workflow `[MYRA] 08 · Heartbeat` cada 3 días |
+| Límite de ejecuciones de n8n Cloud | Medir volumen mensual y elegir plan; los sub-workflows no consumen el límite |
+| Credenciales/IDs locales no sirven en Cloud | Recrear credenciales y remapear nodos al importar |
+| Pérdida de workflows o datos | Export de workflows a git + respaldos de Supabase |
