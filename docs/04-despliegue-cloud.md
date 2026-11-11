@@ -221,6 +221,8 @@ credenciales locales y storage de ejecuciones; en Cloud no aplica.
 - [ ] Cancelar: deja el registro cancelado.
 - [ ] Usuario no autorizado: no accede a la IA ni a la base.
 - [ ] Mensaje fuera de contexto: no crea gasto.
+- [ ] `/start`, `/proyectos`, `/resumen`, `/ultimos`, `/ayuda`: responden con datos.
+- [ ] `/cancelar`: cancela el registro pendiente.
 - [ ] Heartbeat: ejecución exitosa y sin pausa de Supabase.
 
 ## 7. Operación

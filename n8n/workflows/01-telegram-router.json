@@ -27,7 +27,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const update = $json;\nconst msg = update.message;\nconst cb = update.callback_query;\nconst from = (msg && msg.from) || (cb && cb.from) || {};\nconst chat = (msg && msg.chat) || (cb && cb.message && cb.message.chat) || {};\nconst texto = (msg && msg.text) || '';\nconst esComando = texto.startsWith('/');\n\nlet tipo = 'texto';\nif (cb) tipo = 'callback';\nelse if (msg && msg.voice) tipo = 'voz';\nelse if (msg && msg.photo) tipo = 'foto';\nelse if (esComando) tipo = 'comando';\n\nreturn [{\n  json: {\n    tipo,\n    telegram_chat_id: chat.id,\n    telegram_user_id: from.id,\n    telegram_message_id: (msg && msg.message_id) || (cb && cb.message && cb.message.message_id) || null,\n    texto,\n    comando: esComando ? texto.split(' ')[0].replace('/', '').toLowerCase() : null,\n    callback_data: (cb && cb.data) || null,\n    file_id: (msg && msg.voice && msg.voice.file_id) || null,\n    duracion_seg: (msg && msg.voice && msg.voice.duration) || null,\n    nombre_usuario: [from.first_name, from.last_name].filter(Boolean).join(' '),\n    update_id: update.update_id\n  }\n}];"
+        "jsCode": "const update = $json;\nconst msg = update.message;\nconst cb = update.callback_query;\nconst from = (msg && msg.from) || (cb && cb.from) || {};\nconst chat = (msg && msg.chat) || (cb && cb.message && cb.message.chat) || {};\nconst texto = (msg && msg.text) || '';\nconst esComando = texto.startsWith('/');\n\nlet tipo = 'texto';\nif (cb) tipo = 'callback';\nelse if (msg && msg.voice) tipo = 'voz';\nelse if (msg && msg.photo) tipo = 'foto';\nelse if (esComando) tipo = 'comando';\n\nreturn [{\n  json: {\n    tipo,\n    telegram_chat_id: chat.id,\n    telegram_user_id: from.id,\n    telegram_message_id: (msg && msg.message_id) || (cb && cb.message && cb.message.message_id) || null,\n    texto,\n    comando: esComando ? texto.split(/\\s+/)[0].replace('/', '').split('@')[0].toLowerCase() : null,\n    callback_data: (cb && cb.data) || null,\n    file_id: (msg && msg.voice && msg.voice.file_id) || null,\n    duracion_seg: (msg && msg.voice && msg.voice.duration) || null,\n    nombre_usuario: [from.first_name, from.last_name].filter(Boolean).join(' '),\n    update_id: update.update_id\n  }\n}];"
       },
       "id": "9ac51dc5-0164-43f6-8dda-53af37ca35cb",
       "name": "Normalizar update",
@@ -222,70 +222,6 @@
         2048,
         80
       ]
-    },
-    {
-      "parameters": {
-        "mode": "expression",
-        "numberOutputs": 2,
-        "output": "={{ $json.comando === 'cancelar' ? 0 : 1 }}"
-      },
-      "id": "447f7fbe-a1c8-4c0f-89ac-8139375fa4dc",
-      "name": "Comando",
-      "type": "n8n-nodes-base.switch",
-      "typeVersion": 3.4,
-      "position": [
-        1296,
-        560
-      ]
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE registros_entrada\nSET estado = 'cancelado', campo_pendiente = NULL\nWHERE usuario_id = $1\n  AND estado IN ('falta_dato', 'pendiente_confirmacion')\nRETURNING id;",
-        "options": {
-          "queryReplacement": "={{ [ $json.usuario.id ] }}"
-        }
-      },
-      "id": "4039d035-9d39-475e-8e4d-8c3afb2bd2c9",
-      "name": "Cancelar pendientes",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.7,
-      "position": [
-        1536,
-        544
-      ],
-      "executeOnce": true,
-      "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "cTGjz9LhGz7aqgbC",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Comando').first().json.telegram_chat_id }}",
-        "text": "Listo. Cancelé los registros pendientes.",
-        "additionalFields": {
-          "appendAttribution": false
-        }
-      },
-      "id": "4cd18012-b51b-4a97-8465-dd00774ff66e",
-      "name": "Responder cancelar",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        1760,
-        544
-      ],
-      "webhookId": "fb742fd2-ae12-4eda-bec4-88ffb39b4c38",
-      "credentials": {
-        "telegramApi": {
-          "id": "5417ZlcyBFHgxQ8J",
-          "name": "Telegram account"
-        }
-      }
     },
     {
       "parameters": {
@@ -495,6 +431,101 @@
           "name": "Telegram account"
         }
       }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "f05c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e7f",
+          "mode": "list",
+          "cachedResultName": "[MYRA] 05 · Comandos"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "comando": "={{ $json.comando }}",
+            "telegram_chat_id": "={{ $json.telegram_chat_id }}",
+            "usuario_id": "={{ $json.usuario.id }}",
+            "usuario_nombre": "={{ $json.usuario.nombre }}",
+            "usuario_rol": "={{ $json.usuario.rol }}",
+            "texto": "={{ $json.texto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "comando",
+              "displayName": "comando",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telegram_chat_id",
+              "displayName": "telegram_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "usuario_id",
+              "displayName": "usuario_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "usuario_nombre",
+              "displayName": "usuario_nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "usuario_rol",
+              "displayName": "usuario_rol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+      "name": "Enviar a comandos",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1296,
+        560
+      ]
     }
   ],
   "pinData": {},
@@ -572,7 +603,7 @@
         ],
         [
           {
-            "node": "Comando",
+            "node": "Enviar a comandos",
             "type": "main",
             "index": 0
           }
@@ -594,35 +625,6 @@
         [
           {
             "node": "Armar respuesta",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Comando": {
-      "main": [
-        [
-          {
-            "node": "Cancelar pendientes",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Armar respuesta",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Cancelar pendientes": {
-      "main": [
-        [
-          {
-            "node": "Responder cancelar",
             "type": "main",
             "index": 0
           }

@@ -378,7 +378,7 @@ está vacío. Usa `.\scripts\db-migrate.ps1`.
 - [x] WF-02 Voz → Texto
 - [x] WF-03 Extracción
 - [x] WF-04 Confirmación y persistencia
-- [ ] WF-05 Comandos
+- [x] WF-05 Comandos
 - [ ] WF-06 Reportes
 - [ ] WF-07 Errores
 - [ ] Despliegue en n8n Cloud + Supabase
