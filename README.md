@@ -88,14 +88,8 @@ esté corriendo (o lo levanta, pero no aplica migraciones).
 | `scripts\export-workflows.ps1` | Exportar workflows a JSON antes de commitear |
 | `scripts\backup.ps1` | Respaldo de PostgreSQL + workflows + credenciales |
 
-### Scripts Linux (legado)
-
-Los scripts de `scripts/linux/` corresponden al despliegue anterior en un servidor
-Linux. **Ya no se usan en producción.** Se conservan como referencia histórica y
-para pruebas locales en Linux si alguien las necesita.
-
-La producción actual no usa Docker, Nginx, Caddy, VPS ni servidor UCN. Ver
-[`docs/04-despliegue-cloud.md`](docs/04-despliegue-cloud.md).
+> La producción no usa Docker, Nginx, Caddy, VPS ni servidor UCN. Ver
+> [`docs/04-despliegue-cloud.md`](docs/04-despliegue-cloud.md).
 
 ### Probar el bot de Telegram
 
@@ -129,7 +123,6 @@ producción n8n Cloud entrega una URL HTTPS fija.
 ├─ docker-compose.yml          # postgres + n8n solo para desarrollo local
 ├─ .env                        # secretos locales (ignorado por git)
 ├─ .env.example                # plantilla de desarrollo local
-├─ .env.production.example     # legado: servidor Linux (no usar en Cloud)
 ├─ db/
 │  ├─ migrations/              # esquema y cambios, en orden (000, 001, ...)
 │  ├─ seeds/                   # datos de ejemplo para desarrollo
@@ -138,8 +131,7 @@ producción n8n Cloud entrega una URL HTTPS fija.
 │  ├─ data/                    # n8n local: SQLite, credenciales, storage (solo dev)
 │  └─ workflows/               # workflows exportados a JSON (versionados)
 ├─ scripts/
-│  ├─ *.ps1                    # Windows: desarrollo local
-│  └─ linux/                   # legado: servidor Linux, no usado en Cloud
+│  └─ *.ps1                    # Windows: desarrollo local
 ├─ docs/
 │  ├─ charter/                 # Project Charter e imagenes
 │  ├─ entrevistas/             # transcripciones (los audios no se versionan)

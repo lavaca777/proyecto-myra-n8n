@@ -249,7 +249,7 @@ Revisar mensualmente:
 - Docker Compose en producción.
 - Nginx/Caddy.
 - Cloudflare Tunnel o `trycloudflare.com`.
-- `scripts/linux/*` como mecanismo de despliegue.
+- Los scripts Linux del despliegue anterior (eliminados).
 - `n8n/data/` como fuente de producción.
 
 Estos elementos pueden seguir existiendo para desarrollo local o como referencia
