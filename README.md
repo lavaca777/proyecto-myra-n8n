@@ -222,6 +222,7 @@ Migraciones actuales:
 | `002_seed_catalogos.sql` | Medios de pago y categorías iniciales |
 | `003_fuzzy_proyectos.sql` | `pg_trgm` para buscar proyectos por similitud |
 | `004_admin_pending.sql` | Estado temporal para la administración de maestras |
+| `005_admin_modo.sql` | Modo administración para WF-07 |
 
 Consola SQL local:
 
