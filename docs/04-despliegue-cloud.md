@@ -222,6 +222,9 @@ credenciales locales y storage de ejecuciones; en Cloud no aplica.
 - [ ] Usuario no autorizado: no accede a la IA ni a la base.
 - [ ] Mensaje fuera de contexto: no crea gasto.
 - [ ] `/start`, `/proyectos`, `/resumen`, `/ultimos`, `/ayuda`: responden con datos.
+- [ ] `/help` y `/h`: muestran la ayuda.
+- [ ] Un saludo como “hola” abre el menú de `/start`.
+- [ ] Los botones inline ejecutan el comando y editan el mensaje.
 - [ ] `/cancelar`: cancela el registro pendiente.
 - [ ] Heartbeat: ejecución exitosa y sin pausa de Supabase.
 

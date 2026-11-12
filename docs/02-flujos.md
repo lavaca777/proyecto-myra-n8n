@@ -341,6 +341,12 @@ Después, si hay comprobante (foto), insertar en `comprobantes` con el `gasto_id
 | `/ultimos` | Últimos 5 gastos del usuario |
 | `/cancelar` | Cancela el registro pendiente |
 | `/ayuda` | Lista de comandos |
+| `/help`, `/h` | Alias de `/ayuda` |
+
+Los comandos se muestran también como botones inline (`cmd:proyectos`,
+`cmd:resumen`, `cmd:ultimos`, `cmd:cancelar`, `cmd:ayuda`, `cmd:start`). Al tocar
+un botón, WF-05 edita el mismo mensaje. Los saludos exactos como “hola” o “buenas”
+se enrutan a `/start`.
 
 ### SQL de `/resumen`
 
