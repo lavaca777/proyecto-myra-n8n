@@ -193,10 +193,11 @@ producción n8n Cloud entrega una URL HTTPS fija.
 | 04 | Confirmación | Máquina de estados, correcciones y persistencia del gasto |
 | 05 | Comandos | `/start`, `/proyectos`, `/resumen`, `/ultimos`, `/cancelar` |
 | 06 | Exportaciones | Descarga de gastos para administración (Excel/CSV, filtros por fecha y proyecto) |
-| 07 | Maestras | Alta de proyectos, clientes y alias; edición y desactivación |
+| 07 | Maestras | Orquestador de sesión, menú, callbacks y comandos de administración |
+| 07A | Interpretar operación | Prompt LLM, validación y borrador de la operación |
+| 07B | Ejecutar operación | Persistencia determinista de altas, ediciones y operaciones masivas |
 | 08 | Errores | Error Trigger + aviso al administrador |
 | 09 | Heartbeat | Consulta periódica a Supabase para evitar la pausa por inactividad |
-| 08 | Heartbeat | Consulta periódica a Supabase para evitar la pausa por inactividad |
 
 El detalle de nodos y transiciones está en [`docs/02-flujos.md`](docs/02-flujos.md).
 
@@ -386,8 +387,10 @@ está vacío. Usa `.\scripts\db-migrate.ps1`.
 - [x] WF-04 Confirmación y persistencia
 - [x] WF-05 Comandos
 - [x] WF-06 Exportaciones
-- [x] WF-07 Maestras (alta de proyectos)
-- [ ] WF-07 edición/desactivación de proyectos
+- [x] WF-07 Maestras (orquestador dividido en 07A y 07B)
+- [x] WF-07A Interpretar operación
+- [x] WF-07B Ejecutar operación
+- [x] WF-07 edición, desactivación/reactivación y operaciones masivas por cliente
 - [ ] WF-08 Errores
 - [ ] WF-09 Heartbeat
 - [ ] Despliegue en n8n Cloud + Supabase

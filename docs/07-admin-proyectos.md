@@ -265,11 +265,43 @@ No se modifican las tablas `gastos`, `registros_entrada`, `proyectos` ni
 - [ ] Los gastos históricos siguen visibles después de desactivar.
 - [ ] `salir` cierra el modo administración.
 
-## 10. Estado
+## 10. Refactor de WF-07
 
-Diseño aprobado. Pendiente de implementación:
+Para evitar que el flujo creciera sin control, se dividió en tres workflows:
 
-1. Reemplazar el WF-07 de pasos por el flujo con IA.
-2. Simplificar el uso de `admin_pending` al payload de la operación.
-3. Probar los casos de aceptación.
-4. Actualizar este documento con el resultado final.
+| Workflow | Responsabilidad |
+|---|---|
+| `[MYRA] 07 · Maestras` | Sesión, menú, callbacks, listado, cancelar y salir |
+| `[MYRA] 07A · Interpretar operación` | Prompt LLM, parseo, fuzzy matching, validación y borrador |
+| `[MYRA] 07B · Ejecutar operación` | Persistencia determinista y respuesta final |
+
+El estado sigue viviendo en `admin_pending`; los sub-workflows se comunican con
+`Execute Workflow` y no comparten memoria.
+
+## 11. Operaciones masivas
+
+Además de un proyecto individual, el administrador puede pedir:
+
+```text
+desactiva todos los proyectos del cliente Cliente Demo
+reactiva todos los proyectos del cliente Cliente Demo
+desactiva todos los proyectos
+```
+
+Reglas:
+
+- El cliente se resuelve por nombre exacto normalizado.
+- Solo se cambian proyectos que estén en el estado opuesto:
+  - desactivar → proyectos activos,
+  - reactivar → proyectos inactivos.
+- Se muestra un resumen con la cantidad y la lista antes de confirmar.
+- Si el cliente no existe o hay ambigüedad, se pregunta el nombre exacto.
+- La escritura se ejecuta solo al confirmar.
+
+## 12. Estado
+
+Implementado en local y validado con pruebas de los nodos y del SQL. Pendiente:
+
+1. Probar los casos de aceptación completos con datos reales de Supabase.
+2. Validar la publicación de los tres workflows en n8n Cloud.
+3. Agregar pruebas automatizadas para 07A y 07B.
