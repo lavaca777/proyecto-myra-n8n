@@ -1,1 +1,1564 @@
-{"updatedAt":"2026-11-12T01:54:15.000Z","createdAt":"2026-11-12T01:53:36.810Z","id":"a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70","name":"[MYRA] 07 · Maestras","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"a07c0a2e-0000-4000-8000-000000000001","name":"Cuando se ejecuta","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.2,"position":[0,0]},{"parameters":{"mode":"expression","numberOutputs":2,"output":"={{ ['administrador','gerencia'].includes(String($json.usuario_rol || '').toLowerCase()) ? 0 : 1 }}"},"id":"a07c0a2e-0000-4000-8000-000000000002","name":"Permiso","type":"n8n-nodes-base.switch","typeVersion":3.4,"position":[224,0]},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $json.telegram_chat_id }}","text":"🔒 <b>Acceso restringido</b>\n\nSolo administración y gerencia pueden administrar proyectos.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000003","name":"Responder sin permiso","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[448,160],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"SELECT id, usuario_id, accion, paso, entidad_id, payload FROM admin_pending WHERE usuario_id = $1 LIMIT 1;","options":{"queryReplacement":"={{ [ $json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000004","name":"Buscar pendiente","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[448,0],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"mode":"expression","numberOutputs":3,"output":"={{ String($('Cuando se ejecuta').first().json.callback_data || '').startsWith('adm:') ? 0 : ($('Buscar pendiente').first().json.id && $('Cuando se ejecuta').first().json.texto ? 1 : 2) }}"},"id":"a07c0a2e-0000-4000-8000-000000000005","name":"Ruta","type":"n8n-nodes-base.switch","typeVersion":3.4,"position":[672,0]},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"⚙️ <b>Maestras</b>\n\n¿Qué quieres administrar?","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"➕ Nuevo proyecto","additionalFields":{"callback_data":"adm:new"}}]}},{"row":{"buttons":[{"text":"🏠 Menú","additionalFields":{"callback_data":"cmd:start"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000006","name":"Menu maestras","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[896,240],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"jsCode":"const base = $('Cuando se ejecuta').first().json;\nconst cb = String(base.callback_data || '');\nlet accion = 'menu';\nif (cb === 'adm:new') accion = 'new';\nelse if (cb === 'adm:cancel') accion = 'cancel';\nelse if (cb === 'adm:save') accion = 'save';\nelse if (cb === 'adm:fix') accion = 'fix_menu';\nelse if (cb === 'adm:fix:nombre') accion = 'fix_nombre';\nelse if (cb === 'adm:fix:cliente') accion = 'fix_cliente';\nelse if (cb === 'adm:fix:alias') accion = 'fix_alias';\nelse if (cb === 'adm:fix:back') accion = 'fix_back';\nreturn [{ json: { ...base, accion } }];"},"id":"a07c0a2e-0000-4000-8000-000000000007","name":"Preparar callback","type":"n8n-nodes-base.code","typeVersion":2,"position":[896,-160]},{"parameters":{"mode":"expression","numberOutputs":8,"output":"={{ $json.accion === 'new' ? 0 : $json.accion === 'cancel' ? 1 : $json.accion === 'save' ? 2 : $json.accion === 'fix_menu' ? 3 : $json.accion === 'fix_nombre' ? 4 : $json.accion === 'fix_cliente' ? 5 : $json.accion === 'fix_alias' ? 6 : 7 }}"},"id":"a07c0a2e-0000-4000-8000-000000000008","name":"Accion callback","type":"n8n-nodes-base.switch","typeVersion":3.4,"position":[1120,-160]},{"parameters":{"operation":"executeQuery","query":"INSERT INTO admin_pending (usuario_id, accion, paso, payload) VALUES ($1, 'crear', 'nombre', '{}'::jsonb) ON CONFLICT (usuario_id) DO UPDATE SET accion='crear', paso='nombre', payload='{}'::jsonb, entidad_id=NULL, actualizado_en=now();","options":{"queryReplacement":"={{ [ $json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000009","name":"Nuevo pendiente","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1344,-320],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"🏗️ <b>Nuevo proyecto</b>\n\nEnvíame el nombre del proyecto.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-00000000000a","name":"Pedir nombre","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1568,-320],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"DELETE FROM admin_pending WHERE usuario_id = $1;","options":{"queryReplacement":"={{ [ $json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-00000000000b","name":"Borrar cancelacion","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1344,-200],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"Operación cancelada.","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"⚙️ Maestras","additionalFields":{"callback_data":"cmd:start"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-00000000000c","name":"Cancelar mensaje","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1568,-200],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"✏️ <b>Corregir proyecto</b>\n\n¿Qué dato quieres cambiar?","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"Nombre","additionalFields":{"callback_data":"adm:fix:nombre"}},{"text":"Cliente","additionalFields":{"callback_data":"adm:fix:cliente"}}]}},{"row":{"buttons":[{"text":"Alias","additionalFields":{"callback_data":"adm:fix:alias"}}]}},{"row":{"buttons":[{"text":"⬅️ Volver","additionalFields":{"callback_data":"adm:fix:back"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-00000000000d","name":"Menu correccion","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1344,-80],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET paso='fix_nombre', actualizado_en=now() WHERE usuario_id=$1;","options":{"queryReplacement":"={{ [ $json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-00000000000e","name":"Paso fix nombre","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1344,40],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"Envía el nuevo nombre del proyecto.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-00000000000f","name":"Pedir nombre fix","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1568,40],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET paso='fix_cliente', actualizado_en=now() WHERE usuario_id=$1;","options":{"queryReplacement":"={{ [ $json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000010","name":"Paso fix cliente","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1344,160],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"Envía el nombre del cliente. Si ya existe uno equivalente, se reutilizará.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000011","name":"Pedir cliente fix","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1568,160],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET paso='fix_alias', actualizado_en=now() WHERE usuario_id=$1;","options":{"queryReplacement":"={{ [ $json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000012","name":"Paso fix alias","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1344,280],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"Envía los alias separados por coma, o 'ninguno'.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000013","name":"Pedir alias fix","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1568,280],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"mode":"expression","numberOutputs":8,"output":"={{ $('Buscar pendiente').first().json.paso === 'nombre' ? 0 : $('Buscar pendiente').first().json.paso === 'cliente' ? 1 : $('Buscar pendiente').first().json.paso === 'alias' ? 2 : $('Buscar pendiente').first().json.paso === 'fix_nombre' ? 3 : $('Buscar pendiente').first().json.paso === 'fix_cliente' ? 4 : $('Buscar pendiente').first().json.paso === 'fix_alias' ? 5 : 6 }}"},"id":"a07c0a2e-0000-4000-8000-000000000014","name":"Paso texto","type":"n8n-nodes-base.switch","typeVersion":3.4,"position":[896,0]},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET payload = payload || jsonb_build_object('nombre', $2), paso='cliente', actualizado_en=now() WHERE usuario_id=$1 RETURNING id;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id, $('Cuando se ejecuta').first().json.texto ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000015","name":"Guardar nombre","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1120,0],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"👤 <b>Cliente</b>\n\nEscribe el nombre del cliente. Si ya existe uno equivalente, se reutilizará.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000016","name":"Pedir cliente","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1344,0],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET payload = payload || jsonb_build_object('cliente_nombre', $2), paso='alias', actualizado_en=now() WHERE usuario_id=$1 RETURNING id;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id, $('Cuando se ejecuta').first().json.texto ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000017","name":"Guardar cliente","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1120,120],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"🏷️ <b>Alias</b>\n\nEnvía los alias separados por coma, o 'ninguno'.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000018","name":"Pedir alias","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1344,120],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"jsCode":"const base = $('Cuando se ejecuta').first().json;\nconst raw = String(base.texto || '').trim();\nconst aliases = (raw === '' || raw.toLowerCase() === 'ninguno')\n  ? []\n  : raw.split(',').map(a => a.trim()).filter(Boolean);\nreturn [{ json: { ...base, aliases } }];"},"id":"a07c0a2e-0000-4000-8000-000000000019","name":"Preparar alias","type":"n8n-nodes-base.code","typeVersion":2,"position":[1120,240]},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET payload = payload || jsonb_build_object('alias', $2::jsonb), paso='confirmar', actualizado_en=now() WHERE usuario_id=$1 RETURNING id;","options":{"queryReplacement":"={{ [ $json.usuario_id, JSON.stringify($json.aliases) ] }}"}},"id":"a07c0a2e-0000-4000-8000-00000000001a","name":"Guardar alias","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1344,240],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET payload = payload || jsonb_build_object('nombre', $2), paso='confirmar', actualizado_en=now() WHERE usuario_id=$1 RETURNING id;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id, $('Cuando se ejecuta').first().json.texto ] }}"}},"id":"a07c0a2e-0000-4000-8000-00000000001b","name":"Guardar fix nombre","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1120,360],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"operation":"executeQuery","query":"UPDATE admin_pending SET payload = payload || jsonb_build_object('cliente_nombre', $2), paso='confirmar', actualizado_en=now() WHERE usuario_id=$1 RETURNING id;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id, $('Cuando se ejecuta').first().json.texto ] }}"}},"id":"a07c0a2e-0000-4000-8000-00000000001c","name":"Guardar fix cliente","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1120,480],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"operation":"executeQuery","query":"SELECT payload FROM admin_pending WHERE usuario_id = $1 LIMIT 1;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-00000000001d","name":"Leer pendiente","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1568,360],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"jsCode":"const p = $input.first().json.payload || {};\nconst base = $('Cuando se ejecuta').first().json;\nconst esc = (s) => String(s ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;');\nconst nombre = esc(p.nombre || '(sin nombre)');\nconst cliente = esc(p.cliente_nombre || '(sin cliente)');\nconst alias = Array.isArray(p.alias) ? p.alias : [];\nconst texto = `🏗️ <b>Nuevo proyecto</b>\\n\\n<b>Nombre:</b> ${nombre}\\n<b>Cliente:</b> ${cliente}\\n<b>Alias:</b> ${alias.length ? alias.map(esc).join(', ') : '(ninguno)'}\\n\\n¿Confirmas la creación?`;\nreturn [{ json: { respuesta: texto, telegram_chat_id: base.telegram_chat_id } }];"},"id":"a07c0a2e-0000-4000-8000-00000000001e","name":"Armar resumen","type":"n8n-nodes-base.code","typeVersion":2,"position":[1792,360]},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $json.telegram_chat_id }}","text":"={{ $json.respuesta }}","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"✅ Confirmar","additionalFields":{"callback_data":"adm:save"}},{"text":"✏️ Corregir","additionalFields":{"callback_data":"adm:fix"}}]}},{"row":{"buttons":[{"text":"❌ Cancelar","additionalFields":{"callback_data":"adm:cancel"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-00000000001f","name":"Enviar resumen","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[2016,360],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"WITH nuevo_cliente AS (\n  INSERT INTO clientes (nombre)\n  SELECT $1::text\n  WHERE $1::text IS NOT NULL\n    AND NOT EXISTS (\n      SELECT 1 FROM clientes\n      WHERE unaccent(lower(nombre)) = unaccent(lower($1::text))\n    )\n  ON CONFLICT (nombre) DO NOTHING\n  RETURNING id\n),\ncliente AS (\n  SELECT COALESCE(\n    (SELECT id FROM nuevo_cliente),\n    (SELECT id FROM clientes WHERE unaccent(lower(nombre)) = unaccent(lower($1::text)) LIMIT 1)\n  ) AS id\n),\nproyecto AS (\n  INSERT INTO proyectos (cliente_id, nombre)\n  SELECT cliente.id, $2::text\n  FROM cliente\n  WHERE cliente.id IS NOT NULL\n  ON CONFLICT (nombre) DO NOTHING\n  RETURNING id\n),\naliases AS (\n  INSERT INTO proyecto_alias (proyecto_id, alias)\n  SELECT proyecto.id, a.alias\n  FROM proyecto, jsonb_array_elements_text($3::jsonb) AS a(alias)\n  ON CONFLICT DO NOTHING\n  RETURNING id\n)\nSELECT proyecto.id FROM proyecto;","options":{"queryReplacement":"={{ [ $('Buscar pendiente').first().json.payload.cliente_nombre || null, $('Buscar pendiente').first().json.payload.nombre || null, JSON.stringify($('Buscar pendiente').first().json.payload.alias || []) ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000020","name":"Guardar proyecto","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1344,480],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true},{"parameters":{"mode":"expression","numberOutputs":2,"output":"={{ $json.id ? 0 : 1 }}"},"id":"a07c0a2e-0000-4000-8000-000000000021","name":"¿Guardado?","type":"n8n-nodes-base.switch","typeVersion":3.4,"position":[1568,480]},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"✅ <b>Proyecto creado correctamente.</b>","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000022","name":"Proyecto creado","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1792,400],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"⚠️ No se pudo crear el proyecto.\n\nPuede que el nombre ya exista. Usa Corregir para cambiar el nombre o cancela.","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"✏️ Corregir","additionalFields":{"callback_data":"adm:fix"}},{"text":"❌ Cancelar","additionalFields":{"callback_data":"adm:cancel"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"a07c0a2e-0000-4000-8000-000000000023","name":"Error al crear","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1792,560],"webhookId":"a07c0a2e-0000-4000-8000-0000000000f0","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"DELETE FROM admin_pending WHERE usuario_id = $1;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"}},"id":"a07c0a2e-0000-4000-8000-000000000024","name":"Borrar exito","type":"n8n-nodes-base.postgres","typeVersion":2.7,"executeOnce":true,"position":[1792,480],"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}},"alwaysOutputData":true}],"connections":{"Cuando se ejecuta":{"main":[[{"node":"Permiso","type":"main","index":0}]]},"Permiso":{"main":[[{"node":"Buscar pendiente","type":"main","index":0}],[{"node":"Responder sin permiso","type":"main","index":0}]]},"Buscar pendiente":{"main":[[{"node":"Ruta","type":"main","index":0}]]},"Ruta":{"main":[[{"node":"Preparar callback","type":"main","index":0}],[{"node":"Paso texto","type":"main","index":0}],[{"node":"Menu maestras","type":"main","index":0}]]},"Preparar callback":{"main":[[{"node":"Accion callback","type":"main","index":0}]]},"Accion callback":{"main":[[{"node":"Nuevo pendiente","type":"main","index":0}],[{"node":"Borrar cancelacion","type":"main","index":0}],[{"node":"Guardar proyecto","type":"main","index":0}],[{"node":"Menu correccion","type":"main","index":0}],[{"node":"Paso fix nombre","type":"main","index":0}],[{"node":"Paso fix cliente","type":"main","index":0}],[{"node":"Paso fix alias","type":"main","index":0}],[{"node":"Leer pendiente","type":"main","index":0}]]},"Nuevo pendiente":{"main":[[{"node":"Pedir nombre","type":"main","index":0}]]},"Borrar cancelacion":{"main":[[{"node":"Cancelar mensaje","type":"main","index":0}]]},"Paso fix nombre":{"main":[[{"node":"Pedir nombre fix","type":"main","index":0}]]},"Paso fix cliente":{"main":[[{"node":"Pedir cliente fix","type":"main","index":0}]]},"Paso fix alias":{"main":[[{"node":"Pedir alias fix","type":"main","index":0}]]},"Paso texto":{"main":[[{"node":"Guardar nombre","type":"main","index":0}],[{"node":"Guardar cliente","type":"main","index":0}],[{"node":"Preparar alias","type":"main","index":0}],[{"node":"Guardar fix nombre","type":"main","index":0}],[{"node":"Guardar fix cliente","type":"main","index":0}],[{"node":"Preparar alias","type":"main","index":0}],[{"node":"Leer pendiente","type":"main","index":0}],[{"node":"Menu maestras","type":"main","index":0}]]},"Guardar nombre":{"main":[[{"node":"Pedir cliente","type":"main","index":0}]]},"Guardar cliente":{"main":[[{"node":"Pedir alias","type":"main","index":0}]]},"Preparar alias":{"main":[[{"node":"Guardar alias","type":"main","index":0}]]},"Guardar alias":{"main":[[{"node":"Leer pendiente","type":"main","index":0}]]},"Guardar fix nombre":{"main":[[{"node":"Leer pendiente","type":"main","index":0}]]},"Guardar fix cliente":{"main":[[{"node":"Leer pendiente","type":"main","index":0}]]},"Leer pendiente":{"main":[[{"node":"Armar resumen","type":"main","index":0}]]},"Armar resumen":{"main":[[{"node":"Enviar resumen","type":"main","index":0}]]},"Guardar proyecto":{"main":[[{"node":"¿Guardado?","type":"main","index":0}]]},"¿Guardado?":{"main":[[{"node":"Borrar exito","type":"main","index":0}],[{"node":"Error al crear","type":"main","index":0}]]},"Borrar exito":{"main":[[{"node":"Proyecto creado","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":{},"nodeGroups":[],"pinData":{},"versionId":"7160bf98-49ad-4d6b-af90-35fe0cb39a82","activeVersionId":"7160bf98-49ad-4d6b-af90-35fe0cb39a82","versionCounter":1,"triggerCount":0,"sourceWorkflowId":null,"tags":[],"shared":[{"updatedAt":"2026-11-12T01:53:36.819Z","createdAt":"2026-11-12T01:53:36.819Z","role":"workflow:owner","workflowId":"a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70","projectId":"ZlvxrIvP3V3KROE9","project":{"updatedAt":"2026-09-22T23:22:18.851Z","createdAt":"2026-09-22T23:11:48.748Z","id":"ZlvxrIvP3V3KROE9","name":"CARLOS ANDRES TAPIA PAREDES <tapiacarlostapiaxd@hotmail.com>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"f30d85d5-80e7-4017-9021-2cf07e99747a"}}],"versionMetadata":{"name":null,"description":null}}
+{
+  "updatedAt": "2026-11-12T01:54:15.000Z",
+  "createdAt": "2026-11-12T01:53:36.810Z",
+  "id": "a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70",
+  "name": "[MYRA] 07 · Maestras",
+  "description": null,
+  "active": true,
+  "isArchived": false,
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "f1ea3070-b10e-5e73-83cb-36f461593d92",
+      "name": "Cuando se ejecuta",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ ['administrador','gerencia'].includes(String($json.usuario_rol || '').toLowerCase()) ? 0 : 1 }}"
+      },
+      "id": "1c78d0e9-001f-5319-8a8b-af0f5cc1a7db",
+      "name": "Permiso",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "🔒 <b>Acceso restringido</b>\n\nSolo administración y gerencia pueden administrar proyectos.",
+        "replyMarkup": "none",
+        "inlineKeyboard": null,
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "6a7b69f7-1c96-5db4-8741-dacf8a8c426c",
+      "name": "Responder sin permiso",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        160
+      ],
+      "webhookId": "d4da012d-9ed5-5b0d-bf02-69487f93458c",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  COALESCE((\n    SELECT json_agg(x ORDER BY x.nombre)\n    FROM (\n      SELECT p.id,\n             p.nombre,\n             p.activo,\n             p.cliente_id,\n             c.nombre AS cliente,\n             COALESCE(\n               json_agg(pa.alias ORDER BY pa.alias) FILTER (WHERE pa.alias IS NOT NULL),\n               '[]'::json\n             ) AS alias\n      FROM proyectos p\n      JOIN clientes c ON c.id = p.cliente_id\n      LEFT JOIN proyecto_alias pa ON pa.proyecto_id = p.id\n      GROUP BY p.id, p.nombre, p.activo, p.cliente_id, c.nombre\n    ) x\n  ), '[]'::json) AS proyectos,\n  COALESCE((\n    SELECT json_agg(json_build_object('id', c.id, 'nombre', c.nombre) ORDER BY c.nombre)\n    FROM clientes c\n    WHERE c.activo\n  ), '[]'::json) AS clientes,\n  (SELECT to_json(a) FROM admin_pending a WHERE a.usuario_id = $1 LIMIT 1) AS pendiente;",
+        "options": {
+          "queryReplacement": "={{ [ $json.usuario_id ] }}"
+        }
+      },
+      "id": "f1d0c182-3396-579d-b0b0-31e83e234804",
+      "name": "Cargar contexto",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        0
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Cuando se ejecuta').first().json;\nconst ctx = $input.first().json || {};\nconst pendiente = ctx.pendiente || null;\nlet payload = {};\nif (pendiente && pendiente.payload) {\n  payload = typeof pendiente.payload === 'string' ? JSON.parse(pendiente.payload) : pendiente.payload;\n}\nif (pendiente && pendiente.paso) payload.paso = pendiente.paso;\nconst catalogo = {\n  proyectos: Array.isArray(ctx.proyectos) ? ctx.proyectos : [],\n  clientes: Array.isArray(ctx.clientes) ? ctx.clientes : []\n};\nconst cb = String(base.callback_data || '');\nconst texto = String(base.texto || '').trim();\nconst norm = String(texto).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\nconst modoActivo = !!(pendiente && pendiente.accion === 'modo');\nconst paso = String(payload.paso || '');\nlet accion = 'menu';\nif (cb === 'cmd:maestras' || /^\\/maestras\\b/i.test(texto)) accion = 'abrir';\nelse if (cb === 'adm:exit') accion = 'salir';\nelse if (cb === 'adm:list') accion = 'listar';\nelse if (cb === 'adm:menu') accion = 'menu';\nelse if (cb === 'adm:save') accion = 'guardar';\nelse if (cb === 'adm:fix') accion = 'corregir';\nelse if (cb === 'adm:cancel') accion = 'cancelar';\nelse if (cb === 'adm:cliente:usar') accion = 'cliente_usar';\nelse if (cb === 'adm:cliente:nuevo') accion = 'cliente_nuevo';\nelse if (modoActivo && texto) {\n  if (/^(salir|terminar|cerrar|chao|adios|adiós)$/i.test(norm)) accion = 'salir';\n  else if (/^(cancelar|anular)$/i.test(norm)) accion = 'cancelar';\n  else if (/^(listar|lista|proyectos|ver proyectos|muestra(me)?( los)? proyectos|que proyectos)\\b/i.test(norm)) accion = 'listar';\n  else if (/^(ayuda|help|\\?)$/i.test(norm)) accion = 'menu';\n  else if (['falta_nombre','falta_cliente','falta_proyecto','cliente_ambiguo'].includes(paso)) accion = 'completar';\n  else accion = 'interpretar';\n} else if (modoActivo) accion = 'menu';\nelse accion = 'menu_sin_modo';\nreturn [{ json: { ...base, contexto: ctx, catalogo, pendiente, payload, texto, callback_data: cb, accion, paso } }];"
+      },
+      "id": "cc98d86f-091b-5102-b39b-bd851c2bb31c",
+      "name": "Preparar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 12,
+        "output": "={{ (function(){ const a = String($('Preparar entrada').first().json.accion || 'menu'); const orden = ['abrir','interpretar','completar','guardar','corregir','cancelar','salir','listar','menu','cliente_usar','cliente_nuevo','menu_sin_modo']; const i = orden.indexOf(a); return i >= 0 ? i : 8; })() }}"
+      },
+      "id": "dedbadde-6e9f-571f-b3cb-35524a1218d5",
+      "name": "Ruta admin",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'esperando', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = 'esperando', entidad_id = NULL, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "e9c1be64-31d8-50ba-a5e9-432af503e16b",
+      "name": "Crear modo",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1120,
+        -320
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "⚙️ <b>Modo administración</b>\n\nEscríbeme lo que quieres hacer en lenguaje natural. Ejemplos:\n\n• <i>agrega el proyecto Los Robles para el cliente Constructora Andes</i>\n• <i>cambia el nombre de Peñuelas a Obra Peñuelas Norte</i>\n• <i>desactiva la obra La Rinconada</i>\n• <i>reactiva Los Aromos</i>\n• <i>agrega el alias \"el robles\" al proyecto Los Robles</i>\n• <i>lista los proyectos</i>\n• <i>salir</i>",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📋 Listar",
+                    "additionalFields": {
+                      "callback_data": "adm:list"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "b40d2c60-157b-5bf8-b977-9985aa2b2ac1",
+      "name": "Menu admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        -320
+      ],
+      "webhookId": "28a69b82-b048-56f8-9a03-dbc6ae8fc0a6",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst catalogo = base.catalogo || { proyectos: [], clientes: [] };\nconst proyectos = (catalogo.proyectos || []).map(p => `- ${p.nombre} | cliente: ${p.cliente} | estado: ${p.activo ? 'activo' : 'inactivo'} | alias: ${(p.alias || []).join(', ') || '(ninguno)'}`).join('\\n');\nconst clientes = (catalogo.clientes || []).map(c => `- ${c.nombre}`).join('\\n');\nconst paso = String((base.payload || {}).paso || '');\nconst conBorrador = ['confirmar','corregir','falta_dato','falta_nombre','falta_cliente','falta_proyecto','cliente_ambiguo'].includes(paso);\nconst borrador = conBorrador\n  ? `\\nBORRADOR ACTUAL:\\n${JSON.stringify(base.payload, null, 2)}\\nSi el mensaje corrige o completa el borrador, devuelve solo los campos que cambian; deja los demás en null o [] según corresponda.\\n`\n  : '';\nconst prompt = `Eres el módulo de administración de proyectos de Constructora MYRA.\nRecibes un mensaje de un administrador o gerente. Tu única tarea es interpretar la intención y extraer los datos. No inventes datos.\n\nACCIONES VÁLIDAS\n- \"crear\": agregar un proyecto nuevo.\n- \"editar\": cambiar el nombre y/o agregar alias a un proyecto existente.\n- \"desactivar\": marcar un proyecto como inactivo.\n- \"reactivar\": volver a activar un proyecto.\n- \"listar\": mostrar los proyectos.\n- \"salir\": cerrar el modo administración.\n- \"otro\": cualquier mensaje que no corresponda a lo anterior.\n\nREGLAS\n1. No inventes datos. Usa null cuando el dato no aparezca.\n2. \"proyecto\": nombre del proyecto mencionado. Para crear, es el nombre nuevo.\n3. \"proyecto_actual\": proyecto que se quiere modificar cuando se cambia el nombre o se agrega un alias.\n4. \"nuevo_nombre\": nombre nuevo en una edición de nombre.\n5. \"cliente\": solo para crear un proyecto.\n6. \"alias\": arreglo de alias mencionados. Para \"agrega el alias X\", devuelve [\"X\"].\n7. Si el mensaje corrige o completa un BORRADOR ACTUAL, devuelve solo los campos que cambian.\n8. La confianza es un número entre 0 y 1 por acción, proyecto y cliente.\n9. No escribas explicaciones ni markdown. Devuelve solo JSON.\n\nEJEMPLOS\n- \"agrega el proyecto Los Robles para el cliente Constructora Andes\" -> {\"accion\":\"crear\",\"proyecto\":\"Los Robles\",\"cliente\":\"Constructora Andes\",\"alias\":[]}\n- \"cambia el nombre de Peñuelas a Obra Peñuelas Norte\" -> {\"accion\":\"editar\",\"proyecto_actual\":\"Peñuelas\",\"nuevo_nombre\":\"Obra Peñuelas Norte\",\"alias\":[]}\n- \"agrega el alias el robles al proyecto Los Robles\" -> {\"accion\":\"editar\",\"proyecto_actual\":\"Los Robles\",\"alias\":[\"el robles\"]}\n- \"desactiva la obra La Rinconada\" -> {\"accion\":\"desactivar\",\"proyecto_actual\":\"La Rinconada\",\"alias\":[]}\n- \"reactiva Los Aromos\" -> {\"accion\":\"reactivar\",\"proyecto_actual\":\"Los Aromos\",\"alias\":[]}\n- \"lista los proyectos\" -> {\"accion\":\"listar\",\"alias\":[]}\n- \"salir\" -> {\"accion\":\"salir\",\"alias\":[]}\n\nFORMATO EXACTO DE SALIDA\n{\n  \"accion\": \"crear | editar | desactivar | reactivar | listar | salir | otro\",\n  \"proyecto\": \"texto o null\",\n  \"proyecto_actual\": \"texto o null\",\n  \"nuevo_nombre\": \"texto o null\",\n  \"cliente\": \"texto o null\",\n  \"alias\": [],\n  \"confianza\": {\"accion\": 0.0, \"proyecto\": 0.0, \"cliente\": 0.0}\n}\n${borrador}\nPROYECTOS (nombre | cliente | estado | alias):\n${proyectos || '- (sin proyectos)'}\n\nCLIENTES:\n${clientes || '- (sin clientes)'}\n\nTEXTO DEL USUARIO:\n<<<\n${base.texto}\n>>>\n\nDevuelve solo el JSON.`;\nreturn [{ json: { ...base, prompt } }];"
+      },
+      "id": "1de76a95-5688-55ea-882b-230f231e1a9d",
+      "name": "Preparar prompt admin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "batching": {}
+      },
+      "id": "9df38edf-4848-5fe0-b02e-6e95f1d096a3",
+      "name": "Extraer admin con Gemini",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1344,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {
+          "maxOutputTokens": 2048,
+          "temperature": 0
+        }
+      },
+      "id": "42ffb0e3-dadb-5b0c-83f1-18fbf0439275",
+      "name": "Gemini administracion",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        1416,
+        80
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pPXUaQysenaOvzy1",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst raw = $input.first().json;\nconst parsePosible = (value) => {\n  if (typeof value !== 'string') return value;\n  const limpio = value.replace(/```json/gi, '').replace(/```/g, '').trim();\n  try { return JSON.parse(limpio); } catch (error) { return {}; }\n};\nlet parsed = raw && raw.output ? raw.output : raw;\nif (parsed && typeof parsed.text === 'string') parsed = parsed.text;\nparsed = parsePosible(parsed);\nif (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) parsed = {};\n\nconst prev = base.payload || {};\nconst paso = String(prev.paso || '');\nconst continuar = ['confirmar','corregir','falta_dato','falta_nombre','falta_cliente','falta_proyecto','cliente_ambiguo'].includes(paso);\nconst op = continuar ? { ...prev } : { alias: [] };\nconst setStr = (key, val) => {\n  if (val === undefined || val === null) return;\n  const s = String(val).trim();\n  if (s) op[key] = s;\n};\nconst acciones = ['crear','editar','desactivar','reactivar','listar','salir','otro'];\nif (parsed.accion && acciones.includes(String(parsed.accion).toLowerCase())) op.accion = String(parsed.accion).toLowerCase();\nelse if (!continuar) op.accion = 'otro';\nsetStr('proyecto', parsed.proyecto);\nsetStr('proyecto_actual', parsed.proyecto_actual);\nsetStr('nuevo_nombre', parsed.nuevo_nombre);\nsetStr('cliente', parsed.cliente);\nif (op.accion === 'crear' && parsed.nuevo_nombre && !parsed.proyecto) setStr('proyecto', parsed.nuevo_nombre);\nif (Array.isArray(parsed.alias)) {\n  const nuevos = parsed.alias.map(a => String(a || '').trim()).filter(Boolean);\n  if (nuevos.length) op.alias = [...new Set([...(Array.isArray(op.alias) ? op.alias : []), ...nuevos])];\n  else if (!continuar) op.alias = [];\n}\nif (continuar && op.accion !== prev.accion) {\n  delete op.cliente_confirmado;\n  delete op.cliente_id;\n  delete op.cliente_nombre;\n  delete op.proyecto_id;\n  delete op.nuevo_nombre;\n  if (op.accion !== 'crear') delete op.cliente;\n}\nif (!op.accion) op.accion = 'otro';\nreturn [{ json: { ...base, operacion: op, original: base, esCorreccion: paso === 'corregir' } }];"
+      },
+      "id": "7ce5a200-ef7b-5fb6-9b59-3a9797a73f9e",
+      "name": "Armar operacion admin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1568,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 4,
+        "output": "={{ (function(){ const a = String($('Armar operacion admin').first().json.operacion.accion || 'otro'); return a === 'listar' ? 0 : a === 'salir' ? 1 : a === 'otro' ? 2 : 3; })() }}"
+      },
+      "id": "1971e0dc-d369-525a-87a7-a329d8e531a2",
+      "name": "Accion directa",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1792,
+        -160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst proyectos = (base.catalogo && base.catalogo.proyectos) ? base.catalogo.proyectos : [];\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst lineas = proyectos.map(p => {\n  const estado = p.activo ? '✅' : '⛔';\n  const alias = (p.alias || []).length ? `\\n   <i>Alias: ${p.alias.map(esc).join(', ')}</i>` : '';\n  return `${estado} <b>${esc(p.nombre)}</b> — ${esc(p.cliente)}${alias}`;\n});\nconst respuesta = `📁 <b>Proyectos (${proyectos.length})</b>\\n\\n${lineas.length ? lineas.join('\\n') : '• (no hay proyectos)'}`;\nreturn [{ json: { respuesta, telegram_chat_id: base.telegram_chat_id } }];"
+      },
+      "id": "bebb2686-e894-5c39-8cd9-ac7ad0e1bc20",
+      "name": "Armar lista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2016,
+        -320
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.respuesta }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⬅️ Volver",
+                    "additionalFields": {
+                      "callback_data": "adm:menu"
+                    }
+                  },
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "6f507520-632f-516f-ab16-4d0a181be8fd",
+      "name": "Responder lista",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2240,
+        -320
+      ],
+      "webhookId": "0683ce77-b5a9-5bfa-8e7b-c9193a3c3e6a",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "🤔 No entendí la operación.\n\nEscríbeme algo como:\n• <i>agrega el proyecto Los Robles para el cliente Constructora Andes</i>\n• <i>desactiva la obra La Rinconada</i>\n• <i>lista los proyectos</i>",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📋 Listar",
+                    "additionalFields": {
+                      "callback_data": "adm:list"
+                    }
+                  },
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "c35180cb-5567-519d-bb2e-35438b0eac98",
+      "name": "Mensaje no entendido",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2016,
+        -160
+      ],
+      "webhookId": "f2fea439-55c4-54a4-8dce-6288ca44763f",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH proy AS (\n  SELECT p.id, p.nombre, p.activo, c.nombre AS cliente,\n         GREATEST(\n           similarity(unaccent(lower(p.nombre)), unaccent(lower($1::text))),\n           COALESCE(MAX(similarity(unaccent(lower(pa.alias)), unaccent(lower($1::text)))), 0)\n         ) AS score\n  FROM proyectos p\n  JOIN clientes c ON c.id = p.cliente_id\n  LEFT JOIN proyecto_alias pa ON pa.proyecto_id = p.id\n  WHERE $1::text IS NOT NULL AND $1::text <> ''\n  GROUP BY p.id, p.nombre, p.activo, c.nombre\n),\ncli AS (\n  SELECT c.id, c.nombre,\n         similarity(unaccent(lower(c.nombre)), unaccent(lower($2::text))) AS score\n  FROM clientes c\n  WHERE $2::text IS NOT NULL AND $2::text <> ''\n)\nSELECT\n  COALESCE((\n    SELECT json_agg(json_build_object('id', id, 'nombre', nombre, 'activo', activo, 'cliente', cliente, 'score', score) ORDER BY score DESC)\n    FROM (SELECT * FROM proy WHERE score >= 0.25 ORDER BY score DESC LIMIT 3) x\n  ), '[]'::json) AS proyecto_candidatos,\n  COALESCE((\n    SELECT json_agg(json_build_object('id', id, 'nombre', nombre, 'score', score) ORDER BY score DESC)\n    FROM (SELECT * FROM cli WHERE score >= 0.25 ORDER BY score DESC LIMIT 3) x\n  ), '[]'::json) AS cliente_candidatos,\n  $3::jsonb AS operacion;",
+        "options": {
+          "queryReplacement": "={{ [ $json.operacion.proyecto_actual || $json.operacion.proyecto || $json.operacion.nombre || null, $json.operacion.cliente || $json.operacion.cliente_nombre || null, JSON.stringify($json.operacion) ] }}"
+        }
+      },
+      "id": "4d78fd64-8b34-5d8d-b41d-f2c688354f7f",
+      "name": "Resolver candidatos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2016,
+        0
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst input = $input.first().json || {};\nconst op = { ...(input.operacion || {}) };\nconst catalogo = base.catalogo || { proyectos: [], clientes: [] };\nconst proyectos = Array.isArray(catalogo.proyectos) ? catalogo.proyectos : [];\nconst clientes = Array.isArray(catalogo.clientes) ? catalogo.clientes : [];\nconst candidatosProyecto = Array.isArray(input.proyecto_candidatos) ? input.proyecto_candidatos : [];\nconst candidatosCliente = Array.isArray(input.cliente_candidatos) ? input.cliente_candidatos : [];\n\nconst norm = (s) => String(s ?? '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().replace(/\\s+/g, ' ').trim();\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst uniq = (arr) => [...new Set(arr.map(a => String(a || '').trim()).filter(Boolean))];\nconst findProjectExact = (nombre) => {\n  const n = norm(nombre);\n  if (!n) return null;\n  return proyectos.find(p => norm(p.nombre) === n || (Array.isArray(p.alias) && p.alias.some(a => norm(a) === n))) || null;\n};\nconst findClientExact = (nombre) => {\n  const n = norm(nombre);\n  if (!n) return null;\n  return clientes.find(c => norm(c.nombre) === n) || null;\n};\nconst pickCandidate = (cands, min = 0.55, gap = 0.10) => {\n  const lista = (Array.isArray(cands) ? cands : []).filter(c => c && c.nombre).sort((a, b) => Number(b.score) - Number(a.score));\n  if (!lista.length) return { match: null, ambiguo: false, lista: [] };\n  const best = lista[0];\n  const second = lista[1];\n  const score = Number(best.score) || 0;\n  if (score >= min && (!second || (score - Number(second.score || 0)) >= gap)) return { match: best, ambiguo: false, lista };\n  return { match: null, ambiguo: true, lista: lista.slice(0, 3) };\n};\nconst opcionesProyecto = (lista) => lista.map(c => `• ${esc(c.nombre)}${c.cliente ? ` (${esc(c.cliente)})` : ''}`).join('\\n');\nconst respuestaBase = (extra) => ({ ok: false, paso: 'esperando', operacion: op, ...extra });\n\nif (!['crear','editar','desactivar','reactivar','listar','salir','otro'].includes(String(op.accion || ''))) op.accion = 'otro';\nif (op.accion === 'listar' || op.accion === 'salir') return [{ json: { ok: true, paso: 'esperando', accion: op.accion, operacion: op, resumen: null } }];\nif (op.accion === 'otro') return [{ json: respuestaBase({ pregunta: 'No entendí la operación. Escríbela de otra forma o usa los ejemplos del menú.', error: null }) }];\n\nif (op.accion === 'crear') {\n  const nombre = String(op.proyecto || op.nombre || '').trim();\n  if (!nombre) return [{ json: respuestaBase({ paso: 'falta_nombre', pregunta: '¿Cómo se llamará el proyecto?', error: null }) }];\n  const dup = findProjectExact(nombre);\n  if (dup) return [{ json: respuestaBase({ paso: 'falta_nombre', error: `Ya existe el proyecto \"${dup.nombre}\".`, pregunta: 'Envíame otro nombre para el proyecto.' }) }];\n  const aliasConflicto = proyectos.find(p => Array.isArray(p.alias) && p.alias.some(a => norm(a) === norm(nombre)));\n  if (aliasConflicto) return [{ json: respuestaBase({ paso: 'falta_nombre', error: `Ese nombre ya se usa como alias de \"${aliasConflicto.nombre}\".`, pregunta: 'Envíame otro nombre para el proyecto.' }) }];\n\n  const clienteTexto = String(op.cliente || op.cliente_nombre || '').trim();\n  if (!clienteTexto) return [{ json: respuestaBase({ paso: 'falta_cliente', pregunta: '¿A qué cliente pertenece el proyecto?', error: null }) }];\n  const clienteExacto = findClientExact(clienteTexto);\n  const clienteId = clienteExacto ? clienteExacto.id : (op.cliente_id ? Number(op.cliente_id) : null);\n  const clienteNombre = clienteExacto ? clienteExacto.nombre : (op.cliente_nombre || clienteTexto);\n  if (!clienteId && !op.cliente_confirmado) {\n    const similares = candidatosCliente\n      .filter(c => norm(c.nombre) !== norm(clienteTexto) && Number(c.score) >= 0.45)\n      .slice(0, 3);\n    if (similares.length) {\n      return [{ json: {\n        ok: false, paso: 'cliente_ambiguo', error: null,\n        operacion: { ...op, proyecto: nombre, nombre, cliente: clienteTexto, cliente_nombre: clienteTexto, cliente_candidatos: similares },\n        cliente_candidatos: similares,\n        pregunta: `Ya existe un cliente parecido: ${similares[0].nombre}. ¿Quieres usar ese cliente o crear \"${clienteTexto}\"?`\n      } }];\n    }\n  }\n  const alias = uniq(Array.isArray(op.alias) ? op.alias : []);\n  for (const a of alias) {\n    const p = findProjectExact(a);\n    if (p) return [{ json: respuestaBase({ paso: 'falta_dato', error: `El alias \"${a}\" ya está asociado a \"${p.nombre}\".`, pregunta: 'Corrige los alias o envía otro dato.' }) }];\n  }\n  const resumen = `🏗️ <b>Nuevo proyecto</b>\\n\\n<b>Nombre:</b> ${esc(nombre)}\\n<b>Cliente:</b> ${esc(clienteNombre)}\\n<b>Alias:</b> ${alias.length ? alias.map(esc).join(', ') : '(ninguno)'}\\n\\n¿Confirmas la creación?`;\n  return [{ json: {\n    ok: true, paso: 'confirmar', accion: 'crear',\n    operacion: { ...op, accion: 'crear', proyecto: nombre, nombre, cliente: clienteTexto, cliente_id: clienteId, cliente_nombre: clienteNombre, alias, cliente_confirmado: true },\n    resumen, pregunta: null, error: null\n  } }];\n}\n\nconst proyectoTexto = String(op.proyecto_actual || op.proyecto || op.nombre || '').trim();\nlet target = findProjectExact(proyectoTexto);\nif (!target) {\n  const picked = pickCandidate(candidatosProyecto);\n  if (picked.match) target = proyectos.find(p => Number(p.id) === Number(picked.match.id)) || null;\n  if (!target) {\n    const lista = picked.lista.length ? picked.lista : candidatosProyecto.slice(0, 3);\n    return [{ json: respuestaBase({\n      paso: 'falta_proyecto',\n      error: lista.length ? 'No pude identificar el proyecto con certeza.' : 'No encontré ese proyecto.',\n      pregunta: lista.length ? `¿A cuál proyecto te refieres?\\n\\n${opcionesProyecto(lista)}` : 'Escríbeme el nombre exacto del proyecto.'\n    }) }];\n  }\n}\n\nif (op.accion === 'editar') {\n  const nuevo = String(op.nuevo_nombre || '').trim() || null;\n  const alias = uniq(Array.isArray(op.alias) ? op.alias : []);\n  if (!nuevo && !alias.length) return [{ json: respuestaBase({ paso: 'falta_dato', error: null, pregunta: '¿Quieres cambiar el nombre o agregar algún alias?' }) }];\n  if (nuevo) {\n    const dup = proyectos.find(p => Number(p.id) !== Number(target.id) && norm(p.nombre) === norm(nuevo));\n    if (dup) return [{ json: respuestaBase({ paso: 'falta_dato', error: `Ya existe un proyecto con el nombre \"${dup.nombre}\".`, pregunta: 'Envíame otro nombre.' }) }];\n    const aliasConflicto = proyectos.find(p => Number(p.id) !== Number(target.id) && Array.isArray(p.alias) && p.alias.some(a => norm(a) === norm(nuevo)));\n    if (aliasConflicto) return [{ json: respuestaBase({ paso: 'falta_dato', error: `Ese nombre ya se usa como alias de \"${aliasConflicto.nombre}\".`, pregunta: 'Envíame otro nombre.' }) }];\n  }\n  for (const a of alias) {\n    const p = proyectos.find(x => Number(x.id) !== Number(target.id) && Array.isArray(x.alias) && x.alias.some(al => norm(al) === norm(a)));\n    if (p) return [{ json: respuestaBase({ paso: 'falta_dato', error: `El alias \"${a}\" ya está asociado a \"${p.nombre}\".`, pregunta: 'Corrige los alias o envía otro dato.' }) }];\n    if (proyectos.some(x => Number(x.id) !== Number(target.id) && norm(x.nombre) === norm(a))) {\n      return [{ json: respuestaBase({ paso: 'falta_dato', error: `El alias \"${a}\" coincide con el nombre de otro proyecto.`, pregunta: 'Envíame otro alias.' }) }];\n    }\n  }\n  const cambios = [];\n  if (nuevo) cambios.push(`<b>Nombre:</b> ${esc(target.nombre)} → ${esc(nuevo)}`);\n  if (alias.length) cambios.push(`<b>Alias a agregar:</b> ${alias.map(esc).join(', ')}`);\n  const resumen = `✏️ <b>Editar proyecto</b>\\n\\n<b>Proyecto:</b> ${esc(target.nombre)}\\n<b>Cliente:</b> ${esc(target.cliente)}\\n${cambios.join('\\n')}\\n\\n¿Confirmas el cambio?`;\n  return [{ json: {\n    ok: true, paso: 'confirmar', accion: 'editar',\n    operacion: { ...op, accion: 'editar', proyecto_id: target.id, proyecto_actual: target.nombre, proyecto: target.nombre, nuevo_nombre: nuevo, alias, cliente: target.cliente, cliente_id: target.cliente_id, cliente_nombre: target.cliente },\n    resumen, pregunta: null, error: null\n  } }];\n}\n\nconst deseado = op.accion === 'reactivar';\nif (Boolean(target.activo) === deseado) {\n  return [{ json: respuestaBase({ paso: 'esperando', error: `El proyecto \"${target.nombre}\" ya está ${deseado ? 'activo' : 'inactivo'}.`, pregunta: 'Puedes escribir otra operación o salir.' }) }];\n}\nconst resumen = `${deseado ? '✅' : '⛔'} <b>${deseado ? 'Reactivar' : 'Desactivar'} proyecto</b>\\n\\n<b>Proyecto:</b> ${esc(target.nombre)}\\n<b>Cliente:</b> ${esc(target.cliente)}\\n\\n¿Confirmas la operación?`;\nreturn [{ json: {\n  ok: true, paso: 'confirmar', accion: op.accion,\n  operacion: { ...op, accion: op.accion, proyecto_id: target.id, proyecto_actual: target.nombre, proyecto: target.nombre, cliente: target.cliente, cliente_id: target.cliente_id, cliente_nombre: target.cliente },\n  resumen, pregunta: null, error: null\n} }];"
+      },
+      "id": "93225382-3c6c-5ca5-9ce5-1baf7f5f843b",
+      "name": "Validar operacion admin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2240,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, entidad_id, payload)\nVALUES ($1, 'modo', $2, $3, $4::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = EXCLUDED.paso, entidad_id = EXCLUDED.entidad_id,\n    payload = EXCLUDED.payload, actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Preparar entrada').first().json.usuario_id, $json.paso, $json.operacion.proyecto_id || null, JSON.stringify({ ...$json.operacion, cliente_candidatos: $json.cliente_candidatos || $json.operacion.cliente_candidatos || [], proyecto_candidatos: $json.proyecto_candidatos || [] }) ] }}"
+        }
+      },
+      "id": "8930e097-b2a2-580e-8d62-e50076261a36",
+      "name": "Guardar borrador admin",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        2464,
+        0
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ $('Validar operacion admin').first().json.ok ? 0 : ($('Validar operacion admin').first().json.paso === 'cliente_ambiguo' ? 1 : 2) }}"
+      },
+      "id": "535d21d8-97d6-5580-a22b-8aaf7bfa7549",
+      "name": "¿Confirmar?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        2688,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "={{ $('Validar operacion admin').first().json.resumen }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Confirmar",
+                    "additionalFields": {
+                      "callback_data": "adm:save"
+                    }
+                  },
+                  {
+                    "text": "✏️ Corregir",
+                    "additionalFields": {
+                      "callback_data": "adm:fix"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "adm:cancel"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "4124a75d-a672-54b4-8fa7-31f29c1e3d56",
+      "name": "Mostrar resumen",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2912,
+        -160
+      ],
+      "webhookId": "050edb8f-6914-593f-b410-3e4005c3b132",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "={{ (($('Validar operacion admin').first().json.error || '') ? '⚠️ ' + $('Validar operacion admin').first().json.error + '\\n\\n' : '') + ($('Validar operacion admin').first().json.pregunta || '') }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "adm:cancel"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "646e64b9-3955-5433-9ce0-b70e2bc476dd",
+      "name": "Preguntar dato",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2912,
+        0
+      ],
+      "webhookId": "e95235be-150a-5531-a676-445348b4aea8",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "={{ 'Ya existe un cliente parecido: ' + $('Validar operacion admin').first().json.cliente_candidatos[0].nombre + '.\\n\\n¿Quieres usar ese cliente o crear \"' + $('Validar operacion admin').first().json.operacion.cliente + '\"?' }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✅ Usar existente",
+                    "additionalFields": {
+                      "callback_data": "adm:cliente:usar"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "➕ Crear nuevo",
+                    "additionalFields": {
+                      "callback_data": "adm:cliente:nuevo"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "adm:cancel"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "bd696169-9684-5043-af1e-03497eb4e5d3",
+      "name": "Preguntar cliente ambiguo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2912,
+        160
+      ],
+      "webhookId": "422e8f7f-8f13-567d-a30d-2b27310e40db",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst p = base.payload || {};\nconst op = { ...p, alias: Array.isArray(p.alias) ? p.alias : [] };\nlet texto = String(base.texto || '').trim();\nconst paso = String(p.paso || '');\nconst limpiar = (s, patron) => s.replace(patron, '').trim();\nif (paso === 'falta_nombre') {\n  texto = limpiar(texto, /^(el nombre (es|será|sera)|ponle|se llamará|se llamara|nombre:)\\s*/i);\n  op.proyecto = texto;\n} else if (paso === 'falta_cliente') {\n  texto = limpiar(texto, /^(el cliente (es|será|sera)|cliente:)\\s*/i);\n  op.cliente = texto;\n} else if (paso === 'falta_proyecto') {\n  texto = limpiar(texto, /^(el proyecto (es|será|sera)|proyecto:)\\s*/i);\n  op.proyecto_actual = texto;\n  op.proyecto = texto;\n} else if (paso === 'cliente_ambiguo') {\n  texto = limpiar(texto, /^(usa|usar|crea|crear|el cliente es)\\s*/i);\n  op.cliente = texto;\n}\nif (op.accion === 'crear') op.nombre = op.proyecto || '';\nreturn [{ json: { ...base, operacion: op, original: base, esCorreccion: false } }];"
+      },
+      "id": "68caa364-0e98-5aa1-9dcd-06c8b5b7c17c",
+      "name": "Completar dato",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst p = base.payload || {};\nconst cands = Array.isArray(p.cliente_candidatos) ? p.cliente_candidatos : [];\nconst cand = cands[0] || null;\nconst op = {\n  ...p,\n  cliente_id: cand ? cand.id : null,\n  cliente_nombre: cand ? cand.nombre : (p.cliente || p.cliente_nombre),\n  cliente: cand ? cand.nombre : (p.cliente || p.cliente_nombre),\n  cliente_confirmado: true,\n  cliente_candidatos: []\n};\nreturn [{ json: { ...base, operacion: op, proyecto_candidatos: [], cliente_candidatos: [], original: base } }];"
+      },
+      "id": "8437f88e-9720-59c6-8940-d309eef3bb7b",
+      "name": "Completar cliente usar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst p = base.payload || {};\nconst op = {\n  ...p,\n  cliente_id: null,\n  cliente_nombre: p.cliente || p.cliente_nombre,\n  cliente: p.cliente || p.cliente_nombre,\n  cliente_confirmado: true,\n  cliente_candidatos: []\n};\nreturn [{ json: { ...base, operacion: op, proyecto_candidatos: [], cliente_candidatos: [], original: base } }];"
+      },
+      "id": "2beaa874-a22b-59eb-9171-a2ee10bbb2c3",
+      "name": "Completar cliente nuevo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1792,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH datos AS (\n  SELECT $1::text AS accion, $2::jsonb AS payload\n),\ncliente_nuevo AS (\n  INSERT INTO clientes (nombre)\n  SELECT payload->>'cliente_nombre'\n  FROM datos\n  WHERE accion = 'crear'\n    AND COALESCE(payload->>'cliente_id', '') = ''\n  ON CONFLICT (nombre) DO NOTHING\n  RETURNING id\n),\ncliente AS (\n  SELECT COALESCE(\n    NULLIF(payload->>'cliente_id', '')::int,\n    (SELECT id FROM cliente_nuevo),\n    (SELECT id FROM clientes WHERE unaccent(lower(nombre)) = unaccent(lower(payload->>'cliente_nombre')) LIMIT 1)\n  ) AS id\n  FROM datos\n),\ncrear AS (\n  INSERT INTO proyectos (cliente_id, nombre)\n  SELECT cliente.id, payload->>'nombre'\n  FROM datos, cliente\n  WHERE accion = 'crear' AND cliente.id IS NOT NULL\n  ON CONFLICT (nombre) DO NOTHING\n  RETURNING id, nombre, 'creado'::text AS resultado\n),\neditar AS (\n  UPDATE proyectos p\n  SET nombre = COALESCE(NULLIF(payload->>'nuevo_nombre', ''), p.nombre)\n  FROM datos\n  WHERE accion = 'editar'\n    AND p.id = NULLIF(payload->>'proyecto_id', '')::int\n  RETURNING p.id, p.nombre, 'editado'::text AS resultado\n),\nestado AS (\n  UPDATE proyectos p\n  SET activo = (accion = 'reactivar')\n  FROM datos\n  WHERE accion IN ('desactivar', 'reactivar')\n    AND p.id = NULLIF(payload->>'proyecto_id', '')::int\n  RETURNING p.id, p.nombre, accion AS resultado\n),\nalias_insert AS (\n  INSERT INTO proyecto_alias (proyecto_id, alias)\n  SELECT COALESCE((SELECT id FROM crear), (SELECT id FROM editar)),\n         a.alias\n  FROM datos,\n       jsonb_array_elements_text(COALESCE(payload->'alias', '[]'::jsonb)) AS a(alias)\n  WHERE accion IN ('crear', 'editar')\n    AND COALESCE((SELECT id FROM crear), (SELECT id FROM editar)) IS NOT NULL\n  ON CONFLICT DO NOTHING\n  RETURNING id\n)\nSELECT * FROM crear\nUNION ALL SELECT * FROM editar\nUNION ALL SELECT * FROM estado;",
+        "options": {
+          "queryReplacement": "={{ [ $('Preparar entrada').first().json.payload.accion, JSON.stringify($('Preparar entrada').first().json.payload) ] }}"
+        }
+      },
+      "id": "3a868008-ec8d-5d6b-9db8-ca36b6e2d027",
+      "name": "Ejecutar accion admin",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1120,
+        320
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.id ? 0 : 1 }}"
+      },
+      "id": "a3e7bf43-342b-58dd-b8d6-fd5aa9f3c521",
+      "name": "¿Guardado?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1344,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'esperando', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = 'esperando', entidad_id = NULL, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Preparar entrada').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "edfe5f24-d338-5c6c-b1d3-5dd12b4e5e35",
+      "name": "Reset tras guardado",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1568,
+        240
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "={{ (function(){ const r = $('Ejecutar accion admin').first().json; const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); return '✅ <b>Operación realizada</b>\\n\\n<b>Proyecto:</b> ' + esc(r.nombre) + '\\n<b>Resultado:</b> ' + esc(r.resultado); })() }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📋 Listar",
+                    "additionalFields": {
+                      "callback_data": "adm:list"
+                    }
+                  },
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "591ec4a7-3821-59c8-8137-7ac58b1dd951",
+      "name": "Responder resultado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1792,
+        240
+      ],
+      "webhookId": "0384c6d7-fc42-5f71-acb3-44545f8ebe10",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "⚠️ No se pudo guardar la operación.\n\nPuede que el nombre o alias ya exista. Usa <b>Corregir</b> para ajustar los datos o <b>Cancelar</b> para volver al modo administración.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "✏️ Corregir",
+                    "additionalFields": {
+                      "callback_data": "adm:fix"
+                    }
+                  },
+                  {
+                    "text": "❌ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "adm:cancel"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "848c68d8-1b10-5693-ba6c-2010e83a82be",
+      "name": "Error al ejecutar",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1568,
+        400
+      ],
+      "webhookId": "9965feca-c6f6-547f-9121-8afcb6ebb007",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'corregir', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET paso = 'corregir', actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "c0388490-988f-58ae-8e3f-55b699e840ea",
+      "name": "Marcar correccion",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1120,
+        480
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "✏️ <b>Corregir operación</b>\n\nEscríbeme qué dato quieres cambiar, en lenguaje natural.\n\n<i>Ejemplo: mejor el cliente es Constructora del Norte</i>",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "adm:cancel"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "23af6a0e-94fa-5714-885e-d7d00d92b318",
+      "name": "Pedir correccion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        480
+      ],
+      "webhookId": "c55d9d54-a01f-5ff1-bf77-4d75ac9ad264",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'esperando', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = 'esperando', entidad_id = NULL, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "d4cb0cd8-d5ba-5ac7-874c-0799b839e413",
+      "name": "Reset cancelacion",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1120,
+        640
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "🧹 Operación cancelada. Seguimos en modo administración.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📋 Listar",
+                    "additionalFields": {
+                      "callback_data": "adm:list"
+                    }
+                  },
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "0eb4de1e-b319-5d97-86d9-6ed8834bd9a6",
+      "name": "Mensaje cancelado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        640
+      ],
+      "webhookId": "1030e1f0-16ba-51a3-ae2a-c3982845db71",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM admin_pending WHERE usuario_id = $1;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "9788cbfe-1150-50ee-92d7-ca8b04ce4b30",
+      "name": "Borrar pendiente",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1120,
+        800
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "ufn1vDeGKOcqMtep",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "👋 Modo administración cerrado.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🏠 Menú",
+                    "additionalFields": {
+                      "callback_data": "cmd:start"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "95352fec-5e9f-52ae-83e7-3ab115b8b7fa",
+      "name": "Mensaje salida",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        800
+      ],
+      "webhookId": "bac4903a-f54f-5202-8b0e-02094666ded1",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "Para administrar proyectos escribe <b>/maestras</b> o usa el botón.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⚙️ Maestras",
+                    "additionalFields": {
+                      "callback_data": "cmd:maestras"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🏠 Menú",
+                    "additionalFields": {
+                      "callback_data": "cmd:start"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "798b801e-cd58-5522-980d-d3e49ea225c1",
+      "name": "Mensaje sin modo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1120,
+        960
+      ],
+      "webhookId": "88c8924c-fcd8-5d7d-80f2-a9a0b981b7af",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cuando se ejecuta": {
+      "main": [
+        [
+          {
+            "node": "Permiso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Permiso": {
+      "main": [
+        [
+          {
+            "node": "Cargar contexto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder sin permiso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cargar contexto": {
+      "main": [
+        [
+          {
+            "node": "Preparar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar entrada": {
+      "main": [
+        [
+          {
+            "node": "Ruta admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ruta admin": {
+      "main": [
+        [
+          {
+            "node": "Crear modo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preparar prompt admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Completar dato",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ejecutar accion admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar correccion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reset cancelacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Borrar pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar lista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Menu admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Completar cliente usar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Completar cliente nuevo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje sin modo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear modo": {
+      "main": [
+        [
+          {
+            "node": "Menu admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar prompt admin": {
+      "main": [
+        [
+          {
+            "node": "Extraer admin con Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer admin con Gemini": {
+      "main": [
+        [
+          {
+            "node": "Armar operacion admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini administracion": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extraer admin con Gemini",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar operacion admin": {
+      "main": [
+        [
+          {
+            "node": "Accion directa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Accion directa": {
+      "main": [
+        [
+          {
+            "node": "Armar lista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Borrar pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje no entendido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Resolver candidatos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar lista": {
+      "main": [
+        [
+          {
+            "node": "Responder lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Resolver candidatos": {
+      "main": [
+        [
+          {
+            "node": "Validar operacion admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completar dato": {
+      "main": [
+        [
+          {
+            "node": "Resolver candidatos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completar cliente usar": {
+      "main": [
+        [
+          {
+            "node": "Validar operacion admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Completar cliente nuevo": {
+      "main": [
+        [
+          {
+            "node": "Validar operacion admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar operacion admin": {
+      "main": [
+        [
+          {
+            "node": "Guardar borrador admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar borrador admin": {
+      "main": [
+        [
+          {
+            "node": "¿Confirmar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Confirmar?": {
+      "main": [
+        [
+          {
+            "node": "Mostrar resumen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preguntar cliente ambiguo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Preguntar dato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar accion admin": {
+      "main": [
+        [
+          {
+            "node": "¿Guardado?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error al ejecutar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Guardado?": {
+      "main": [
+        [
+          {
+            "node": "Reset tras guardado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error al ejecutar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset tras guardado": {
+      "main": [
+        [
+          {
+            "node": "Responder resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar correccion": {
+      "main": [
+        [
+          {
+            "node": "Pedir correccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset cancelacion": {
+      "main": [
+        [
+          {
+            "node": "Mensaje cancelado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar pendiente": {
+      "main": [
+        [
+          {
+            "node": "Mensaje salida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {},
+  "nodeGroups": [],
+  "pinData": {},
+  "triggerCount": 0,
+  "sourceWorkflowId": null,
+  "tags": [],
+  "shared": [
+    {
+      "updatedAt": "2026-11-12T01:53:36.819Z",
+      "createdAt": "2026-11-12T01:53:36.819Z",
+      "role": "workflow:owner",
+      "workflowId": "a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70",
+      "projectId": "ZlvxrIvP3V3KROE9",
+      "project": {
+        "updatedAt": "2026-09-22T23:22:18.851Z",
+        "createdAt": "2026-09-22T23:11:48.748Z",
+        "id": "ZlvxrIvP3V3KROE9",
+        "name": "CARLOS ANDRES TAPIA PAREDES <tapiacarlostapiaxd@hotmail.com>",
+        "type": "personal",
+        "icon": null,
+        "description": null,
+        "customTelemetryTags": [],
+        "creatorId": "f30d85d5-80e7-4017-9021-2cf07e99747a"
+      }
+    }
+  ],
+  "versionMetadata": {
+    "name": null,
+    "description": null
+  }
+}
