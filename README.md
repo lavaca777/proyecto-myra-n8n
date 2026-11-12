@@ -219,6 +219,7 @@ Migraciones actuales:
 | `001_schema_inicial.sql` | Tablas, índices, trigger y vista `v_gastos_detalle` |
 | `002_seed_catalogos.sql` | Medios de pago y categorías iniciales |
 | `003_fuzzy_proyectos.sql` | `pg_trgm` para buscar proyectos por similitud |
+| `004_admin_pending.sql` | Estado temporal para la administración de maestras |
 
 Consola SQL local:
 

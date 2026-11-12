@@ -72,6 +72,7 @@ Los archivos viven en `db/migrations/` y se ejecutan en orden alfabético:
 | `001_schema_inicial.sql` | Tablas, índices, trigger y vista |
 | `002_seed_catalogos.sql` | Medios de pago y categorías |
 | `003_fuzzy_proyectos.sql` | `pg_trgm`, `unaccent` e índices |
+| `004_admin_pending.sql` | Estado pendiente de administración de proyectos |
 
 ### Supabase (producción)
 
