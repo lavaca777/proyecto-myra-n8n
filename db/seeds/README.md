@@ -18,6 +18,15 @@ docker compose exec -T postgres psql -U myra -d myra -v ON_ERROR_STOP=1 -f /tmp/
 docker compose exec -T postgres rm -f /tmp/dev_demo.sql
 ```
 
+## Seed realista para demos
+
+`demo_realista.sql` carga clientes, 6 proyectos, alias, usuarios ficticios,
+proveedores y 37 gastos con fechas variadas. Sirve para probar `/resumen`,
+`/ultimos` y las exportaciones con filtros de 30 días y tabla completa.
+
+Es idempotente: se puede ejecutar varias veces sin duplicar los gastos.
+No usar como datos productivos.
+
 ## Antes de probar el bot
 
 1. Reemplaza `123456789` en `dev_demo.sql` por tu `telegram_chat_id` real.
