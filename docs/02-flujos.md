@@ -218,6 +218,7 @@ El prompt debe recibir:
 
 ```json
 {
+  "intencion": "saludo | gasto | otro",
   "proyecto": "Obra Peñuelas",
   "monto_total": 45990,
   "fecha": "2026-10-17",
@@ -234,6 +235,8 @@ El prompt debe recibir:
   }
 }
 ```
+
+`intencion` clasifica el mensaje como `saludo`, `gasto` u `otro`.
 
 Reglas de normalización:
 
@@ -345,8 +348,11 @@ Después, si hay comprobante (foto), insertar en `comprobantes` con el `gasto_id
 
 Los comandos se muestran también como botones inline (`cmd:proyectos`,
 `cmd:resumen`, `cmd:ultimos`, `cmd:cancelar`, `cmd:ayuda`, `cmd:start`). Al tocar
-un botón, WF-05 edita el mismo mensaje. Los saludos exactos como “hola” o “buenas”
-se enrutan a `/start`.
+un botón, WF-05 edita el mismo mensaje.
+
+WF-03 clasifica la intención con IA: un saludo o pregunta sin datos de gasto se
+envía a `/start`; si el mensaje mezcla un saludo con una compra, sigue el flujo
+normal de extracción y pide los datos faltantes.
 
 ### SQL de `/resumen`
 

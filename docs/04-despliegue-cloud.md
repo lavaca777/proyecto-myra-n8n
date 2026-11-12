@@ -224,6 +224,7 @@ credenciales locales y storage de ejecuciones; en Cloud no aplica.
 - [ ] `/start`, `/proyectos`, `/resumen`, `/ultimos`, `/ayuda`: responden con datos.
 - [ ] `/help` y `/h`: muestran la ayuda.
 - [ ] Un saludo como “hola” abre el menú de `/start`.
+- [ ] Un saludo con datos de gasto, por ejemplo “hola, gasté 3.000 en Copec”, sigue el flujo de extracción.
 - [ ] Los botones inline ejecutan el comando y editan el mensaje.
 - [ ] `/cancelar`: cancela el registro pendiente.
 - [ ] Heartbeat: ejecución exitosa y sin pausa de Supabase.
