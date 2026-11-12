@@ -411,6 +411,8 @@ Medio de pago, Monto, Registrado por y Origen.
 
 ## WF-07 · Maestras
 
+> Diseño detallado: [`07-admin-proyectos.md`](07-admin-proyectos.md).
+
 **Tipo:** sub-workflow. **Solo `administrador` y `gerencia`.**
 
 Comando `/maestras` con botones para administrar proyectos.

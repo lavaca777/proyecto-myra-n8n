@@ -15,6 +15,7 @@ de pago**), pide confirmación y persiste el gasto.
 - **Despliegue Cloud:** [`docs/04-despliegue-cloud.md`](docs/04-despliegue-cloud.md)
 - **Migración desde la carpeta anterior:** [`docs/05-migracion.md`](docs/05-migracion.md)
 - **WF-02 Voz → Texto (handoff):** [`docs/06-wf-02-voz-a-texto.md`](docs/06-wf-02-voz-a-texto.md)
+- **Administración de proyectos (WF-07):** [`docs/07-admin-proyectos.md`](docs/07-admin-proyectos.md)
 
 ---
 
