@@ -170,7 +170,7 @@ producción n8n Cloud entrega una URL HTTPS fija.
    deterministas (Postgres) y validaciones explícitas.
 3. **El estado de la conversación vive en PostgreSQL** (`registros_entrada.estado` y
    `campo_pendiente`), no en la memoria del agente. Así sobrevive a reinicios.
-4. **Confirmación con botones inline** (`callback_query`), no texto libre.
+4. **Confirmación de gastos con botones inline** (`callback_query`); la administración de proyectos acepta texto y audio.
 5. **Nada se guarda en `gastos` sin los 5 campos válidos.** El proyecto es obligatorio.
 6. **Idempotencia:** un mismo mensaje de Telegram no puede generar dos gastos.
 7. **Credenciales y `.env` nunca se versionan.**
@@ -191,8 +191,8 @@ producción n8n Cloud entrega una URL HTTPS fija.
 | 02 | Voz → Texto | Descarga el audio y lo transcribe (STT) |
 | 03 | Extracción | LLM + validación de los 5 campos + fuzzy match de proyecto |
 | 04 | Confirmación | Máquina de estados, correcciones y persistencia del gasto |
-| 05 | Comandos | `/start`, `/proyectos`, `/resumen`, `/ultimos`, `/cancelar` |
-| 06 | Exportaciones | Descarga de gastos para administración (Excel/CSV, filtros por fecha y proyecto) |
+| 05 | Comandos | `/start`, `/proyectos`, `/ultimos`, `/cancelar`, `/ayuda`; `/resumen`, `/exportar`/`/gastos` y `/maestras` solo admin/gerencia |
+| 06 | Exportaciones | Excel/CSV por rango de fechas; siempre exporta todos los proyectos |
 | 07 | Maestras | Orquestador de sesión, menú, callbacks y comandos de administración |
 | 07A | Interpretar operación | Prompt LLM, validación y borrador de la operación |
 | 07B | Ejecutar operación | Persistencia determinista de altas, ediciones y operaciones masivas |
@@ -268,7 +268,7 @@ Docker Compose. Se compone de:
 
 - **n8n Cloud:** workflows, credenciales, webhook HTTPS estable.
 - **Supabase:** PostgreSQL administrado para los datos del negocio.
-- **`[MYRA] 08 · Heartbeat`:** workflow cada 3 días para evitar la pausa por
+- **`[MYRA] 09 · Heartbeat`:** workflow cada 3 días para evitar la pausa por
   inactividad de Supabase.
 - **Telegram, Gemini y Groq:** se conectan desde n8n Cloud con sus credenciales.
 
@@ -336,7 +336,7 @@ En producción (n8n Cloud):
 ### Supabase aparece pausado
 
 El plan gratuito se pausa por inactividad. Revisar el workflow
-`[MYRA] 08 · Heartbeat` y reactivar el proyecto desde el panel de Supabase. Después,
+`[MYRA] 09 · Heartbeat` y reactivar el proyecto desde el panel de Supabase. Después,
 verificar que el heartbeat vuelva a ejecutarse.
 
 ### El contenedor quedó apuntando a localhost

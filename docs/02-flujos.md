@@ -85,14 +85,16 @@ pregunta (ambigüedad).
 | 1 | `Telegram Trigger` | Telegram Trigger | Updates: **`message` y `callback_query`** |
 | 2 | `Normalizar update` | Code | Ver contrato abajo |
 | 3 | `Buscar usuario` | Postgres | `SELECT id, nombre, rol FROM usuarios WHERE telegram_chat_id = $1 AND activo` |
-| 4 | `¿Autorizado?` | IF | `usuario.id` existe |
-| 5 | `Responder no autorizado` | Telegram | Mensaje simple; fin |
-| 6 | `Router` | Switch | Por `tipo`: `comando`, `callback`, `voz`, `texto`, `foto` |
-| 7 | `→ WF-02` | Execute Workflow | Voz |
-| 8 | `→ WF-05` | Execute Workflow | Comando |
-| 9 | `→ WF-04` | Execute Workflow | Callback o texto con estado pendiente |
-| 10 | `→ WF-03` | Execute Workflow | Texto nuevo sin estado pendiente |
-| 11 | `→ WF-06` | Execute Workflow | Foto (Could) |
+| 4 | `Evaluar autorizacion` | Code | Normaliza el usuario encontrado y su rol |
+| 5 | `Autorizado` | Switch | Autorizado → continuar; si no → `Responder no autorizado` |
+| 6 | `Buscar admin pendiente` / `¿Admin pendiente?` | Postgres / Switch | Recupera la sesión de `admin_pending` |
+| 7 | `Router` | Switch | Por `tipo`: `texto`, `comando`, `voz`, `callback`, `foto` |
+| 8 | `Enviar a extraccion` | Execute Workflow | Texto nuevo o con gasto pendiente → WF-03 |
+| 9 | `Enviar a comandos` | Execute Workflow | Comando o callback `cmd:*` → WF-05 |
+| 10 | `Enviar a confirmacion` | Execute Workflow | Callback `confirm/edit/cancel` → WF-04 |
+| 11 | `Call [MYRA] 02 · Voz a Texto` / `Voz como texto` | Execute Workflow / Code | Audio → WF-02; luego se enruta el texto |
+| 12 | `Enviar a maestras` / `Enviar voz a maestras` | Execute Workflow | Sesión admin → WF-07/07A |
+| 13 | `Armar respuesta` / `Responder generico` | Code / Telegram | Foto u otro tipo: OCR pendiente; pide texto o audio |
 
 ### Contrato del Code `Normalizar update`
 
@@ -129,80 +131,71 @@ return [{
 }];
 ```
 
-> **Importante:** el Telegram Trigger actual solo escucha `message`. Hay que agregar
-> `callback_query` o los botones de confirmación no llegarán nunca.
+> **Importante:** el Telegram Trigger ya escucha `message` y `callback_query`.
+> Los callbacks `cmd:*`, `exp:*`, `adm:*` y `confirm:/edit:/cancel:` se normalizan antes de enrutar.
 
 ---
 
 ## WF-02 · Voz → Texto
 
 **Tipo:** sub-workflow
-**Entrada:** `{ registro_id, file_id, usuario_id, chat_id }`
+**Entrada:** `{ file_id, duracion_seg, telegram_chat_id, telegram_message_id, usuario, nombre_usuario, autorizado }`
+**Salida:** `{ ...entrada, texto_transcrito, transcripcion_ok, stt_no_speech_prob, stt_avg_logprob }`
 
 ### Nodos
 
 | # | Nodo | Tipo | Detalle |
 |---|---|---|---|
-| 1 | `Ejecutar` | Execute Workflow Trigger | Input del router |
-| 2 | `Descargar audio` | Telegram | Recurso `file`, operación `getFile`, `fileId`, **Download = true** |
-| 3 | `Convertir a base64` | Code | `Buffer.from($binary.data.data).toString('base64')` |
-| 4 | `Transcribir (Gemini)` | HTTP Request | Ver request abajo |
-| 5 | `Extraer texto` | Code | `candidates[0].content.parts[0].text` |
-| 6 | `Guardar transcripción` | Postgres | `UPDATE registros_entrada SET transcripcion=$2, duracion_ms=$3 WHERE id=$1` |
-| 7 | `→ WF-03` | Execute Workflow | Pasar `registro_id`, `texto`, `usuario_id`, `chat_id` |
+| 1 | `When Executed by Another Workflow` | Execute Workflow Trigger | Recibe el audio desde WF-01 |
+| 2 | `Descargar audio` | Telegram | Recurso `file`, operación `getFile`, **Download = true** |
+| 3 | `Preparar audio` | Code | Valida binario, tamaño máximo 20 MB y MIME de audio; normaliza a OGG/Opus |
+| 4 | `¿Audio válido?` | Switch | Válido → Groq; inválido → mensaje específico |
+| 5 | `Transcribir con Groq` | HTTP Request | `whisper-large-v3`, `language=es`, `verbose_json`, temperatura 0 |
+| 6 | `Extraer transcripcion` | Code | Obtiene `text`, `no_speech_prob` y `avg_logprob`; calcula `transcripcion_ok` |
+| 7 | `Transcripcion OK?` | Switch | OK → devolver; error → mensaje |
+| 8 | `Responder audio invalido` / `Responder error audio` | Telegram | Mensajes claros antes de terminar |
+| 9 | `Devolver transcripcion` | Code | Devuelve el texto a WF-01 |
 
-### Request de transcripción
+### Reglas
 
-```http
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
-Content-Type: application/json
-
-{
-  "contents": [{
-    "parts": [
-      { "text": "Transcribe literalmente este audio en español de Chile. No resumas, no interpretes. Devuelve solo la transcripción." },
-      { "inline_data": { "mime_type": "audio/ogg", "data": "{{ $json.audio_base64 }}" } }
-    ]
-  }],
-  "generationConfig": { "temperature": 0 }
-}
-```
-
-Consideraciones:
-
-- La credencial de Gemini se puede usar como *Predefined Credential* en el nodo
-  HTTP Request. Si no aparece, guarda la API key en `.env` como `GEMINI_API_KEY`.
-- Telegram entrega **OGG/Opus**. Si Gemini rechaza el formato, convertir con ffmpeg
-  a `audio/wav` o usar Whisper como respaldo.
-- Registrar `modelo_ia` en `registros_entrada` para comparar precisión entre modelos.
-- Si la transcripción falla, responder: "No pude escuchar bien. ¿Puedes repetirlo o
-  escribirlo?" y dejar el registro en `error`.
+- Telegram entrega notas de voz OGG/Opus; Groq Whisper las acepta directamente.
+- Si el archivo supera **20 MB**, no es audio o no se pudo descargar, se responde sin llamar a Groq.
+- Se rechaza si `texto` está vacío, `no_speech_prob >= 0.5` o `avg_logprob <= -0.8`.
+- WF-01 recibe el texto y decide el destino:
+  - WF-03 si es un gasto normal.
+  - WF-07A si el administrador está en modo maestras.
+- `registros_entrada` se crea en WF-03, no aquí; allí se guardan `tipo`, `telegram_file_id` y `duracion_ms` (duración del audio).
 
 ---
 
 ## WF-03 · Extracción
 
 **Tipo:** sub-workflow
-**Entrada:** `{ registro_id, texto, usuario_id, chat_id }`
+**Entrada:** `{ texto, tipo, telegram_message_id, telegram_file_id?, duracion_ms?, usuario, telegram_chat_id }`
 **Salida:** mensaje de confirmación o pregunta por el campo faltante.
 
 ### Nodos
 
 | # | Nodo | Tipo | Detalle |
 |---|---|---|---|
-| 1 | `Ejecutar` | Execute Workflow Trigger | |
-| 2 | `→ WF-00 Maestras` | Execute Workflow | Trae proyectos, medios de pago y categorías |
-| 3 | `Crear registro` | Postgres | `INSERT INTO registros_entrada (... estado='procesando') RETURNING id` (si no existe) |
-| 4 | `Armar prompt` | Set / Code | Inyecta catálogos + texto + fecha de hoy |
-| 5 | `Extraer JSON (Gemini)` | HTTP Request / LLM Chain | `response_mime_type: application/json` |
-| 6 | `Parsear JSON` | Code | Limpia ```json, valida tipos, calcula faltantes |
-| 7 | `Buscar proyecto` | Postgres | Fuzzy SQL de WF-00 |
-| 8 | `Resolver proyecto` | Code | Aplica reglas de confianza/ambigüedad |
-| 9 | `Normalizar datos` | Code | Monto CLP, fecha ISO, medio de pago, categoría |
-| 10 | `Guardar borrador` | Postgres | `UPDATE registros_entrada SET json_extraido=$2, estado=$3, campo_pendiente=$4` |
-| 11 | `¿Faltan datos?` | IF | |
-| 12 | `Preguntar campo` | Telegram | Una sola pregunta directa |
-| 13 | `Pedir confirmación` | Telegram | Resumen + botones inline |
+| 1 | `Cuando se ejecuta` | Execute Workflow Trigger | Recibe el texto normalizado desde WF-01 |
+| 2 | `Maestras` | Execute Workflow | Trae proyectos, medios de pago y categorías |
+| 3 | `Buscar pendiente` | Postgres | Busca el último registro abierto del usuario |
+| 4 | `Continuacion` | Switch | Corregir, recordar confirmación o crear registro |
+| 5 | `Crear registro` | Postgres | Inserta `tipo`, `telegram_message_id`, `telegram_file_id`, `transcripcion`, `duracion_ms`; evita duplicados por mensaje |
+| 6 | `¿Registro nuevo?` | Switch | Si el mensaje ya existía, ignora el duplicado |
+| 7 | `Preparar contexto` | Code | Arma el texto y el estado de la conversación |
+| 8 | `Preparar prompt` | Code | Inyecta catálogos + texto + fecha de hoy |
+| 9 | `Extraer con Gemini` | LLM Chain | `response_mime_type: application/json` |
+| 10 | `Armar extraccion` / `Normalizar extraccion` | Code | Parsea el JSON, valida tipos y normaliza montos/fechas |
+| 11 | `Buscar proyecto` | Postgres | Fuzzy SQL de WF-00 |
+| 12 | `Resolver proyecto` | Code | Aplica reglas de confianza/ambigüedad |
+| 13 | `Decidir estado` / `Guardar borrador` | Code / Postgres | Define `estado` y `campo_pendiente`, y guarda el borrador |
+| 14 | `¿Faltan datos?` | Switch | Pregunta, saluda, rechaza no-gasto o pide confirmación |
+| 15 | `Enviar pregunta` / `Enviar confirmacion` | Telegram | Pregunta puntual o resumen con botones |
+| 16 | `Responder no gasto` / `Enviar saludo` | Telegram / Execute Workflow | Salidas auxiliares |
+| 17 | `Preguntar confirmacion pendiente` | Telegram | Recuerda confirmar el registro abierto |
+| 18 | `Ignorar duplicado` | NoOp | No vuelve a escribir un mensaje ya procesado |
 
 ### Prompt de extracción
 
@@ -275,7 +268,7 @@ Registraré este gasto:
 ## WF-04 · Confirmación y persistencia
 
 **Tipo:** sub-workflow
-**Entrada:** `{ tipo, registro_id?, callback_data?, texto?, chat_id, usuario_id }`
+**Entrada:** `{ registro_id?, callback_data, chat_id, usuario_id }`
 
 ### 4.1 Callback
 
@@ -287,12 +280,15 @@ Registraré este gasto:
 
 ### 4.2 Texto o voz con estado pendiente
 
-1. Buscar el último `registros_entrada` del usuario con
-   `estado IN ('falta_dato','pendiente_confirmacion')`.
-2. Si no hay, tratarlo como gasto nuevo (→ WF-03).
-3. Si hay y `campo_pendiente` está definido, actualizar ese campo con el nuevo texto
-   o audio.
-4. Volver a validar y mostrar el resumen.
+El router envía el texto a WF-03, que busca el último `registros_entrada` del usuario
+con `estado IN ('falta_dato','pendiente_confirmacion')`:
+
+- Si hay `campo_pendiente`, actualiza ese campo con el nuevo texto o audio y vuelve a
+  validar.
+- Si está en `pendiente_confirmacion`, recuerda que debe confirmar con los botones.
+- Si no hay registro pendiente, lo trata como un gasto nuevo.
+
+WF-04 solo procesa callbacks; no recibe texto libre.
 
 ### 4.3 Persistencia atómica
 
@@ -322,12 +318,14 @@ ON CONFLICT (registro_entrada_id) DO NOTHING
 RETURNING id;
 ```
 
-Si no devuelve fila:
+`origen` se toma de `registros_entrada.tipo` (`texto`, `voz` o `foto`), no de un
+valor fijo. Si no devuelve fila:
 
 - El registro ya estaba confirmado → responder "Este gasto ya estaba registrado".
 - O faltan datos → no se actualizó `reg`; volver a validar.
 
-Después, si hay comprobante (foto), insertar en `comprobantes` con el `gasto_id`.
+El comprobante/OCR todavía no se persiste; queda pendiente para una iteración
+posterior.
 
 ---
 
@@ -338,31 +336,28 @@ Después, si hay comprobante (foto), insertar en `comprobantes` con el `gasto_id
 
 | Comando | Respuesta |
 |---|---|
-| `/start` | Bienvenida + ejemplo de uso + proyectos disponibles |
-| `/proyectos` | Lista de proyectos activos con alias |
-| `/resumen` | Total del mes por proyecto (usar `v_gastos_detalle`) |
-| `/ultimos` | Últimos 5 gastos del usuario |
-| `/cancelar` | Cancela el registro pendiente |
-| `/ayuda` | Lista de comandos |
-| `/maestras` | Administrar proyectos (solo admin/gerencia) |
-| `/help`, `/h` | Alias de `/ayuda` |
+| `/start` | Bienvenida + ejemplo + proyectos disponibles |
+| `/proyectos` | Proyectos activos con alias |
+| `/resumen` | Total del mes por proyecto; solo admin/gerencia |
+| `/ultimos` | Últimos 5 del usuario; admin/gerencia ven todo el equipo |
+| `/cancelar` | Cancela el gasto pendiente del usuario |
+| `/exportar` o `/gastos` | Exporta todos los gastos en Excel/CSV; solo admin/gerencia |
+| `/maestras` | Administración de proyectos; solo admin/gerencia |
+| `/ayuda`, `/help`, `/h` | Ayuda según el rol |
 
-Los comandos se muestran también como botones inline (`cmd:proyectos`,
-`cmd:resumen`, `cmd:ultimos`, `cmd:cancelar`, `cmd:ayuda`, `cmd:start`). Al tocar
-un botón, WF-05 edita el mismo mensaje.
+Menús por rol:
 
-WF-03 clasifica la intención con IA: un saludo o pregunta sin datos de gasto se
-envía a `/start`; si el mensaje mezcla un saludo con una compra, sigue el flujo
-normal de extracción y pide los datos faltantes.
+- `jefe_obra`: Proyectos, Últimos, Cancelar, Ayuda.
+- `administrador`/`gerencia`: Proyectos, Resumen, Últimos, Cancelar, Maestras, Exportar, Ayuda.
 
 ### SQL de `/resumen`
 
 ```sql
 SELECT proyecto,
-       COUNT(*) AS compras,
-       SUM(monto_total) AS total
+       COUNT(*)::int AS compras,
+       SUM(monto_total)::bigint AS total
 FROM v_gastos_detalle
-WHERE fecha_gasto >= date_trunc('month', current_date)
+WHERE fecha_gasto >= date_trunc('month', (now() AT TIME ZONE 'America/Santiago'))::date
 GROUP BY proyecto
 ORDER BY total DESC;
 ```
@@ -370,30 +365,41 @@ ORDER BY total DESC;
 ### SQL de `/ultimos`
 
 ```sql
-SELECT fecha_gasto, proyecto, proveedor, monto_total, medio_pago
-FROM v_gastos_detalle
-WHERE registrado_por = $1
-ORDER BY registrado_en DESC
+SELECT g.fecha_gasto,
+       p.nombre AS proyecto,
+       pr.nombre AS proveedor,
+       g.monto_total,
+       mp.nombre AS medio_pago,
+       u.nombre AS registrado_por
+FROM gastos g
+JOIN proyectos p ON p.id = g.proyecto_id
+JOIN usuarios u ON u.id = g.usuario_id
+LEFT JOIN proveedores pr ON pr.id = g.proveedor_id
+LEFT JOIN medios_pago mp ON mp.id = g.medio_pago_id
+WHERE (g.usuario_id = $1 OR $2::boolean)
+  AND g.estado = 'confirmado'
+ORDER BY g.registrado_en DESC
 LIMIT 5;
 ```
 
-`/resumen` y `/proyectos` solo para roles `administrador` y `gerencia` si se decide
-restringir; para el prototipo se pueden dejar abiertos a todos los usuarios activos.
+`$1` es el usuario actual y `$2` indica si es admin/gerencia. `/cancelar` usa
+`usuario.id` y cancela registros en `falta_dato` o `pendiente_confirmacion`.
 
 ---
 
 ## WF-06 · Exportaciones
 
 **Tipo:** sub-workflow. **Solo `administrador` y `gerencia`.**
+**Comando:** `/exportar` o su alias `/gastos`.
 
-Comando `/exportar` con menú de botones:
+El flujo solo pregunta:
 
 1. Formato: Excel (`.xlsx`) o CSV.
-2. Rango: últimos 30 días (por defecto) o toda la tabla.
-3. Proyecto: todos o uno en particular.
+2. Rango: últimos 30 días o toda la tabla.
 
-Consulta `gastos` confirmados, permite filtrar por `proyecto_id` y
-`fecha_gasto`, y envía el archivo por Telegram como documento.
+No se pregunta por proyecto: **siempre exporta todos los proyectos**. El archivo
+incluye la columna Proyecto para filtrar en Excel. La consulta filtra gastos
+confirmados y el rango de fechas.
 
 ### Columnas del archivo
 
@@ -406,43 +412,43 @@ Medio de pago, Monto, Registrado por y Origen.
 - Las fechas se muestran como `dd-mm-aaaa`.
 - Si no hay datos, se responde sin generar archivo.
 - El CSV se genera en UTF-8; Excel es el formato recomendado.
+- El rango de 30 días usa la fecha de `America/Santiago`.
 
 ---
 
-## WF-07 · Maestras
+## WF-07 · Administración de proyectos
 
 > Diseño detallado: [`07-admin-proyectos.md`](07-admin-proyectos.md).
 
-**Tipo:** sub-workflow. **Solo `administrador` y `gerencia`.**
+**Tipo:** tres workflows. **Solo `administrador` y `gerencia`.**
 
-Comando `/maestras` con botones para administrar proyectos.
+| Workflow | Responsabilidad |
+|---|---|
+| `[MYRA] 07 · Maestras` | Sesión, menú, callbacks, listado, cancelar y salir |
+| `[MYRA] 07A · Interpretar operación` | LLM, parseo, fuzzy matching, validación y borrador |
+| `[MYRA] 07B · Ejecutar operación` | Persistencia determinista y respuesta final |
 
-### Alta de proyecto
+Acepta texto y audio; WF-01 transcribe y envía el texto a 07A cuando hay una sesión
+de administración activa.
 
-1. Nombre del proyecto.
-2. Cliente existente o nuevo.
-3. Alias opcionales.
-4. Resumen final con **Confirmar / Corregir / Cancelar**.
+Acciones:
 
-Si el cliente ya existe con el mismo nombre normalizado, se reutiliza.
-La confirmación final muestra nombre, cliente y alias antes de guardar.
+- Crear proyecto (nombre, cliente, alias).
+- Editar nombre y agregar alias.
+- Desactivar o reactivar un proyecto.
+- Desactivar/reactivar todos los proyectos de un cliente.
+- Desactivar/reactivar todos los proyectos.
+- Listar proyectos activos e inactivos.
+- Salir del modo administración.
 
-### Edición y desactivación
-
-- Editar nombre y alias.
-- Desactivar o reactivar con confirmación.
-- No se borran proyectos: se usa `activo = false`.
-
-### Estado pendiente
-
-La tabla `admin_pending` guarda el paso actual del administrador para que
-pueda responder con texto después de un botón.
-
-Medios de pago quedan pendientes para una iteración posterior.
+El estado de la operación vive en `admin_pending` y expira a las 2 horas. La
+confirmación se hace con botones; la escritura solo ocurre al confirmar.
 
 ---
 
 ## WF-08 · Errores
+
+**Estado:** pendiente de implementación.
 
 **Tipo:** workflow con `Error Trigger`
 **Responsabilidad:** centralizar fallos.
@@ -452,9 +458,21 @@ Medios de pago quedan pendientes para una iteración posterior.
 3. Postgres: registra en `registros_entrada.error_detalle` si hay `registro_id`; si no,
    solo log estructurado.
 4. Telegram: avisa a todos los usuarios con rol `administrador` o `gerencia`.
-5. Opcional: responder al chat de origen con un mensaje genérico.
 
-En n8n: **Settings → Error Workflow → `[MYRA] 07 · Errores`** en cada workflow.
+En n8n: **Settings → Error Workflow → `[MYRA] 08 · Errores`** en cada workflow.
+
+---
+
+## WF-09 · Heartbeat
+
+**Estado:** pendiente de implementación.
+
+**Tipo:** workflow con `Schedule Trigger`
+**Responsabilidad:** evitar la pausa por inactividad de Supabase.
+
+1. `Schedule Trigger` cada 3 días.
+2. Postgres: `SELECT 1;` o un upsert en una tabla `heartbeat`.
+3. Si falla, avisar al administrador por Telegram.
 
 ---
 
@@ -474,6 +492,12 @@ En n8n: **Settings → Error Workflow → `[MYRA] 07 · Errores`** en cada workf
 | 10 | Cancelar | `estado='cancelado'`, sin gasto |
 | 11 | Corrección de un campo | Se actualiza y vuelve a confirmar |
 | 12 | Reinicio de n8n en medio del flujo | El estado pendiente se conserva |
+| 13 | Audio en modo maestras | Se transcribe y llega a 07A |
+| 14 | Desactivar todos los proyectos de un cliente | Resumen + confirmación; solo cambia los activos |
+| 15 | `/gastos` o `/exportar` | Pregunta formato y rango, exporta todos los proyectos |
+| 16 | Mismo update de Telegram dos veces | Un solo `registro_entrada` |
+| 17 | Fecha futura | Se rechaza y se pregunta la fecha |
+| 18 | Audio de más de 20 MB | Mensaje claro, sin llamar a Groq |
 
 Criterios del charter a verificar:
 

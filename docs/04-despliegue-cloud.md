@@ -17,7 +17,7 @@ n8n Cloud  ──────►  Gemini / Groq (LLM y STT)
 Supabase (PostgreSQL administrado)
    ▲
    │  heartbeat cada 3 días
-   └── workflow [MYRA] 08 · Heartbeat
+   └── workflow [MYRA] 09 · Heartbeat
 ```
 
 > Docker Compose y PostgreSQL local se mantienen **solo para desarrollo**. No son
@@ -121,6 +121,7 @@ No basta con que Supabase tenga el proyecto: hay que tener una copia recuperable
 ### 3.2 Importar workflows
 
 1. Importar los JSON de `n8n/workflows/` desde **Workflows → Import from File**.
+   Los archivos actuales son `myra-00` a `myra-07b` (incluye 07A y 07B).
 2. Recrear las credenciales en n8n Cloud:
    - Telegram
    - Google Gemini
@@ -128,8 +129,8 @@ No basta con que Supabase tenga el proyecto: hay que tener una copia recuperable
    - Postgres (Supabase)
 3. Asignar las credenciales nuevas a cada nodo. Los IDs de credenciales del entorno
    local **no** se importan.
-4. Publicar también los sub-workflows. En n8n Cloud no existe el comando local
-   `publish:workflow`; se hace desde la UI.
+4. Publicar también los sub-workflows: WF-00, WF-02, WF-03, WF-04, WF-05, WF-06,
+   WF-07, WF-07A y WF-07B. En n8n Cloud se hace desde la UI.
 5. Activar WF-01 y verificar que el Telegram Trigger registre el webhook.
 
 Los IDs de workflows y credenciales de la instancia local no sirven en Cloud. Hay que
@@ -174,7 +175,7 @@ vacaciones.
 Crear un workflow independiente:
 
 ```text
-[MYRA] 08 · Heartbeat
+[MYRA] 09 · Heartbeat
 Schedule Trigger (cada 3 días)
    → Postgres: SELECT 1;
    → IF error → Telegram al administrador
@@ -204,7 +205,7 @@ Reglas:
 2. Crear el proyecto Supabase y aplicar migraciones.
 3. Importar los workflows en n8n Cloud.
 4. Recrear credenciales y remapear IDs.
-5. Publicar WF-00, WF-02, WF-03 y WF-04.
+5. Publicar WF-00, WF-02, WF-03, WF-04, WF-05, WF-06, WF-07, WF-07A y WF-07B.
 6. Configurar y activar el heartbeat.
 7. Ejecutar las pruebas manuales.
 
@@ -230,8 +231,13 @@ credenciales locales y storage de ejecuciones; en Cloud no aplica.
 - [ ] Un saludo con datos de gasto, por ejemplo “hola, gasté 3.000 en Copec”, sigue el flujo de extracción.
 - [ ] Los botones inline ejecutan el comando y editan el mensaje.
 - [ ] `/cancelar`: cancela el registro pendiente.
+- [ ] `/resumen`: solo admin/gerencia; `jefe_obra` recibe un mensaje de permiso.
 - [ ] `/maestras`: solo administradores pueden crear proyectos.
 - [ ] Alta de proyecto con cliente existente, alias y confirmación final.
+- [ ] Administración por audio: la transcripción llega a 07A y muestra el resumen.
+- [ ] Desactivar todos los proyectos de un cliente: pide confirmación y no toca los inactivos.
+- [ ] `/gastos` o `/exportar`: solo pregunta formato y rango; exporta todos los proyectos.
+- [ ] Migración `006`: el índice único por usuario/mensaje está aplicado.
 - [ ] Heartbeat: ejecución exitosa y sin pausa de Supabase.
 
 ## 7. Operación

@@ -1,7 +1,7 @@
 # Prompt · Extracción de gasto v1
 
 **Uso:** WF-03 · Extracción
-**Modelo sugerido:** Gemini 2.0 Flash (capa gratuita)
+**Modelo usado:** Gemini 3.1 Flash Lite (`gemini-3.1-flash-lite`)
 **Salida:** JSON estricto (`response_mime_type: application/json`)
 
 > El prompt se versiona acá y se copia al nodo `Armar prompt`. Si cambia, crear
@@ -225,7 +225,7 @@ Guardar en `registros_entrada`:
 - `modelo_ia`: nombre y versión del modelo.
 - `json_extraido`: la salida cruda y la normalizada.
 - `transcripcion`: el texto de entrada.
-- `duracion_ms`: tiempo total del flujo.
+- `duracion_ms`: duración del audio (el tiempo total de registro se medirá aparte).
 
 Para medir la precisión (>80%), comparar `json_extraido` (lo que entendió la IA) con
 los datos que finalmente se confirmaron en `gastos`. Esa comparación debe hacerse en

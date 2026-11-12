@@ -32,7 +32,7 @@ en el punto de compra y lo imputa a un proyecto antes de persistirlo.
 | STT + NLU | Groq Whisper + Google Gemini | Transcripción y extracción de campos |
 | Datos | Supabase (PostgreSQL administrado) | Modelo relacional y auditoría |
 | Exposición | HTTPS de n8n Cloud | Webhook estable de Telegram |
-| Disponibilidad | Workflow `[MYRA] 08 · Heartbeat` | Evita la pausa por inactividad de Supabase |
+| Disponibilidad | Workflow `[MYRA] 09 · Heartbeat` | Evita la pausa por inactividad de Supabase |
 | Contenedores | Docker Compose solo en desarrollo local | Reproducibilidad del entorno de pruebas |
 
 ## 3. Decisiones de diseño
@@ -68,7 +68,7 @@ Campos que gobiernan la conversación:
 - `campo_pendiente`: qué dato falta o se está corrigiendo (`proyecto`, `monto`, ...).
 - `json_extraido`: último JSON entendido por la IA.
 - `transcripcion`: texto del audio o mensaje.
-- `duracion_ms`: para medir la meta de < 60 segundos.
+- `duracion_ms`: duración del audio en milisegundos. El tiempo total de registro (< 60 s) todavía no se persiste; queda como métrica pendiente.
 
 Ventajas: sobrevive a reinicios de n8n, permite retomar una conversación y deja
 trazabilidad para la tesis.
@@ -98,6 +98,8 @@ El Telegram Trigger debe escuchar **`message` y `callback_query`**.
 ### 3.4 Idempotencia
 
 - `gastos.registro_entrada_id` es `UNIQUE`: un registro no puede generar dos gastos.
+- `registros_entrada (usuario_id, telegram_message_id)` tiene índice único (migración `006`) para que un reintento de Telegram no cree dos registros.
+- Antes de crear un registro se verifica que no exista el mismo `telegram_message_id` para el usuario.
 - Antes de confirmar se verifica que el `registro_entrada` siga en
   `pendiente_confirmacion`.
 - Si el usuario pulsa dos veces "Confirmar", la segunda responde "ya registrado".
@@ -108,9 +110,9 @@ La tabla `usuarios` es una whitelist por `telegram_chat_id`. Todo update de un c
 no registrado o inactivo se rechaza antes de tocar la IA o la base. El rol
 (`jefe_obra`, `administrador`, `gerencia`) habilita comandos distintos:
 
-- `jefe_obra`: registrar gastos y consultar sus últimos registros.
-- `administrador`: maestras, exportaciones.
-- `gerencia`: resúmenes consolidados.
+- `jefe_obra`: registrar gastos; menú con Proyectos, Últimos, Cancelar y Ayuda.
+- `administrador`: además puede ver Resumen, administrar Maestras y exportar.
+- `gerencia`: mismas capacidades que administrador, incluido el resumen consolidado.
 
 ### 3.6 Fuzzy matching de proyectos
 
@@ -125,9 +127,22 @@ combina:
 
 Nunca se asigna un proyecto "parecido" sin confirmación cuando la confianza es baja.
 
-### 3.7 Errores
+### 3.7 Administración de proyectos
 
-- Un workflow `[MYRA] 07 · Errores` con **Error Trigger** centraliza los fallos.
+La administración se separó en tres workflows para reducir complejidad:
+
+- `[MYRA] 07 · Maestras`: sesión, menú, callbacks, listado, cancelar y salir.
+- `[MYRA] 07A · Interpretar operación`: LLM, fuzzy matching, validación y borrador.
+- `[MYRA] 07B · Ejecutar operación`: persistencia determinista y respuesta.
+
+Acepta texto y audio (WF-01 transcribe y envía a 07A), y permite crear, editar,
+desactivar/reactivar y listar proyectos. También soporta operaciones masivas por
+cliente o sobre todos los proyectos. El estado vive en `admin_pending` y expira a las
+2 horas.
+
+### 3.8 Errores
+
+- Un workflow `[MYRA] 08 · Errores` con **Error Trigger** centraliza los fallos (pendiente de implementación).
 - El error se registra con el `execution.id` de n8n y se avisa al chat administrador.
 - El usuario recibe un mensaje genérico ("No pude procesar el audio, intenta de nuevo")
   sin exponer detalles técnicos.
@@ -145,7 +160,7 @@ Nunca se asigna un proyecto "parecido" sin confirmación cuando la confianza es 
 7. Si falta un campo -> estado falta_dato y pregunta puntual
 8. Si están los 5 -> estado pendiente_confirmacion + resumen con botones
 9. Usuario confirma
-10. WF-04 inserta proveedor (si es nuevo), gasto y comprobante
+10. WF-04 inserta proveedor (si es nuevo) y gasto; el comprobante queda pendiente para OCR
 11. Respuesta final con ID y resumen
 ```
 
@@ -162,7 +177,7 @@ Nunca se asigna un proyecto "parecido" sin confirmación cuando la confianza es 
 
 - n8n Cloud con URL HTTPS fija; sin servidor propio ni túnel de Cloudflare.
 - Supabase como PostgreSQL administrado, con conexión SSL.
-- Workflow `[MYRA] 08 · Heartbeat` cada 3 días para evitar la pausa por inactividad
+- Workflow `[MYRA] 09 · Heartbeat` cada 3 días para evitar la pausa por inactividad
   del plan gratuito de Supabase.
 - Respaldos periódicos de Supabase y exportación de workflows a git.
 - Sin servidor UCN, sin VPS, sin Nginx/Caddy y sin Docker Compose en producción.
@@ -177,7 +192,7 @@ Nunca se asigna un proyecto "parecido" sin confirmación cuando la confianza es 
 | URL del quick tunnel cambia | Solo afecta desarrollo; en producción n8n Cloud da URL fija |
 | Reinicio de n8n pierde contexto | Estado en PostgreSQL, no en memoria |
 | Proyecto mal asignado | Fuzzy match + confirmación obligatoria si la confianza es baja |
-| Supabase free se pausa por inactividad | Workflow `[MYRA] 08 · Heartbeat` cada 3 días |
+| Supabase free se pausa por inactividad | Workflow `[MYRA] 09 · Heartbeat` cada 3 días |
 | Límite de ejecuciones de n8n Cloud | Medir volumen mensual y elegir plan; los sub-workflows no consumen el límite |
 | Credenciales/IDs locales no sirven en Cloud | Recrear credenciales y remapear nodos al importar |
 | Pérdida de workflows o datos | Export de workflows a git + respaldos de Supabase |

@@ -17,7 +17,7 @@ conversación del bot. Diagrama: [`modelo-relacional.png`](db/modelo-relacional.
 | `proveedores` | Ferreterías y empresas | `nombre_normalizado` único evita duplicados |
 | `registros_entrada` | Bitácora y estado de la conversación | Una fila por audio/texto/foto |
 | `gastos` | Gasto confirmado | 5 campos críticos + `registro_entrada_id` único |
-| `comprobantes` | Boleta/factura asociada | Uno o varios por gasto |
+| `comprobantes` | Boleta/factura asociada | Esquema listo; la carga/OCR aún no está implementada |
 | `v_gastos_detalle` | Vista legible para reportes | Une proyecto, cliente, categoría, etc. |
 
 ## 2. Los 5 campos críticos
@@ -48,7 +48,7 @@ procesando → falta_dato → pendiente_confirmacion → confirmado
 - `transcripcion`: texto del audio o mensaje.
 - `modelo_ia`: modelo usado para extraer o transcribir (por ejemplo,
   `gemini-3.1-flash-lite` o `whisper-large-v3`).
-- `duracion_ms`: para verificar la meta de < 60 s.
+- `duracion_ms`: duración del audio en milisegundos. El tiempo total de registro (< 60 s) aún no se persiste.
 - `telegram_message_id` y `telegram_file_id`: trazabilidad con Telegram.
 
 El trigger `trg_registros_actualizado` mantiene `actualizado_en`.
@@ -56,11 +56,13 @@ El trigger `trg_registros_actualizado` mantiene `actualizado_en`.
 ## 4. Integridad
 
 - `gastos.registro_entrada_id` es **UNIQUE**: un registro no puede generar dos gastos.
+- `gastos.origen` registra `texto`, `voz` o `foto` a partir de `registros_entrada.tipo`; no es un valor fijo.
 - `gastos.proyecto_id` es **NOT NULL**: no existen gastos huérfanos.
 - `gastos.monto_total > 0`.
 - Borrado lógico con `activo` / `estado`, no `DELETE`.
 - `proveedores.nombre_normalizado` único: "Sodimac" y "sodimac" son el mismo.
 - `proyecto_alias` único por `lower(alias)`: evita dos alias iguales en proyectos distintos.
+- `registros_entrada (usuario_id, telegram_message_id)` único (migración `006`): evita duplicados por reintentos de Telegram.
 
 ## 5. Migraciones
 
@@ -182,7 +184,7 @@ SELECT proyecto,
        COUNT(*) AS compras,
        SUM(monto_total) AS total
 FROM v_gastos_detalle
-WHERE fecha_gasto >= date_trunc('month', current_date)
+WHERE fecha_gasto >= date_trunc('month', (now() AT TIME ZONE 'America/Santiago'))::date
 GROUP BY proyecto
 ORDER BY total DESC;
 ```
@@ -261,7 +263,7 @@ docker compose start n8n
 ## 10. Heartbeat de Supabase
 
 El plan gratuito de Supabase pausa el proyecto después de **7 días sin actividad**
-(verificar la política vigente). Para evitarlo, el workflow `[MYRA] 08 · Heartbeat`
+(verificar la política vigente). Para evitarlo, el workflow `[MYRA] 09 · Heartbeat`
 se ejecuta cada 3 días y hace una consulta simple:
 
 ```sql
