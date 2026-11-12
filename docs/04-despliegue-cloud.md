@@ -227,6 +227,8 @@ credenciales locales y storage de ejecuciones; en Cloud no aplica.
 - [ ] Un saludo con datos de gasto, por ejemplo “hola, gasté 3.000 en Copec”, sigue el flujo de extracción.
 - [ ] Los botones inline ejecutan el comando y editan el mensaje.
 - [ ] `/cancelar`: cancela el registro pendiente.
+- [ ] `/maestras`: solo administradores pueden crear proyectos.
+- [ ] Alta de proyecto con cliente existente, alias y confirmación final.
 - [ ] Heartbeat: ejecución exitosa y sin pausa de Supabase.
 
 ## 7. Operación

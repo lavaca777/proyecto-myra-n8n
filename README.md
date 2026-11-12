@@ -191,8 +191,10 @@ producción n8n Cloud entrega una URL HTTPS fija.
 | 03 | Extracción | LLM + validación de los 5 campos + fuzzy match de proyecto |
 | 04 | Confirmación | Máquina de estados, correcciones y persistencia del gasto |
 | 05 | Comandos | `/start`, `/proyectos`, `/resumen`, `/ultimos`, `/cancelar` |
-| 06 | Reportes | Resumen semanal CSV/Excel (Could) |
-| 07 | Errores | Error Trigger + aviso al administrador |
+| 06 | Exportaciones | Descarga de gastos para administración (Excel/CSV, filtros por fecha y proyecto) |
+| 07 | Maestras | Alta de proyectos, clientes y alias; edición y desactivación |
+| 08 | Errores | Error Trigger + aviso al administrador |
+| 09 | Heartbeat | Consulta periódica a Supabase para evitar la pausa por inactividad |
 | 08 | Heartbeat | Consulta periódica a Supabase para evitar la pausa por inactividad |
 
 El detalle de nodos y transiciones está en [`docs/02-flujos.md`](docs/02-flujos.md).
@@ -380,7 +382,9 @@ está vacío. Usa `.\scripts\db-migrate.ps1`.
 - [x] WF-03 Extracción
 - [x] WF-04 Confirmación y persistencia
 - [x] WF-05 Comandos
-- [ ] WF-06 Reportes
-- [ ] WF-07 Errores
+- [x] WF-06 Exportaciones
+- [x] WF-07 Maestras (alta de proyectos)
+- [ ] WF-07 edición/desactivación de proyectos
+- [ ] WF-08 Errores
+- [ ] WF-09 Heartbeat
 - [ ] Despliegue en n8n Cloud + Supabase
-- [ ] Workflow de heartbeat en producción

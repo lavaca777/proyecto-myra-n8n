@@ -27,7 +27,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const update = $json;\nconst msg = update.message;\nconst cb = update.callback_query;\nconst from = (msg && msg.from) || (cb && cb.from) || {};\nconst chat = (msg && msg.chat) || (cb && cb.message && cb.message.chat) || {};\nconst texto = (msg && msg.text) || '';\nconst esComandoTexto = texto.startsWith('/');\n\nlet tipo = 'texto';\nif (cb) tipo = 'callback';\nelse if (msg && msg.voice) tipo = 'voz';\nelse if (msg && msg.photo) tipo = 'foto';\nelse if (esComandoTexto) tipo = 'comando';\n\nlet comando = null;\nif (cb && cb.data && String(cb.data).startsWith('cmd:')) {\n  tipo = 'comando';\n  comando = String(cb.data).slice(4).split('@')[0].toLowerCase();\n} else if (esComandoTexto) {\n  comando = texto.split(/\\s+/)[0].replace('/', '').split('@')[0].toLowerCase();\n}\n\nconst alias = {\n  help: 'ayuda', h: 'ayuda', ayuda: 'ayuda',\n  start: 'start', inicio: 'start', menu: 'start',\n  proyectos: 'proyectos', resumen: 'resumen',\n  ultimos: 'ultimos', cancelar: 'cancelar'\n};\nif (comando) comando = alias[comando] || comando;\n\nreturn [{\n  json: {\n    tipo,\n    telegram_chat_id: chat.id,\n    telegram_user_id: from.id,\n    telegram_message_id: (msg && msg.message_id) || (cb && cb.message && cb.message.message_id) || null,\n    texto,\n    comando,\n    callback_data: (cb && cb.data) || null,\n    file_id: (msg && msg.voice && msg.voice.file_id) || null,\n    duracion_seg: (msg && msg.voice && msg.voice.duration) || null,\n    nombre_usuario: [from.first_name, from.last_name].filter(Boolean).join(' '),\n    update_id: update.update_id\n  }\n}];"
+        "jsCode": "const update = $json;\nconst msg = update.message;\nconst cb = update.callback_query;\nconst from = (msg && msg.from) || (cb && cb.from) || {};\nconst chat = (msg && msg.chat) || (cb && cb.message && cb.message.chat) || {};\nconst texto = (msg && msg.text) || '';\nconst esComandoTexto = texto.startsWith('/');\n\nlet tipo = 'texto';\nif (cb) tipo = 'callback';\nelse if (msg && msg.voice) tipo = 'voz';\nelse if (msg && msg.photo) tipo = 'foto';\nelse if (esComandoTexto) tipo = 'comando';\n\nlet comando = null;\nif (cb && cb.data && String(cb.data).startsWith('cmd:')) {\n  tipo = 'comando';\n  comando = String(cb.data).slice(4).split('@')[0].toLowerCase();\n} else if (cb && cb.data && String(cb.data).startsWith('exp:')) {\n  tipo = 'comando';\n  comando = 'exportar';\n} else if (cb && cb.data && String(cb.data).startsWith('adm:')) {\n  tipo = 'comando';\n  comando = 'maestras';\n} else if (esComandoTexto) {\n  comando = texto.split(/\\s+/)[0].replace('/', '').split('@')[0].toLowerCase();\n}\n\nconst alias = {\n  help: 'ayuda', h: 'ayuda', ayuda: 'ayuda',\n  start: 'start', inicio: 'start', menu: 'start',\n  proyectos: 'proyectos', resumen: 'resumen',\n  ultimos: 'ultimos', cancelar: 'cancelar'\n};\nif (comando) comando = alias[comando] || comando;\n\nreturn [{\n  json: {\n    tipo,\n    telegram_chat_id: chat.id,\n    telegram_user_id: from.id,\n    telegram_message_id: (msg && msg.message_id) || (cb && cb.message && cb.message.message_id) || null,\n    texto,\n    comando,\n    callback_data: (cb && cb.data) || null,\n    file_id: (msg && msg.voice && msg.voice.file_id) || null,\n    duracion_seg: (msg && msg.voice && msg.voice.duration) || null,\n    nombre_usuario: [from.first_name, from.last_name].filter(Boolean).join(' '),\n    update_id: update.update_id\n  }\n}];"
       },
       "id": "9ac51dc5-0164-43f6-8dda-53af37ca35cb",
       "name": "Normalizar update",
@@ -548,6 +548,165 @@
         1296,
         560
       ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT p.id, p.usuario_id, p.accion, p.paso, p.entidad_id, p.payload\nFROM admin_pending p\nJOIN usuarios u ON u.id = p.usuario_id\nWHERE p.usuario_id = $1\n  AND u.rol IN ('administrador','gerencia')\nLIMIT 1;",
+        "options": {
+          "queryReplacement": "={{ [ $json.usuario.id ] }}"
+        }
+      },
+      "id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee",
+      "name": "Buscar admin pendiente",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "position": [
+        800,
+        400
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "cTGjz9LhGz7aqgbC",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.admin_pending && $json.admin_pending.id && $json.tipo === 'texto' ? 0 : 1 }}"
+      },
+      "id": "bbbbbbbb-cccc-4ddd-8eee-ffffffffffff",
+      "name": "?Admin pendiente?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1000,
+        400
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70",
+          "mode": "list",
+          "cachedResultName": "[MYRA] 07 ? Maestras"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "callback_data": "={{ $('Evaluar autorizacion').first().json.callback_data }}",
+            "texto": "={{ $('Evaluar autorizacion').first().json.texto }}",
+            "usuario_id": "={{ $('Evaluar autorizacion').first().json.usuario.id }}",
+            "usuario_nombre": "={{ $('Evaluar autorizacion').first().json.usuario.nombre }}",
+            "usuario_rol": "={{ $('Evaluar autorizacion').first().json.usuario.rol }}",
+            "telegram_chat_id": "={{ $('Evaluar autorizacion').first().json.telegram_chat_id }}",
+            "telegram_message_id": "={{ $('Evaluar autorizacion').first().json.telegram_message_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "callback_data",
+              "displayName": "callback_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "usuario_id",
+              "displayName": "usuario_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "usuario_nombre",
+              "displayName": "usuario_nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "usuario_rol",
+              "displayName": "usuario_rol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telegram_chat_id",
+              "displayName": "telegram_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "telegram_message_id",
+              "displayName": "telegram_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "cccccccc-dddd-4eee-8fff-111111111111",
+      "name": "Enviar a maestras",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1200,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $('Evaluar autorizacion').first().json;\nconst pending = $input.first().json || {};\nreturn [{ json: { ...original, admin_pending: pending } }];"
+      },
+      "id": "dddddddd-eeee-4fff-8aaa-cccccccccccc",
+      "name": "Preparar admin",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        900,
+        400
+      ]
     }
   ],
   "pinData": {},
@@ -600,7 +759,7 @@
       "main": [
         [
           {
-            "node": "Router",
+            "node": "Buscar admin pendiente",
             "type": "main",
             "index": 0
           }
@@ -680,6 +839,46 @@
         [
           {
             "node": "Enviar a extraccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar admin pendiente": {
+      "main": [
+        [
+          {
+            "node": "Preparar admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "?Admin pendiente?": {
+      "main": [
+        [
+          {
+            "node": "Enviar a maestras",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Router",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar admin": {
+      "main": [
+        [
+          {
+            "node": "?Admin pendiente?",
             "type": "main",
             "index": 0
           }

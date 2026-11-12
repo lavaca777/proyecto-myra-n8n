@@ -17,8 +17,8 @@
     {
       "parameters": {
         "mode": "expression",
-        "numberOutputs": 6,
-        "output": "={{ $json.comando === 'start' ? 0 : $json.comando === 'proyectos' ? 1 : $json.comando === 'resumen' ? 2 : $json.comando === 'ultimos' ? 3 : $json.comando === 'cancelar' ? 4 : 5 }}"
+        "numberOutputs": 8,
+        "output": "={{ $json.comando === 'start' ? 0 : $json.comando === 'proyectos' ? 1 : $json.comando === 'resumen' ? 2 : $json.comando === 'ultimos' ? 3 : $json.comando === 'cancelar' ? 4 : $json.comando === 'exportar' ? 5 : $json.comando === 'maestras' ? 6 : 7 }}"
       },
       "id": "22222222-2222-4222-8222-222222222222",
       "name": "Comando",
@@ -127,7 +127,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const base = $('Cuando se ejecuta').first().json;\nconst comando = String(base.comando || '').toLowerCase();\nconst nombre = base.usuario_nombre || (base.usuario && base.usuario.nombre) || 'equipo';\nconst rows = $input.all().map(i => i.json).filter(r => r && Object.keys(r).length > 0);\n\nconst esc = (s) => String(s ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;');\n\nconst money = (n) => new Intl.NumberFormat('es-CL', {\n  style: 'currency',\n  currency: 'CLP',\n  maximumFractionDigits: 0\n}).format(Number(n) || 0);\n\nconst fecha = (f) => {\n  const s = String(f || '').slice(0, 10);\n  return s ? s.split('-').reverse().join('-') : '(sin fecha)';\n};\n\nconst proyectos = rows.filter(r => r.nombre).map(r => {\n  const alias = Array.isArray(r.alias) ? r.alias : [];\n  const linea = `• <b>${esc(r.nombre)}</b>`;\n  return alias.length\n    ? `${linea}\\n  <i>Alias: ${alias.map(esc).join(', ')}</i>`\n    : linea;\n});\n\nlet respuesta;\nif (comando === 'start') {\n  respuesta = `🏗️ <b>MYRA · Asistente de gastos</b>\\n\\n¡Hola, <b>${esc(nombre)}</b>! Puedo registrar tus compras por voz o texto.\\n\\n<b>Ejemplo</b>\\n<i>“Anota 12.500 en Copec, débito, obra Peñuelas, bencina.”</i>\\n\\n<b>Proyectos disponibles</b>\\n${proyectos.length ? proyectos.join('\\n') : '• (no hay proyectos cargados)'}\\n\\nUsa los botones de abajo o escribe /ayuda.`;\n} else if (comando === 'proyectos') {\n  respuesta = `📁 <b>Proyectos activos</b>\\n\\n${proyectos.length ? proyectos.join('\\n') : '• (no hay proyectos cargados)'}`;\n} else if (comando === 'resumen') {\n  const filas = rows.filter(r => r.proyecto);\n  if (!filas.length) {\n    respuesta = '📊 <b>Resumen del mes</b>\\n\\nNo hay gastos confirmados este mes.';\n  } else {\n    const total = filas.reduce((s, r) => s + Number(r.total || 0), 0);\n    const detalle = filas.map(r => `• <b>${esc(r.proyecto)}</b>\\n  <i>${r.compras} ${Number(r.compras) === 1 ? 'compra' : 'compras'}</i> · <b>${money(r.total)}</b>`).join('\\n\\n');\n    respuesta = `📊 <b>Resumen del mes</b>\\n\\n${detalle}\\n\\n<b>Total: ${money(total)}</b>`;\n  }\n} else if (comando === 'ultimos') {\n  const filas = rows.filter(r => r.proyecto);\n  if (!filas.length) {\n    respuesta = '🧾 <b>Tus últimos gastos</b>\\n\\nNo tienes gastos registrados.';\n  } else {\n    const detalle = filas.map(r => `• <b>${fecha(r.fecha_gasto)}</b> · ${esc(r.proyecto)}\\n  ${esc(r.proveedor || '(sin proveedor)')} · ${money(r.monto_total)} · ${esc(r.medio_pago || '(sin medio de pago)')}`).join('\\n\\n');\n    respuesta = `🧾 <b>Tus últimos gastos</b>\\n\\n${detalle}`;\n  }\n} else if (comando === 'cancelar') {\n  const n = Number((rows[0] && rows[0].cancelados) || 0);\n  respuesta = n > 0\n    ? `🧹 <b>Registros pendientes</b>\\n\\nListo. Cancelé ${n} ${n === 1 ? 'registro pendiente' : 'registros pendientes'}.`\n    : '🧹 <b>Registros pendientes</b>\\n\\nNo tenías registros pendientes.';\n} else if (comando === 'ayuda') {\n  respuesta = '❓ <b>Ayuda</b>\\n\\n<b>Comandos</b>\\n/proyectos — Obras activas\\n/resumen — Total del mes\\n/ultimos — Tus últimos gastos\\n/cancelar — Cancela el registro pendiente\\n/ayuda — Esta ayuda\\n/help y /h también funcionan.\\n\\nTambién puedes usar los botones de abajo.';\n} else {\n  respuesta = `🤔 No reconocí <code>/${esc(comando)}</code>.\\n\\nUsa los botones o escribe /ayuda.`;\n}\n\nreturn [{\n  json: {\n    respuesta,\n    telegram_chat_id: base.telegram_chat_id,\n    telegram_message_id: base.telegram_message_id,\n    editar: String(base.callback_data || '').startsWith('cmd:')\n  }\n}];"
+        "jsCode": "const base = $('Cuando se ejecuta').first().json;\nconst comando = String(base.comando || '').toLowerCase();\nconst nombre = base.usuario_nombre || (base.usuario && base.usuario.nombre) || 'equipo';\nconst rol = base.usuario_rol || (base.usuario && base.usuario.rol) || '';\nconst esAdmin = ['administrador', 'gerencia'].includes(String(rol).toLowerCase());\nconst rows = $input.all().map(i => i.json).filter(r => r && Object.keys(r).length > 0);\n\nconst esc = (s) => String(s ?? '')\n  .replace(/&/g, '&amp;')\n  .replace(/</g, '&lt;')\n  .replace(/>/g, '&gt;');\n\nconst money = (n) => new Intl.NumberFormat('es-CL', {\n  style: 'currency',\n  currency: 'CLP',\n  maximumFractionDigits: 0\n}).format(Number(n) || 0);\n\nconst fecha = (f) => {\n  const s = String(f || '').slice(0, 10);\n  return s ? s.split('-').reverse().join('-') : '(sin fecha)';\n};\n\nconst proyectos = rows.filter(r => r.nombre).map(r => {\n  const alias = Array.isArray(r.alias) ? r.alias : [];\n  const linea = `• <b>${esc(r.nombre)}</b>`;\n  return alias.length\n    ? `${linea}\\n  <i>Alias: ${alias.map(esc).join(', ')}</i>`\n    : linea;\n});\n\nlet respuesta;\nif (comando === 'start') {\n  respuesta = `🏗️ <b>MYRA · Asistente de gastos</b>\\n\\n¡Hola, <b>${esc(nombre)}</b>! Puedo registrar tus compras por voz o texto.\\n\\n<b>Ejemplo</b>\\n<i>“Anota 12.500 en Copec, débito, obra Peñuelas, bencina.”</i>\\n\\n<b>Proyectos disponibles</b>\\n${proyectos.length ? proyectos.join('\\n') : '• (no hay proyectos cargados)'}\\n\\nUsa los botones de abajo o escribe /ayuda.`;\n} else if (comando === 'proyectos') {\n  respuesta = `📁 <b>Proyectos activos</b>\\n\\n${proyectos.length ? proyectos.join('\\n') : '• (no hay proyectos cargados)'}`;\n} else if (comando === 'resumen') {\n  const filas = rows.filter(r => r.proyecto);\n  if (!filas.length) {\n    respuesta = '📊 <b>Resumen del mes</b>\\n\\nNo hay gastos confirmados este mes.';\n  } else {\n    const total = filas.reduce((s, r) => s + Number(r.total || 0), 0);\n    const detalle = filas.map(r => `• <b>${esc(r.proyecto)}</b>\\n  <i>${r.compras} ${Number(r.compras) === 1 ? 'compra' : 'compras'}</i> · <b>${money(r.total)}</b>`).join('\\n\\n');\n    respuesta = `📊 <b>Resumen del mes</b>\\n\\n${detalle}\\n\\n<b>Total: ${money(total)}</b>`;\n  }\n} else if (comando === 'ultimos') {\n  const filas = rows.filter(r => r.proyecto);\n  if (!filas.length) {\n    respuesta = '🧾 <b>Tus últimos gastos</b>\\n\\nNo tienes gastos registrados.';\n  } else {\n    const detalle = filas.map(r => `• <b>${fecha(r.fecha_gasto)}</b> · ${esc(r.proyecto)}\\n  ${esc(r.proveedor || '(sin proveedor)')} · ${money(r.monto_total)} · ${esc(r.medio_pago || '(sin medio de pago)')}`).join('\\n\\n');\n    respuesta = `🧾 <b>Tus últimos gastos</b>\\n\\n${detalle}`;\n  }\n} else if (comando === 'cancelar') {\n  const n = Number((rows[0] && rows[0].cancelados) || 0);\n  respuesta = n > 0\n    ? `🧹 <b>Registros pendientes</b>\\n\\nListo. Cancelé ${n} ${n === 1 ? 'registro pendiente' : 'registros pendientes'}.`\n    : '🧹 <b>Registros pendientes</b>\\n\\nNo tenías registros pendientes.';\n} else if (comando === 'ayuda') {\n  respuesta = '❓ <b>Ayuda</b>\\n\\n<b>Comandos</b>\\n/proyectos — Obras activas\\n/resumen — Total del mes\\n/ultimos — Tus últimos gastos\\n/cancelar — Cancela el registro pendiente\\n/ayuda — Esta ayuda\\n/help y /h también funcionan.\\n\\nTambién puedes usar los botones de abajo.';\n  if (esAdmin) respuesta = respuesta.replace('/ayuda — Esta ayuda', '/exportar — Descargar gastos (admin)\\n/ayuda — Esta ayuda');\n} else {\n  respuesta = `🤔 No reconocí <code>/${esc(comando)}</code>.\\n\\nUsa los botones o escribe /ayuda.`;\n}\n\nreturn [{\n  json: {\n    respuesta,\n    telegram_chat_id: base.telegram_chat_id,\n    telegram_message_id: base.telegram_message_id,\n    usuario_rol: base.usuario_rol || (base.usuario && base.usuario.rol) || null,\n    editar: String(base.callback_data || '').startsWith('cmd:')\n  }\n}];"
       },
       "id": "77777777-7777-4777-8777-777777777777",
       "name": "Armar respuesta",
@@ -213,8 +213,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        896,
-        0
+        1344,
+        96
       ],
       "webhookId": "99999999-9999-4999-8999-999999999999",
       "credentials": {
@@ -315,7 +315,7 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        1120,
+        1344,
         -96
       ],
       "webhookId": "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
@@ -326,6 +326,458 @@
           "name": "Telegram account"
         }
       }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "e06c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70",
+          "mode": "list",
+          "cachedResultName": "[MYRA] 06 · Exportaciones"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "callback_data": "={{ $json.callback_data }}",
+            "usuario_id": "={{ $json.usuario.id }}",
+            "usuario_nombre": "={{ $json.usuario.nombre }}",
+            "usuario_rol": "={{ $json.usuario.rol }}",
+            "telegram_chat_id": "={{ $json.telegram_chat_id }}",
+            "telegram_message_id": "={{ $json.telegram_message_id }}",
+            "texto": "={{ $json.texto }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "callback_data",
+              "displayName": "callback_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "usuario_id",
+              "displayName": "usuario_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "usuario_nombre",
+              "displayName": "usuario_nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "usuario_rol",
+              "displayName": "usuario_rol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telegram_chat_id",
+              "displayName": "telegram_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "telegram_message_id",
+              "displayName": "telegram_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+      "name": "Enviar a exportaciones",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        672,
+        480
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ ['administrador','gerencia'].includes(String($json.usuario_rol || '').toLowerCase()) ? 0 : 1 }}"
+      },
+      "id": "ffffffff-ffff-4fff-8fff-ffffffffffff",
+      "name": "Rol",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ $json.editar ? 0 : 1 }}"
+      },
+      "id": "11111111-2222-4333-8444-555555555555",
+      "name": "¿Editar admin?",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1120,
+        -96
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "editMessageText",
+        "messageType": "message",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "messageId": "={{ $json.telegram_message_id }}",
+        "text": "={{ $json.respuesta }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? Proyectos",
+                    "additionalFields": {
+                      "callback_data": "cmd:proyectos"
+                    }
+                  },
+                  {
+                    "text": "?? Resumen",
+                    "additionalFields": {
+                      "callback_data": "cmd:resumen"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? ?ltimos",
+                    "additionalFields": {
+                      "callback_data": "cmd:ultimos"
+                    }
+                  },
+                  {
+                    "text": "? Cancelar",
+                    "additionalFields": {
+                      "callback_data": "cmd:cancelar"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? Maestras",
+                    "additionalFields": {
+                      "callback_data": "cmd:maestras"
+                    }
+                  },
+                  {
+                    "text": "?? Exportar",
+                    "additionalFields": {
+                      "callback_data": "cmd:exportar"
+                    }
+                  },
+                  {
+                    "text": "? Ayuda",
+                    "additionalFields": {
+                      "callback_data": "cmd:ayuda"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? Men?",
+                    "additionalFields": {
+                      "callback_data": "cmd:start"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "11111111-5555-4666-8777-888888888888",
+      "name": "Editar comando admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        -96
+      ],
+      "webhookId": "11111111-6666-4777-8888-999999999999",
+      "onError": "continueErrorOutput",
+      "credentials": {
+        "telegramApi": {
+          "id": "5417ZlcyBFHgxQ8J",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.respuesta }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? Proyectos",
+                    "additionalFields": {
+                      "callback_data": "cmd:proyectos"
+                    }
+                  },
+                  {
+                    "text": "?? Resumen",
+                    "additionalFields": {
+                      "callback_data": "cmd:resumen"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? ?ltimos",
+                    "additionalFields": {
+                      "callback_data": "cmd:ultimos"
+                    }
+                  },
+                  {
+                    "text": "? Cancelar",
+                    "additionalFields": {
+                      "callback_data": "cmd:cancelar"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? Maestras",
+                    "additionalFields": {
+                      "callback_data": "cmd:maestras"
+                    }
+                  },
+                  {
+                    "text": "?? Exportar",
+                    "additionalFields": {
+                      "callback_data": "cmd:exportar"
+                    }
+                  },
+                  {
+                    "text": "? Ayuda",
+                    "additionalFields": {
+                      "callback_data": "cmd:ayuda"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "?? Men?",
+                    "additionalFields": {
+                      "callback_data": "cmd:start"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "11111111-3333-4444-8555-666666666666",
+      "name": "Responder comando admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1344,
+        96
+      ],
+      "webhookId": "11111111-4444-4555-8666-777777777777",
+      "credentials": {
+        "telegramApi": {
+          "id": "5417ZlcyBFHgxQ8J",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70",
+          "mode": "list",
+          "cachedResultName": "[MYRA] 07 ? Maestras"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "callback_data": "={{ $json.callback_data }}",
+            "texto": "={{ $json.texto }}",
+            "usuario_id": "={{ $json.usuario.id }}",
+            "usuario_nombre": "={{ $json.usuario.nombre }}",
+            "usuario_rol": "={{ $json.usuario.rol }}",
+            "telegram_chat_id": "={{ $json.telegram_chat_id }}",
+            "telegram_message_id": "={{ $json.telegram_message_id }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "callback_data",
+              "displayName": "callback_data",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "texto",
+              "displayName": "texto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "usuario_id",
+              "displayName": "usuario_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "usuario_nombre",
+              "displayName": "usuario_nombre",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "usuario_rol",
+              "displayName": "usuario_rol",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "telegram_chat_id",
+              "displayName": "telegram_chat_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            },
+            {
+              "id": "telegram_message_id",
+              "displayName": "telegram_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "dddddddd-eeee-4fff-8aaa-bbbbbbbbbbbb",
+      "name": "Enviar a maestras",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        896,
+        720
+      ]
     }
   ],
   "pinData": {},
@@ -374,6 +826,20 @@
         [
           {
             "node": "Cancelar",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar a exportaciones",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar a maestras",
             "type": "main",
             "index": 0
           }
@@ -435,7 +901,7 @@
       "main": [
         [
           {
-            "node": "¿Editar?",
+            "node": "Rol",
             "type": "main",
             "index": 0
           }
@@ -466,6 +932,54 @@
         [
           {
             "node": "Responder comando",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Rol": {
+      "main": [
+        [
+          {
+            "node": "¿Editar admin?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "¿Editar?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Editar admin?": {
+      "main": [
+        [
+          {
+            "node": "Editar comando admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder comando admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Editar comando admin": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Responder comando admin",
             "type": "main",
             "index": 0
           }

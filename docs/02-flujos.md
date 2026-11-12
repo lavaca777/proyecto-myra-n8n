@@ -344,6 +344,7 @@ Después, si hay comprobante (foto), insertar en `comprobantes` con el `gasto_id
 | `/ultimos` | Últimos 5 gastos del usuario |
 | `/cancelar` | Cancela el registro pendiente |
 | `/ayuda` | Lista de comandos |
+| `/maestras` | Administrar proyectos (solo admin/gerencia) |
 | `/help`, `/h` | Alias de `/ayuda` |
 
 Los comandos se muestran también como botones inline (`cmd:proyectos`,
@@ -381,23 +382,65 @@ restringir; para el prototipo se pueden dejar abiertos a todos los usuarios acti
 
 ---
 
-## WF-06 · OCR de comprobantes (Could)
+## WF-06 · Exportaciones
 
-**Tipo:** sub-workflow
-**Entrada:** `{ file_id, chat_id, usuario_id }`
+**Tipo:** sub-workflow. **Solo `administrador` y `gerencia`.**
 
-1. Telegram `getFile` con Download.
-2. Gemini Vision (`inline_data` con `image/jpeg`).
-3. Prompt: extraer RUT del proveedor, folio, fecha, monto total y tipo de documento.
-4. Combinar con el texto que acompañe la foto (si existe).
-5. Seguir el mismo camino de WF-03 y WF-04.
-6. Guardar `telegram_file_id` y `texto_ocr` en `comprobantes`.
+Comando `/exportar` con menú de botones:
 
-No es requisito del MVP. Se implementa después de estabilizar voz.
+1. Formato: Excel (`.xlsx`) o CSV.
+2. Rango: últimos 30 días (por defecto) o toda la tabla.
+3. Proyecto: todos o uno en particular.
+
+Consulta `gastos` confirmados, permite filtrar por `proyecto_id` y
+`fecha_gasto`, y envía el archivo por Telegram como documento.
+
+### Columnas del archivo
+
+ID, Fecha, Cliente, Proyecto, Categoría, Proveedor, Descripción,
+Medio de pago, Monto, Registrado por y Origen.
+
+### Consideraciones
+
+- Los montos quedan como números para que Excel los sume.
+- Las fechas se muestran como `dd-mm-aaaa`.
+- Si no hay datos, se responde sin generar archivo.
+- El CSV se genera en UTF-8; Excel es el formato recomendado.
 
 ---
 
-## WF-07 · Errores
+## WF-07 · Maestras
+
+**Tipo:** sub-workflow. **Solo `administrador` y `gerencia`.**
+
+Comando `/maestras` con botones para administrar proyectos.
+
+### Alta de proyecto
+
+1. Nombre del proyecto.
+2. Cliente existente o nuevo.
+3. Alias opcionales.
+4. Resumen final con **Confirmar / Corregir / Cancelar**.
+
+Si el cliente ya existe con el mismo nombre normalizado, se reutiliza.
+La confirmación final muestra nombre, cliente y alias antes de guardar.
+
+### Edición y desactivación
+
+- Editar nombre y alias.
+- Desactivar o reactivar con confirmación.
+- No se borran proyectos: se usa `activo = false`.
+
+### Estado pendiente
+
+La tabla `admin_pending` guarda el paso actual del administrador para que
+pueda responder con texto después de un botón.
+
+Medios de pago quedan pendientes para una iteración posterior.
+
+---
+
+## WF-08 · Errores
 
 **Tipo:** workflow con `Error Trigger`
 **Responsabilidad:** centralizar fallos.
