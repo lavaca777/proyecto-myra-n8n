@@ -224,6 +224,7 @@ Migraciones actuales:
 | `003_fuzzy_proyectos.sql` | `pg_trgm` para buscar proyectos por similitud |
 | `004_admin_pending.sql` | Estado temporal para la administración de maestras |
 | `005_admin_modo.sql` | Modo administración para WF-07 |
+| `006_idempotencia_telegram.sql` | Índice único por usuario/mensaje de Telegram |
 
 Consola SQL local:
 

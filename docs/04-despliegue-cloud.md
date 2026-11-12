@@ -71,6 +71,9 @@ Supabase o con `psql` usando la cadena de conexión:
 001_schema_inicial.sql
 002_seed_catalogos.sql
 003_fuzzy_proyectos.sql
+004_admin_pending.sql
+005_admin_modo.sql
+006_idempotencia_telegram.sql
 ```
 
 Verificar que quedaron registrados:

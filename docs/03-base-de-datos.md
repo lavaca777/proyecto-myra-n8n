@@ -74,6 +74,7 @@ Los archivos viven en `db/migrations/` y se ejecutan en orden alfabético:
 | `003_fuzzy_proyectos.sql` | `pg_trgm`, `unaccent` e índices |
 | `004_admin_pending.sql` | Estado pendiente de administración de proyectos |
 | `005_admin_modo.sql` | Modo administración para WF-07 |
+| `006_idempotencia_telegram.sql` | Evita duplicados por reintentos de Telegram |
 
 ### Supabase (producción)
 
@@ -85,6 +86,9 @@ cadena de conexión del proyecto:
 001_schema_inicial.sql
 002_seed_catalogos.sql
 003_fuzzy_proyectos.sql
+004_admin_pending.sql
+005_admin_modo.sql
+006_idempotencia_telegram.sql
 ```
 
 Verificar:
