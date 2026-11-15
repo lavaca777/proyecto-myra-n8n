@@ -1,0 +1,968 @@
+{
+  "name": "[MYRA] 12 - Admin Gestionar Usuarios",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "9c9f843a-e0bf-453e-92da-808ae116b068",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1008,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst usuario = input.usuario || {};\nconst chatId = input.telegram_chat_id || usuario.telegram_chat_id;\nconst texto = (input.texto || '').trim();\nconst cb = (input.callback_data || '').trim();\n\nlet accion = 'unknown';\nlet targetId = null;\nlet nuevoRol = null;\n\nif (usuario.rol !== 'administrador') {\n  accion = 'denegado';\n} else if (cb === 'admin_usuarios' || texto === '/usuarios') {\n  accion = 'listar';\n} else if (cb.startsWith('usr_ver:')) {\n  accion = 'ver';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_rol_menu:')) {\n  accion = 'rol_menu';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_set_rol:')) {\n  accion = 'set_rol';\n  const parts = cb.split(':');\n  targetId = parseInt(parts[1], 10);\n  nuevoRol = parts[2];\n} else if (cb.startsWith('usr_revocar:')) {\n  accion = 'revocar';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_reinvitar:')) {\n  accion = 'reinvitar';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_del_confirm:')) {\n  accion = 'del_confirm';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_del_exec:')) {\n  accion = 'del_exec';\n  targetId = parseInt(cb.split(':')[1], 10);\n}\n\nconst esMismoUsuario = targetId !== null && Number(targetId) === Number(usuario.id);\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    admin_id: usuario.id,\n    accion,\n    target_id: targetId,\n    nuevo_rol: nuevoRol,\n    es_mismo_usuario: esMismoUsuario\n  }\n}];"
+      },
+      "id": "2c3d46f9-b5f7-4ff0-ada6-bd90a439c4a8",
+      "name": "Clasificar accion",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -784,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "denegado",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Denegado"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "listar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Listar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "ver",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Ver"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "rol_menu",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "RolMenu"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "set_rol",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "SetRol"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "revocar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Revocar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "reinvitar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Reinvitar"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "del_confirm",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DelConfirm"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.accion }}",
+                    "rightValue": "del_exec",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "DelExec"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d9adc9ce-6a53-4829-8650-9523e3bad557",
+      "name": "Enrutar accion",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -544,
+        432
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⛔ No tienes permisos de administrador.",
+        "additionalFields": {}
+      },
+      "id": "f2972eb4-f496-43ea-b0f6-2cb5425caee4",
+      "name": "Responder denegado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        -128
+      ],
+      "webhookId": "83adcbe2-68a5-4a9c-a977-450bf456aa08",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, nombre, rol, activo, telegram_chat_id, codigo_vinculacion\nFROM usuarios\nORDER BY activo DESC, id ASC\nLIMIT 30;",
+        "options": {}
+      },
+      "id": "d007ac33-18f4-43b0-a7fa-4271ee791f1f",
+      "name": "Consultar usuarios",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -240,
+        32
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r.id);\nconst chatId = $('Clasificar accion').first().json.chat_id;\n\nconst inline_keyboard = rows.map(u => {\n  const icono = u.activo ? '🟢' : (u.codigo_vinculacion ? '🟡' : '🔴');\n  return [{\n    text: `${icono} ${u.nombre} (${u.rol})`,\n    callback_data: `usr_ver:${u.id}`\n  }];\n});\n\ninline_keyboard.push([{\n  text: '➕ Invitar nuevo usuario',\n  callback_data: 'admin_invitar'\n}]);\n\nconst texto = `👥 *Gestión de Usuarios (${rows.length})*\\n\\n🟢 Activo  |  🟡 Invitación pendiente  |  🔴 Revocado\\n\\nSelecciona un usuario para editar su rol o acceso:`;\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    text: texto,\n    parse_mode: 'Markdown',\n    reply_markup: { inline_keyboard }\n  }\n}];"
+      },
+      "id": "9b5d322e-2652-4fc4-83a4-edccb25540d3",
+      "name": "Armar teclado usuarios",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8903964023:AAFkNNcuNb-NuiLH5nykagjtw1D8gc9lBeM/sendMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "telegramApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "7333a8a0-2195-483f-bad0-255b48460cde",
+      "name": "Enviar lista dinamica",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        32
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, nombre, rol, activo, telegram_chat_id, codigo_vinculacion, codigo_expira_at\nFROM usuarios\nWHERE id = $1;",
+        "options": {
+          "queryReplacement": "={{ [$json.target_id] }}"
+        }
+      },
+      "id": "6fd51f7b-df3f-494b-b72a-765d93fc4825",
+      "name": "Consultar detalle usuario",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -240,
+        192
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const u = $input.first().json;\nconst ctx = $('Clasificar accion').first().json;\nconst estado = u.activo ? '🟢 Activo' : (u.codigo_vinculacion ? `🟡 Pendiente (Código: \\`${u.codigo_vinculacion}\\`)` : '🔴 Acceso revocado');\n\nconst keyboard = [\n  [{ text: '🔄 Cambiar rol', callback_data: `usr_rol_menu:${u.id}` }]\n];\n\nif (u.activo) {\n  keyboard.push([{ text: '🔴 Revocar acceso', callback_data: `usr_revocar:${u.id}` }]);\n} else {\n  keyboard.push([\n    { text: '🟢 Re-invitar (nuevo código)', callback_data: `usr_reinvitar:${u.id}` },\n    { text: '🗑️ Eliminar', callback_data: `usr_del_confirm:${u.id}` }\n  ]);\n}\n\nkeyboard.push([{ text: '⬅️ Volver a la lista', callback_data: 'admin_usuarios' }]);\n\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text: `👤 *Ficha de Usuario*\\n\\n• *ID:* ${u.id}\\n• *Nombre:* ${u.nombre}\\n• *Rol:* ${u.rol}\\n• *Estado:* ${estado}`,\n    parse_mode: 'Markdown',\n    reply_markup: { inline_keyboard: keyboard }\n  }\n}];"
+      },
+      "id": "71cfb94a-5847-4895-9847-2e1de1640749",
+      "name": "Armar ficha usuario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8903964023:AAFkNNcuNb-NuiLH5nykagjtw1D8gc9lBeM/sendMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "telegramApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "4c00ea26-e8e3-4ea3-9cf5-90c3597e74ca",
+      "name": "Enviar ficha usuario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        192
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nif (ctx.es_mismo_usuario) {\n  return [{\n    json: {\n      chat_id: ctx.chat_id,\n      text: '⚠️ Por seguridad, no puedes modificar tu propio rol de administrador.',\n      reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: `usr_ver:${ctx.target_id}` }]] }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text: '🔄 Selecciona el *nuevo rol* para este usuario:',\n    parse_mode: 'Markdown',\n    reply_markup: {\n      inline_keyboard: [\n        [{ text: '👷 Jefe de Obra', callback_data: `usr_set_rol:${ctx.target_id}:jefe_obra` }],\n        [\n          { text: '📊 Gerencia', callback_data: `usr_set_rol:${ctx.target_id}:gerencia` },\n          { text: '🛡️ Administrador', callback_data: `usr_set_rol:${ctx.target_id}:administrador` }\n        ],\n        [{ text: '⬅️ Cancelar', callback_data: `usr_ver:${ctx.target_id}` }]\n      ]\n    }\n  }\n}];"
+      },
+      "id": "49c88f8b-3b8f-449e-8303-554759493e49",
+      "name": "Armar menu roles",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8903964023:AAFkNNcuNb-NuiLH5nykagjtw1D8gc9lBeM/sendMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "telegramApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "6eaad821-a580-4145-a401-7d55d9717d17",
+      "name": "Enviar menu roles",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        352
+      ],
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE usuarios\nSET rol = $2\nWHERE id = $1 AND id <> $3\nRETURNING id, nombre, rol;",
+        "options": {
+          "queryReplacement": "={{ [$json.target_id, $json.nuevo_rol, $json.admin_id] }}"
+        }
+      },
+      "id": "f8e96551-8b95-4d39-9bdd-1cb584bb69dc",
+      "name": "Actualizar rol en BD",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -240,
+        512
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar accion').first().json.chat_id }}",
+        "text": "=✅ Rol actualizado correctamente.\n\n👤 *{{ $json.nombre }}* ahora tiene el rol: *{{ $json.rol }}*.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👥 Volver a Gestión de Usuarios",
+                    "additionalFields": {
+                      "callback_data": "admin_usuarios"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "d1a07d06-c077-4745-af32-2197df09db4c",
+      "name": "Confirmar rol actualizado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        512
+      ],
+      "webhookId": "4d9c03e9-931c-42e2-8b6d-f49bbd4a8e8d",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE usuarios\nSET activo = false,\n    telegram_chat_id = NULL,\n    codigo_vinculacion = NULL,\n    codigo_expira_at = NULL\nWHERE id = $1 AND id <> $2\nRETURNING id, nombre;",
+        "options": {
+          "queryReplacement": "={{ [$json.target_id, $json.admin_id] }}"
+        }
+      },
+      "id": "b4698cda-37cc-4023-81b9-6b8608ab8deb",
+      "name": "Revocar acceso en BD",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -240,
+        672
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar accion').first().json.chat_id }}",
+        "text": "=🔴 Acceso revocado para *{{ $json.nombre }}*.\n\nSu Telegram fue desvinculado y ya no puede operar el bot (su historial de registros se conserva intacto).",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👥 Volver a Gestión de Usuarios",
+                    "additionalFields": {
+                      "callback_data": "admin_usuarios"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "0c1f9ebc-04be-4866-816a-cf3fc7ac5869",
+      "name": "Confirmar revocacion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        672
+      ],
+      "webhookId": "0dc78f3e-8bdd-46c1-be24-c76571b9e4bc",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const ctx = $input.first().json;\nconst chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\nlet rand = '';\nfor (let i = 0; i < 5; i++) rand += chars.charAt(Math.floor(Math.random() * chars.length));\nreturn [{ json: { ...ctx, codigo: `MYRA-${rand}` } }];"
+      },
+      "id": "0286a042-8e45-4923-9e7c-e5c3e4499872",
+      "name": "Generar nuevo codigo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        832
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE usuarios\nSET activo = false,\n    telegram_chat_id = NULL,\n    codigo_vinculacion = $2,\n    codigo_expira_at = NOW() + INTERVAL '24 hours'\nWHERE id = $1 AND id <> $3\nRETURNING id, nombre, rol, codigo_vinculacion;",
+        "options": {
+          "queryReplacement": "={{ [$json.target_id, $json.codigo, $json.admin_id] }}"
+        }
+      },
+      "id": "fa8a4a09-cc76-4439-a783-06023a6ada5c",
+      "name": "Guardar codigo reinvitacion",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        0,
+        832
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar accion').first().json.chat_id }}",
+        "text": "=🟢 *Nuevo código generado para {{ $json.nombre }}*\n\n🔑 *Código:* `{{ $json.codigo_vinculacion }}`\n⏳ *Expira en:* 24 horas\n\nEnvíale este código para que vuelva a vincular su Telegram.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👥 Volver a Gestión de Usuarios",
+                    "additionalFields": {
+                      "callback_data": "admin_usuarios"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "1e127ab3-8e60-48de-a835-26bbc43a7aa8",
+      "name": "Enviar codigo reinvitacion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        832
+      ],
+      "webhookId": "106f2d76-ac45-4d20-bedc-3fbe8908a97b",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ *¿Seguro que deseas eliminar este usuario?*\n\nSi el usuario ya tiene registros históricos asociados, la base de datos bloqueará el borrado por seguridad.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🗑️ Sí, eliminar",
+                    "additionalFields": {
+                      "callback_data": "=usr_del_exec:{{ $json.target_id }}"
+                    }
+                  },
+                  {
+                    "text": "⬅️ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "=usr_ver:{{ $json.target_id }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "f2bce543-8feb-42ac-ae40-9d17a97b1ed0",
+      "name": "Confirmar eliminacion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -240,
+        992
+      ],
+      "webhookId": "d51cce2a-bf2f-4e94-90de-c1f1ccab1fcf",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM usuarios\nWHERE id = $1 AND id <> $2\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [$json.target_id, $json.admin_id] }}"
+        }
+      },
+      "id": "99c953f9-f368-44ee-bc02-d1525eac7d09",
+      "name": "Eliminar usuario BD",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -240,
+        1152
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Clasificar accion').first().json.chat_id }}",
+        "text": "={{ $json.error ? '⚠️ No se puede eliminar este usuario porque tiene registros históricos en obra. Su acceso ya está revocado.' : '🗑️ Usuario eliminado correctamente.' }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👥 Volver a Gestión de Usuarios",
+                    "additionalFields": {
+                      "callback_data": "admin_usuarios"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "id": "0c811aee-7307-4fa6-9098-7e6f41093ff7",
+      "name": "Informar resultado eliminacion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        1152
+      ],
+      "webhookId": "96818dea-0308-4ab5-870d-d493e86cb227",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Clasificar accion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clasificar accion": {
+      "main": [
+        [
+          {
+            "node": "Enrutar accion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enrutar accion": {
+      "main": [
+        [
+          {
+            "node": "Responder denegado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Consultar usuarios",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Consultar detalle usuario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar menu roles",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Actualizar rol en BD",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Revocar acceso en BD",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Generar nuevo codigo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Confirmar eliminacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Eliminar usuario BD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar usuarios": {
+      "main": [
+        [
+          {
+            "node": "Armar teclado usuarios",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar teclado usuarios": {
+      "main": [
+        [
+          {
+            "node": "Enviar lista dinamica",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Consultar detalle usuario": {
+      "main": [
+        [
+          {
+            "node": "Armar ficha usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar ficha usuario": {
+      "main": [
+        [
+          {
+            "node": "Enviar ficha usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar menu roles": {
+      "main": [
+        [
+          {
+            "node": "Enviar menu roles",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar rol en BD": {
+      "main": [
+        [
+          {
+            "node": "Confirmar rol actualizado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Revocar acceso en BD": {
+      "main": [
+        [
+          {
+            "node": "Confirmar revocacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generar nuevo codigo": {
+      "main": [
+        [
+          {
+            "node": "Guardar codigo reinvitacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar codigo reinvitacion": {
+      "main": [
+        [
+          {
+            "node": "Enviar codigo reinvitacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eliminar usuario BD": {
+      "main": [
+        [
+          {
+            "node": "Informar resultado eliminacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f3f95336-5de3-40df-b01c-8d439d80e6cc",
+  "meta": {
+    "instanceId": "394c1237d24a05cc783acc75d441f3ba8bc544ff8a67a56a8dff14706c755ce2"
+  },
+  "nodeGroups": [],
+  "id": "6Uqo3IBkbJLdU5dA",
+  "tags": []
+}

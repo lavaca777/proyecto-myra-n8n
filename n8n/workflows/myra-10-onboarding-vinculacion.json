@@ -1,0 +1,301 @@
+{
+  "name": "[MYRA] 10 - Onboarding y Vinculación",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "5ac047b8-ed74-4cce-ad2d-01e6f170fd79",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1136,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst chatId = input.telegram_chat_id;\nconst nombreTelegram = input.nombre_usuario || input.nombre_telegram || 'usuario';\nconst rawTexto = (input.texto || '').trim();\n\n// Extraer código si viene directo ('MYRA-2026') o vía Deep Link ('/start MYRA-2026')\nconst match = rawTexto.match(/^(?:\\/start\\s+)?(MYRA-[A-Z0-9]{4,8})$/i);\n\nreturn [{\n  json: {\n    telegram_chat_id: chatId,\n    nombre_telegram: nombreTelegram,\n    texto_original: rawTexto,\n    tiene_formato_codigo: Boolean(match),\n    codigo_limpio: match ? match[1].toUpperCase() : null\n  }\n}];"
+      },
+      "id": "9a478318-d802-4813-a7b1-4c2419ab3c1a",
+      "name": "Extraer y validar formato",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -928,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-formato-ok",
+              "leftValue": "={{ $json.tiene_formato_codigo }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "298a65ff-cc2b-49c0-8ad6-57be4120088a",
+      "name": "Tiene formato de codigo",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -704,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "=👋 Hola *{{ $json.nombre_telegram }}*.\n\nTu cuenta aún no está vinculada a *MYRA*.\nPor favor, envíame el código de invitación que te entregó tu administrador (ejemplo: `MYRA-2026`).",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "5bba2712-0890-44ba-a94b-7c42c5600e61",
+      "name": "Pedir codigo de invitacion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -464,
+        368
+      ],
+      "webhookId": "09e97809-0c2a-44db-b924-19c786237335",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE usuarios\nSET telegram_chat_id = $1,\n    activo = true,\n    codigo_vinculacion = NULL,\n    codigo_expira_at = NULL\nWHERE codigo_vinculacion = $2\n  AND telegram_chat_id IS NULL\n  AND (codigo_expira_at IS NULL OR codigo_expira_at > NOW())\nRETURNING id, nombre, rol;",
+        "options": {
+          "queryReplacement": "={{ [$json.telegram_chat_id, $json.codigo_limpio] }}"
+        }
+      },
+      "id": "f894ce6a-a98a-4be0-bedf-98121fa78e83",
+      "name": "Canjear codigo en BD",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        -464,
+        112
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "id": "cond-vinculado",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "8e9f0603-505a-45d6-9686-7c12e58d2975",
+      "name": "Codigo valido y vinculado",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -240,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const user = $input.first().json;\nconst chatId = $('Extraer y validar formato').first().json.telegram_chat_id;\n\nconst mensajesPorRol = {\n  jefe_obra: `✅ *¡Vinculación exitosa, ${user.nombre}!*\\n\\nTu perfil ha sido activado como *Jefe de Obra*.\\nYa puedes enviarme notas de voz con tus avances diarios o fotos de boletas para registrar gastos.`,\n  administrador: `✅ *¡Vinculación exitosa, ${user.nombre}!*\\n\\nTu perfil ha sido activado como *Administrador*.\\nTienes acceso completo a gestión de obras, reportes y administración del sistema.`,\n  gerencia: `✅ *¡Vinculación exitosa, ${user.nombre}!*\\n\\nTu perfil ha sido activado como *Gerencia*.\\nPuedes consultar el estado de avance y costos de las obras en cualquier momento.`\n};\n\nconst mensajeFinal = mensajesPorRol[user.rol] || `✅ *¡Vinculación exitosa, ${user.nombre}!*\\n\\nTu cuenta ya está activa en MYRA con el rol: *${user.rol}*.`;\n\nreturn [{\n  json: {\n    telegram_chat_id: chatId,\n    mensaje: mensajeFinal\n  }\n}];"
+      },
+      "id": "3f0b3041-9959-4ef3-ab30-404b6e56ada4",
+      "name": "Armar bienvenida segun rol",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.mensaje }}",
+        "additionalFields": {
+          "parse_mode": "Markdown"
+        }
+      },
+      "id": "fefb6cf5-f06b-4086-8349-ec7a7a146838",
+      "name": "Enviar bienvenida",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "2eadf658-376a-47a9-8880-e438352aa6e4",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extraer y validar formato').first().json.telegram_chat_id }}",
+        "text": "❌ El código ingresado no es válido, ya fue utilizado o expiró.\n\nVerifica el código con tu administrador e inténtalo nuevamente.",
+        "additionalFields": {}
+      },
+      "id": "cf698a24-2e58-4e29-b1a6-e785e8414b12",
+      "name": "Notificar codigo invalido",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        208
+      ],
+      "webhookId": "9027b3f8-0e7b-46cd-b866-165762362dfa",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extraer y validar formato",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extraer y validar formato": {
+      "main": [
+        [
+          {
+            "node": "Tiene formato de codigo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tiene formato de codigo": {
+      "main": [
+        [
+          {
+            "node": "Canjear codigo en BD",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Pedir codigo de invitacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canjear codigo en BD": {
+      "main": [
+        [
+          {
+            "node": "Codigo valido y vinculado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Codigo valido y vinculado": {
+      "main": [
+        [
+          {
+            "node": "Armar bienvenida segun rol",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Notificar codigo invalido",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar bienvenida segun rol": {
+      "main": [
+        [
+          {
+            "node": "Enviar bienvenida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "29e11398-8a7b-49b9-9fd0-bba94ded378a",
+  "meta": {
+    "instanceId": "394c1237d24a05cc783acc75d441f3ba8bc544ff8a67a56a8dff14706c755ce2"
+  },
+  "nodeGroups": [],
+  "id": "9IINYnvYMGMa4C0n",
+  "tags": []
+}

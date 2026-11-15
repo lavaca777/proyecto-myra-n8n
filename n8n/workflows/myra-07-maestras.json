@@ -1,1 +1,789 @@
-{"updatedAt":"2026-11-12T19:27:28.000Z","createdAt":"2026-11-12T01:53:36.810Z","id":"a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70","name":"[MYRA] 07 · Maestras","description":null,"active":true,"isArchived":false,"nodes":[{"parameters":{"inputSource":"passthrough"},"id":"f1ea3070-b10e-5e73-83cb-36f461593d92","name":"Cuando se ejecuta","type":"n8n-nodes-base.executeWorkflowTrigger","typeVersion":1.2,"position":[0,0]},{"parameters":{"mode":"expression","numberOutputs":2,"output":"={{ ['administrador','gerencia'].includes(String($json.usuario_rol || '').toLowerCase()) ? 0 : 1 }}"},"id":"1c78d0e9-001f-5319-8a8b-af0f5cc1a7db","name":"Permiso","type":"n8n-nodes-base.switch","typeVersion":3.4,"position":[224,0]},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"🔒 <b>Acceso restringido</b>\n\nSolo administración y gerencia pueden administrar proyectos.","replyMarkup":"none","inlineKeyboard":null,"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"6a7b69f7-1c96-5db4-8741-dacf8a8c426c","name":"Responder sin permiso","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[448,160],"webhookId":"d4da012d-9ed5-5b0d-bf02-69487f93458c","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"SELECT\n  COALESCE((\n    SELECT json_agg(x ORDER BY x.nombre)\n    FROM (\n      SELECT p.id,\n             p.nombre,\n             p.activo,\n             p.cliente_id,\n             c.nombre AS cliente,\n             COALESCE(\n               json_agg(pa.alias ORDER BY pa.alias) FILTER (WHERE pa.alias IS NOT NULL),\n               '[]'::json\n             ) AS alias\n      FROM proyectos p\n      JOIN clientes c ON c.id = p.cliente_id\n      LEFT JOIN proyecto_alias pa ON pa.proyecto_id = p.id\n      GROUP BY p.id, p.nombre, p.activo, p.cliente_id, c.nombre\n    ) x\n  ), '[]'::json) AS proyectos,\n  COALESCE((\n    SELECT json_agg(json_build_object('id', c.id, 'nombre', c.nombre) ORDER BY c.nombre)\n    FROM clientes c\n    WHERE c.activo\n  ), '[]'::json) AS clientes,\n  (SELECT to_json(a)\n   FROM admin_pending a\n   WHERE a.usuario_id = $1\n     AND a.accion = 'modo'\n     AND a.actualizado_en > now() - interval '2 hours'\n   LIMIT 1) AS pendiente;","options":{"queryReplacement":"={{ [ $json.usuario_id ] }}"}},"id":"f1d0c182-3396-579d-b0b0-31e83e234804","name":"Cargar contexto","type":"n8n-nodes-base.postgres","typeVersion":2.7,"position":[448,0],"executeOnce":true,"alwaysOutputData":true,"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}}},{"parameters":{"jsCode":"const base = $('Cuando se ejecuta').first().json;\nconst ctx = $input.first().json || {};\nconst pendiente = ctx.pendiente || null;\nlet payload = {};\nif (pendiente && pendiente.payload) {\n  payload = typeof pendiente.payload === 'string' ? JSON.parse(pendiente.payload) : pendiente.payload;\n}\nif (pendiente && pendiente.paso) payload.paso = pendiente.paso;\nconst catalogo = {\n  proyectos: Array.isArray(ctx.proyectos) ? ctx.proyectos : [],\n  clientes: Array.isArray(ctx.clientes) ? ctx.clientes : []\n};\nconst cb = String(base.callback_data || '');\nconst texto = String(base.texto || '').trim();\nconst norm = String(texto).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\nconst modoActivo = !!(pendiente && pendiente.accion === 'modo');\nconst paso = String(payload.paso || '');\nlet accion = 'menu';\nif (cb === 'cmd:maestras' || /^\\/maestras\\b/i.test(texto)) accion = 'abrir';\nelse if (cb === 'adm:exit') accion = 'salir';\nelse if (cb === 'adm:list') accion = 'listar';\nelse if (cb === 'adm:menu') accion = 'menu';\nelse if (cb === 'adm:save') accion = 'guardar';\nelse if (cb === 'adm:fix') accion = 'corregir';\nelse if (cb === 'adm:cancel') accion = 'cancelar';\nelse if (cb === 'adm:cliente:usar') accion = 'cliente_usar';\nelse if (cb === 'adm:cliente:nuevo') accion = 'cliente_nuevo';\nelse if (modoActivo && texto) {\n  if (/^(salir|terminar|cerrar|chao|adios|adiós)$/i.test(norm)) accion = 'salir';\n  else if (/^(cancelar|anular)$/i.test(norm)) accion = 'cancelar';\n  else if (/^(listar|lista|proyectos|ver proyectos|muestra(me)?( los)? proyectos|que proyectos)\\b/i.test(norm)) accion = 'listar';\n  else if (/^(ayuda|help|\\?)$/i.test(norm)) accion = 'menu';\n  else if (paso === 'confirmar' && /^(si|sí|confirmar|confirmo|correcto|ok|dale|adelante|guardar|registrar)\\b/i.test(norm)) accion = 'guardar';\n  else if (paso === 'confirmar' && /^(no|corregir|editar|cambiar|mal|error)\\b/i.test(norm)) accion = 'corregir';\n  else if (paso === 'cliente_ambiguo' && /^(usar|usa|existente|el existente|si|sí)\\b/i.test(norm)) accion = 'cliente_usar';\n  else if (paso === 'cliente_ambiguo' && /^(crear|crea|nuevo|nueva|no)\\b/i.test(norm)) accion = 'cliente_nuevo';\n  else if (['falta_nombre','falta_cliente','falta_proyecto','cliente_ambiguo'].includes(paso)) accion = 'completar';\n  else accion = 'interpretar';\n} else if (modoActivo) accion = 'menu';\nelse accion = 'menu_sin_modo';\nreturn [{ json: { ...base, contexto: ctx, catalogo, pendiente, payload, texto, callback_data: cb, accion, paso } }];"},"id":"cc98d86f-091b-5102-b39b-bd851c2bb31c","name":"Preparar entrada","type":"n8n-nodes-base.code","typeVersion":2,"position":[672,0]},{"parameters":{"mode":"expression","numberOutputs":12,"output":"={{ (function(){ const a = String($('Preparar entrada').first().json.accion || 'menu'); const orden = ['abrir','interpretar','completar','guardar','corregir','cancelar','salir','listar','menu','cliente_usar','cliente_nuevo','menu_sin_modo']; const i = orden.indexOf(a); return i >= 0 ? i : 8; })() }}"},"id":"dedbadde-6e9f-571f-b3cb-35524a1218d5","name":"Ruta admin","type":"n8n-nodes-base.switch","typeVersion":3.4,"position":[896,0]},{"parameters":{"operation":"executeQuery","query":"INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'esperando', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = 'esperando', entidad_id = NULL, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"}},"id":"e9c1be64-31d8-50ba-a5e9-432af503e16b","name":"Crear modo","type":"n8n-nodes-base.postgres","typeVersion":2.7,"position":[1120,-320],"executeOnce":true,"alwaysOutputData":true,"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}}},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"⚙️ <b>Modo administración</b>\n\nEscríbeme o envíame una nota de voz con lo que quieres hacer. Ejemplos:\n\n• <i>agrega el proyecto Los Robles para el cliente Constructora Andes</i>\n• <i>cambia el nombre de Peñuelas a Obra Peñuelas Norte</i>\n• <i>desactiva la obra La Rinconada</i>\n• <i>reactiva Los Aromos</i>\n• <i>agrega el alias \"el robles\" al proyecto Los Robles</i>\n• <i>lista los proyectos</i>\n• <i>salir</i>","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"📋 Listar","additionalFields":{"callback_data":"adm:list"}}]}},{"row":{"buttons":[{"text":"❌ Salir","additionalFields":{"callback_data":"adm:exit"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"b40d2c60-157b-5bf8-b977-9985aa2b2ac1","name":"Menu admin","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1344,-320],"webhookId":"28a69b82-b048-56f8-9a03-dbc6ae8fc0a6","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"jsCode":"const base = $('Preparar entrada').first().json;\nconst proyectos = (base.catalogo && base.catalogo.proyectos) ? base.catalogo.proyectos : [];\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst lineas = proyectos.map(p => {\n  const estado = p.activo ? '✅' : '⛔';\n  const alias = (p.alias || []).length ? `\\n   <i>Alias: ${p.alias.map(esc).join(', ')}</i>` : '';\n  return `${estado} <b>${esc(p.nombre)}</b> — ${esc(p.cliente)}${alias}`;\n});\nconst maxCharsLista = 3200;\nlet usadosLista = 0;\nconst lineasVisibles = [];\nfor (const linea of lineas) {\n  if (usadosLista + linea.length + 1 > maxCharsLista) break;\n  lineasVisibles.push(linea);\n  usadosLista += linea.length + 1;\n}\nconst notaLista = lineasVisibles.length < lineas.length\n  ? `\\n\\n… y ${lineas.length - lineasVisibles.length} proyecto(s) más.`\n  : '';\nconst respuesta = `📁 <b>Proyectos (${proyectos.length})</b>\\n\\n${lineasVisibles.length ? lineasVisibles.join('\\n') + notaLista : '• (no hay proyectos)'}`;\nreturn [{ json: { respuesta, telegram_chat_id: base.telegram_chat_id } }];"},"id":"bebb2686-e894-5c39-8cd9-ac7ad0e1bc20","name":"Armar lista","type":"n8n-nodes-base.code","typeVersion":2,"position":[2016,-320]},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $json.telegram_chat_id }}","text":"={{ $json.respuesta }}","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"⬅️ Volver","additionalFields":{"callback_data":"adm:menu"}},{"text":"❌ Salir","additionalFields":{"callback_data":"adm:exit"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"6f507520-632f-516f-ab16-4d0a181be8fd","name":"Responder lista","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[2240,-320],"webhookId":"0683ce77-b5a9-5bfa-8e7b-c9193a3c3e6a","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'corregir', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET paso = 'corregir', actualizado_en = now()\nRETURNING id;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"}},"id":"c0388490-988f-58ae-8e3f-55b699e840ea","name":"Marcar correccion","type":"n8n-nodes-base.postgres","typeVersion":2.7,"position":[1120,480],"executeOnce":true,"alwaysOutputData":true,"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}}},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"✏️ <b>Corregir operación</b>\n\nEscríbeme o envíame una nota de voz con el dato que quieres cambiar.\n\n<i>Ejemplo: mejor el cliente es Constructora del Norte</i>","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"❌ Cancelar","additionalFields":{"callback_data":"adm:cancel"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"23af6a0e-94fa-5714-885e-d7d00d92b318","name":"Pedir correccion","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1344,480],"webhookId":"c55d9d54-a01f-5ff1-bf77-4d75ac9ad264","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'esperando', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = 'esperando', entidad_id = NULL, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"}},"id":"d4cb0cd8-d5ba-5ac7-874c-0799b839e413","name":"Reset cancelacion","type":"n8n-nodes-base.postgres","typeVersion":2.7,"position":[1120,640],"executeOnce":true,"alwaysOutputData":true,"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}}},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"🧹 Operación cancelada. Seguimos en modo administración.","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"📋 Listar","additionalFields":{"callback_data":"adm:list"}},{"text":"❌ Salir","additionalFields":{"callback_data":"adm:exit"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"0eb4de1e-b319-5d97-86d9-6ed8834bd9a6","name":"Mensaje cancelado","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1344,640],"webhookId":"1030e1f0-16ba-51a3-ae2a-c3982845db71","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"operation":"executeQuery","query":"DELETE FROM admin_pending WHERE usuario_id = $1;","options":{"queryReplacement":"={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"}},"id":"9788cbfe-1150-50ee-92d7-ca8b04ce4b30","name":"Borrar pendiente","type":"n8n-nodes-base.postgres","typeVersion":2.7,"position":[1120,800],"executeOnce":true,"alwaysOutputData":true,"credentials":{"postgres":{"id":"ufn1vDeGKOcqMtep","name":"Postgres account"}}},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"👋 Modo administración cerrado.","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"🏠 Menú","additionalFields":{"callback_data":"cmd:start"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"95352fec-5e9f-52ae-83e7-3ab115b8b7fa","name":"Mensaje salida","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1344,800],"webhookId":"bac4903a-f54f-5202-8b0e-02094666ded1","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"resource":"message","operation":"sendMessage","chatId":"={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}","text":"Para administrar proyectos escribe <b>/maestras</b> o usa el botón.","replyMarkup":"inlineKeyboard","inlineKeyboard":{"rows":[{"row":{"buttons":[{"text":"⚙️ Maestras","additionalFields":{"callback_data":"cmd:maestras"}}]}},{"row":{"buttons":[{"text":"🏠 Menú","additionalFields":{"callback_data":"cmd:start"}}]}}]},"additionalFields":{"appendAttribution":false,"parse_mode":"HTML"}},"id":"798b801e-cd58-5522-980d-d3e49ea225c1","name":"Mensaje sin modo","type":"n8n-nodes-base.telegram","typeVersion":1.2,"position":[1120,960],"webhookId":"88c8924c-fcd8-5d7d-80f2-a9a0b981b7af","credentials":{"telegramApi":{"id":"YPgCfnQDmZ3qwb8E","name":"Telegram account"}}},{"parameters":{"workflowId":{"__rl":true,"value":"a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e71","mode":"list","cachedResultName":"[MYRA] 07A · Interpretar operación"},"workflowInputs":{"mappingMode":"defineBelow","value":{},"matchingColumns":[],"schema":[],"attemptToConvertTypes":false,"convertFieldsToString":true},"options":{}},"id":"cfc54019-7533-57f3-81f1-a0658041135a","name":"Interpretar operacion","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.4,"position":[1120,-160]},{"parameters":{"workflowId":{"__rl":true,"value":"a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e72","mode":"list","cachedResultName":"[MYRA] 07B · Ejecutar operación"},"workflowInputs":{"mappingMode":"defineBelow","value":{},"matchingColumns":[],"schema":[],"attemptToConvertTypes":false,"convertFieldsToString":true},"options":{}},"id":"c12b17ad-d594-5323-838b-1f7637e01efa","name":"Ejecutar operacion","type":"n8n-nodes-base.executeWorkflow","typeVersion":1.4,"position":[1120,320]}],"connections":{"Cuando se ejecuta":{"main":[[{"node":"Permiso","type":"main","index":0}]]},"Permiso":{"main":[[{"node":"Cargar contexto","type":"main","index":0}],[{"node":"Responder sin permiso","type":"main","index":0}]]},"Cargar contexto":{"main":[[{"node":"Preparar entrada","type":"main","index":0}]]},"Preparar entrada":{"main":[[{"node":"Ruta admin","type":"main","index":0}]]},"Ruta admin":{"main":[[{"node":"Crear modo","type":"main","index":0}],[{"node":"Interpretar operacion","type":"main","index":0}],[{"node":"Interpretar operacion","type":"main","index":0}],[{"node":"Ejecutar operacion","type":"main","index":0}],[{"node":"Marcar correccion","type":"main","index":0}],[{"node":"Reset cancelacion","type":"main","index":0}],[{"node":"Borrar pendiente","type":"main","index":0}],[{"node":"Armar lista","type":"main","index":0}],[{"node":"Menu admin","type":"main","index":0}],[{"node":"Interpretar operacion","type":"main","index":0}],[{"node":"Interpretar operacion","type":"main","index":0}],[{"node":"Mensaje sin modo","type":"main","index":0}]]},"Crear modo":{"main":[[{"node":"Menu admin","type":"main","index":0}]]},"Armar lista":{"main":[[{"node":"Responder lista","type":"main","index":0}]]},"Marcar correccion":{"main":[[{"node":"Pedir correccion","type":"main","index":0}]]},"Reset cancelacion":{"main":[[{"node":"Mensaje cancelado","type":"main","index":0}]]},"Borrar pendiente":{"main":[[{"node":"Mensaje salida","type":"main","index":0}]]}},"settings":{"executionOrder":"v1"},"staticData":null,"meta":{},"nodeGroups":[],"pinData":{},"versionId":"9ee4a489-0389-45d0-975e-3fac86f72854","activeVersionId":"9ee4a489-0389-45d0-975e-3fac86f72854","versionCounter":2,"triggerCount":0,"sourceWorkflowId":null,"tags":[],"shared":[{"updatedAt":"2026-11-12T01:53:36.819Z","createdAt":"2026-11-12T01:53:36.819Z","role":"workflow:owner","workflowId":"a07c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e70","projectId":"ZlvxrIvP3V3KROE9","project":{"updatedAt":"2026-09-22T23:22:18.851Z","createdAt":"2026-09-22T23:11:48.748Z","id":"ZlvxrIvP3V3KROE9","name":"CARLOS ANDRES TAPIA PAREDES <tapiacarlostapiaxd@hotmail.com>","type":"personal","icon":null,"description":null,"customTelemetryTags":[],"creatorId":"f30d85d5-80e7-4017-9021-2cf07e99747a"}}],"versionMetadata":{"name":null,"description":null}}
+{
+  "name": "[MYRA] 07 · Maestras",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "id": "0e59ac7a-8d7e-4353-9594-8c1dc8c06331",
+      "name": "Cuando se ejecuta",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        320,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 2,
+        "output": "={{ ['administrador','gerencia'].includes(String($json.usuario_rol || '').toLowerCase()) ? 0 : 1 }}"
+      },
+      "id": "89fa98a4-bc72-4c05-b9ba-520703171ee2",
+      "name": "Permiso",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        544,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT\n  COALESCE((\n    SELECT json_agg(x ORDER BY x.nombre)\n    FROM (\n      SELECT p.id,\n             p.nombre,\n             p.activo,\n             p.cliente_id,\n             c.nombre AS cliente,\n             COALESCE(\n               json_agg(pa.alias ORDER BY pa.alias) FILTER (WHERE pa.alias IS NOT NULL),\n               '[]'::json\n             ) AS alias\n      FROM proyectos p\n      JOIN clientes c ON c.id = p.cliente_id\n      LEFT JOIN proyecto_alias pa ON pa.proyecto_id = p.id\n      GROUP BY p.id, p.nombre, p.activo, p.cliente_id, c.nombre\n    ) x\n  ), '[]'::json) AS proyectos,\n  COALESCE((\n    SELECT json_agg(json_build_object('id', c.id, 'nombre', c.nombre) ORDER BY c.nombre)\n    FROM clientes c\n    WHERE c.activo\n  ), '[]'::json) AS clientes,\n  (SELECT to_json(a)\n   FROM admin_pending a\n   WHERE a.usuario_id = $1\n     AND a.accion = 'modo'\n     AND a.actualizado_en > now() - interval '2 hours'\n   LIMIT 1) AS pendiente;",
+        "options": {
+          "queryReplacement": "={{ [ $json.usuario_id ] }}"
+        }
+      },
+      "id": "60ffa512-1a46-4594-960a-b403ba846233",
+      "name": "Cargar contexto",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        768,
+        2064
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Cuando se ejecuta').first().json;\nconst ctx = $input.first().json || {};\nconst pendiente = ctx.pendiente || null;\nlet payload = {};\nif (pendiente && pendiente.payload) {\n  payload = typeof pendiente.payload === 'string' ? JSON.parse(pendiente.payload) : pendiente.payload;\n}\nif (pendiente && pendiente.paso) payload.paso = pendiente.paso;\nconst catalogo = {\n  proyectos: Array.isArray(ctx.proyectos) ? ctx.proyectos : [],\n  clientes: Array.isArray(ctx.clientes) ? ctx.clientes : []\n};\nconst cb = String(base.callback_data || '');\nconst texto = String(base.texto || '').trim();\nconst norm = String(texto).normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLowerCase().trim();\nconst modoActivo = !!(pendiente && pendiente.accion === 'modo');\nconst paso = String(payload.paso || '');\nlet accion = 'menu';\nif (cb === 'cmd:maestras' || /^\\/maestras\\b/i.test(texto)) accion = 'abrir';\nelse if (cb === 'adm:exit') accion = 'salir';\nelse if (cb === 'adm:list') accion = 'listar';\nelse if (cb === 'adm:menu') accion = 'menu';\nelse if (cb === 'adm:save') accion = 'guardar';\nelse if (cb === 'adm:fix') accion = 'corregir';\nelse if (cb === 'adm:cancel') accion = 'cancelar';\nelse if (cb === 'adm:cliente:usar') accion = 'cliente_usar';\nelse if (cb === 'adm:cliente:nuevo') accion = 'cliente_nuevo';\nelse if (modoActivo && texto) {\n  if (/^(salir|terminar|cerrar|chao|adios|adiós)$/i.test(norm)) accion = 'salir';\n  else if (/^(cancelar|anular)$/i.test(norm)) accion = 'cancelar';\n  else if (/^(listar|lista|proyectos|ver proyectos|muestra(me)?( los)? proyectos|que proyectos)\\b/i.test(norm)) accion = 'listar';\n  else if (/^(ayuda|help|\\?)$/i.test(norm)) accion = 'menu';\n  else if (paso === 'confirmar' && /^(si|sí|confirmar|confirmo|correcto|ok|dale|adelante|guardar|registrar)\\b/i.test(norm)) accion = 'guardar';\n  else if (paso === 'confirmar' && /^(no|corregir|editar|cambiar|mal|error)\\b/i.test(norm)) accion = 'corregir';\n  else if (paso === 'cliente_ambiguo' && /^(usar|usa|existente|el existente|si|sí)\\b/i.test(norm)) accion = 'cliente_usar';\n  else if (paso === 'cliente_ambiguo' && /^(crear|crea|nuevo|nueva|no)\\b/i.test(norm)) accion = 'cliente_nuevo';\n  else if (['falta_nombre','falta_cliente','falta_proyecto','cliente_ambiguo'].includes(paso)) accion = 'completar';\n  else accion = 'interpretar';\n} else if (modoActivo) accion = 'menu';\nelse accion = 'menu_sin_modo';\nreturn [{ json: { ...base, contexto: ctx, catalogo, pendiente, payload, texto, callback_data: cb, accion, paso } }];"
+      },
+      "id": "f07ba98e-7500-4f79-a16f-9c10101f2cce",
+      "name": "Preparar entrada",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        992,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 12,
+        "output": "={{ (function(){ const a = String($('Preparar entrada').first().json.accion || 'menu'); const orden = ['abrir','interpretar','completar','guardar','corregir','cancelar','salir','listar','menu','cliente_usar','cliente_nuevo','menu_sin_modo']; const i = orden.indexOf(a); return i >= 0 ? i : 8; })() }}"
+      },
+      "id": "dbf18f95-3473-406d-84b2-2e99b27b4a4a",
+      "name": "Ruta admin",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        1216,
+        2064
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'esperando', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = 'esperando', entidad_id = NULL, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "ee8440b1-be3b-4b52-a8b8-bbd765394a78",
+      "name": "Crear modo",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1440,
+        1744
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "⚙️ <b>Modo administración</b>\n\nEscríbeme o envíame una nota de voz con lo que quieres hacer. Ejemplos:\n\n• <i>agrega el proyecto Los Robles para el cliente Constructora Andes</i>\n• <i>cambia el nombre de Peñuelas a Obra Peñuelas Norte</i>\n• <i>desactiva la obra La Rinconada</i>\n• <i>reactiva Los Aromos</i>\n• <i>agrega el alias \"el robles\" al proyecto Los Robles</i>\n• <i>lista los proyectos</i>\n• <i>salir</i>",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📋 Listar",
+                    "additionalFields": {
+                      "callback_data": "adm:list"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👥 Gestionar usuarios",
+                    "additionalFields": {
+                      "callback_data": "admin_usuarios"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "0a602bf6-e1dd-44e4-812e-0a4baeabb690",
+      "name": "Menu admin",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        1744
+      ],
+      "webhookId": "cfd7024c-1e9b-44b2-b93a-45e37af5bf24",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "JUtNQ3yvWIIwxS4j",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/JUtNQ3yvWIIwxS4j",
+          "cachedResultName": "[MYRA] 07A · Interpretar operación"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "8977be70-56dc-46ae-b5e9-13a7fc65b376",
+      "name": "Interpretar operacion",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1440,
+        1904
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "m9rOuojzJdWs5yPW",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/m9rOuojzJdWs5yPW",
+          "cachedResultName": "[MYRA] 07B · Ejecutar operación"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {}
+      },
+      "id": "5b282397-6c01-4dcb-80da-bee801b8d1ea",
+      "name": "Ejecutar operacion",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        1440,
+        2384
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'corregir', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET paso = 'corregir', actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "e90cb22a-0da5-4859-873d-ec19be620324",
+      "name": "Marcar correccion",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1440,
+        2544
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "✏️ <b>Corregir operación</b>\n\nEscríbeme o envíame una nota de voz con el dato que quieres cambiar.\n\n<i>Ejemplo: mejor el cliente es Constructora del Norte</i>",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "❌ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "adm:cancel"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "6ac34beb-b504-44be-b274-cd2d350b9806",
+      "name": "Pedir correccion",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        2544
+      ],
+      "webhookId": "bedec4ad-25b5-422f-acec-471b4d2f8dad",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, payload)\nVALUES ($1, 'modo', 'esperando', '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'modo', paso = 'esperando', entidad_id = NULL, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "0461cc21-8ec5-416e-a956-0d67bf7b11a7",
+      "name": "Reset cancelacion",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1440,
+        2704
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "🧹 Operación cancelada. Seguimos en modo administración.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📋 Listar",
+                    "additionalFields": {
+                      "callback_data": "adm:list"
+                    }
+                  },
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "7685cec1-11ad-4ccf-8140-7ca341eaa565",
+      "name": "Mensaje cancelado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        2704
+      ],
+      "webhookId": "d1cf8532-623f-4806-b511-f5323a37032c",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM admin_pending WHERE usuario_id = $1;",
+        "options": {
+          "queryReplacement": "={{ [ $('Cuando se ejecuta').first().json.usuario_id ] }}"
+        }
+      },
+      "id": "a3ec2692-b457-4e36-9c4e-106e555656a5",
+      "name": "Borrar pendiente",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        1440,
+        2864
+      ],
+      "executeOnce": true,
+      "alwaysOutputData": true,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "👋 Modo administración cerrado.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🏠 Menú",
+                    "additionalFields": {
+                      "callback_data": "cmd:start"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "0dfd7e1b-ef14-4a26-8d85-adc9fa532255",
+      "name": "Mensaje salida",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        2864
+      ],
+      "webhookId": "f4a4d9a6-b88f-4f2e-ab36-87acb667aa83",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const base = $('Preparar entrada').first().json;\nconst proyectos = (base.catalogo && base.catalogo.proyectos) ? base.catalogo.proyectos : [];\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst lineas = proyectos.map(p => {\n  const estado = p.activo ? '✅' : '⛔';\n  const alias = (p.alias || []).length ? `\\n   <i>Alias: ${p.alias.map(esc).join(', ')}</i>` : '';\n  return `${estado} <b>${esc(p.nombre)}</b> — ${esc(p.cliente)}${alias}`;\n});\nconst maxCharsLista = 3200;\nlet usadosLista = 0;\nconst lineasVisibles = [];\nfor (const linea of lineas) {\n  if (usadosLista + linea.length + 1 > maxCharsLista) break;\n  lineasVisibles.push(linea);\n  usadosLista += linea.length + 1;\n}\nconst notaLista = lineasVisibles.length < lineas.length\n  ? `\\n\\n… y ${lineas.length - lineasVisibles.length} proyecto(s) más.`\n  : '';\nconst respuesta = `📁 <b>Proyectos (${proyectos.length})</b>\\n\\n${lineasVisibles.length ? lineasVisibles.join('\\n') + notaLista : '• (no hay proyectos)'}`;\nreturn [{ json: { respuesta, telegram_chat_id: base.telegram_chat_id } }];"
+      },
+      "id": "58efd2dd-9062-4a9b-85b0-3f58883714c7",
+      "name": "Armar lista",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2336,
+        1744
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $json.respuesta }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⬅️ Volver",
+                    "additionalFields": {
+                      "callback_data": "adm:menu"
+                    }
+                  },
+                  {
+                    "text": "❌ Salir",
+                    "additionalFields": {
+                      "callback_data": "adm:exit"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "6eb51724-2712-412c-a74d-bbefc22892f7",
+      "name": "Responder lista",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2560,
+        1744
+      ],
+      "webhookId": "33d6b70e-c774-4061-85db-596bfb319ea2",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "Para administrar proyectos escribe <b>/maestras</b> o usa el botón.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⚙️ Maestras",
+                    "additionalFields": {
+                      "callback_data": "cmd:maestras"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🏠 Menú",
+                    "additionalFields": {
+                      "callback_data": "cmd:start"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "fa321713-fc68-4fa0-aefe-1cb8f0cc974c",
+      "name": "Mensaje sin modo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1440,
+        3024
+      ],
+      "webhookId": "1f540827-11d5-4980-a051-178965132f0b",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Cuando se ejecuta').first().json.telegram_chat_id }}",
+        "text": "🔒 <b>Acceso restringido</b>\n\nSolo administración y gerencia pueden administrar proyectos.",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "id": "52a4ffca-4e16-4673-a4d3-aa00dc158d9f",
+      "name": "Responder sin permiso",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        768,
+        2224
+      ],
+      "webhookId": "d61b21f4-b2ed-4d50-89ea-f0aa1d129888",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cuando se ejecuta": {
+      "main": [
+        [
+          {
+            "node": "Permiso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Permiso": {
+      "main": [
+        [
+          {
+            "node": "Cargar contexto",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Responder sin permiso",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cargar contexto": {
+      "main": [
+        [
+          {
+            "node": "Preparar entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar entrada": {
+      "main": [
+        [
+          {
+            "node": "Ruta admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ruta admin": {
+      "main": [
+        [
+          {
+            "node": "Crear modo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar operacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar operacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Ejecutar operacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Marcar correccion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reset cancelacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Borrar pendiente",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Armar lista",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Menu admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar operacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Interpretar operacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mensaje sin modo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear modo": {
+      "main": [
+        [
+          {
+            "node": "Menu admin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marcar correccion": {
+      "main": [
+        [
+          {
+            "node": "Pedir correccion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reset cancelacion": {
+      "main": [
+        [
+          {
+            "node": "Mensaje cancelado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Borrar pendiente": {
+      "main": [
+        [
+          {
+            "node": "Mensaje salida",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Armar lista": {
+      "main": [
+        [
+          {
+            "node": "Responder lista",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fc94dce7-ee21-49f9-9025-782cd49a9294",
+  "meta": {
+    "instanceId": "394c1237d24a05cc783acc75d441f3ba8bc544ff8a67a56a8dff14706c755ce2"
+  },
+  "nodeGroups": [],
+  "id": "Q1uFgoP9qoGfbXFE",
+  "tags": []
+}
