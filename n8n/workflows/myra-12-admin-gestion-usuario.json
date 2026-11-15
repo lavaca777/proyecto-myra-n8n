@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const input = $input.first().json;\nconst usuario = input.usuario || {};\nconst chatId = input.telegram_chat_id || usuario.telegram_chat_id;\nconst texto = (input.texto || '').trim();\nconst cb = (input.callback_data || '').trim();\n\nlet accion = 'unknown';\nlet targetId = null;\nlet nuevoRol = null;\n\nif (usuario.rol !== 'administrador') {\n  accion = 'denegado';\n} else if (cb === 'admin_usuarios' || texto === '/usuarios') {\n  accion = 'listar';\n} else if (cb.startsWith('usr_ver:')) {\n  accion = 'ver';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_rol_menu:')) {\n  accion = 'rol_menu';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_set_rol:')) {\n  accion = 'set_rol';\n  const parts = cb.split(':');\n  targetId = parseInt(parts[1], 10);\n  nuevoRol = parts[2];\n} else if (cb.startsWith('usr_revocar:')) {\n  accion = 'revocar';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_reinvitar:')) {\n  accion = 'reinvitar';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_del_confirm:')) {\n  accion = 'del_confirm';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_del_exec:')) {\n  accion = 'del_exec';\n  targetId = parseInt(cb.split(':')[1], 10);\n}\n\nconst esMismoUsuario = targetId !== null && Number(targetId) === Number(usuario.id);\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    admin_id: usuario.id,\n    accion,\n    target_id: targetId,\n    nuevo_rol: nuevoRol,\n    es_mismo_usuario: esMismoUsuario\n  }\n}];"
+        "jsCode": "const input = $input.first().json;\nconst usuario = input.usuario || {};\nconst chatId = input.telegram_chat_id || usuario.telegram_chat_id;\nconst texto = (input.texto || '').trim();\nconst cb = (input.callback_data || '').trim();\n\nlet accion = 'unknown';\nlet targetId = null;\nlet nuevoRol = null;\n\nif (usuario.rol !== 'administrador') {\n  accion = 'denegado';\n} else if (cb === 'admin_usuarios' || texto === '/usuarios') {\n  accion = 'listar';\n} else if (cb.startsWith('usr_ver:') || /^\\/usr_\\d+$/.test(texto)) {\n  accion = 'ver';\n  targetId = cb.startsWith('usr_ver:')\n    ? parseInt(cb.split(':')[1], 10)\n    : parseInt(texto.replace('/usr_', ''), 10);\n} else if (cb.startsWith('usr_rol_menu:')) {\n  accion = 'rol_menu';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_set_rol:')) {\n  accion = 'set_rol';\n  const parts = cb.split(':');\n  targetId = parseInt(parts[1], 10);\n  nuevoRol = parts[2];\n} else if (cb.startsWith('usr_revocar:')) {\n  accion = 'revocar';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_reinvitar:')) {\n  accion = 'reinvitar';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_del_confirm:')) {\n  accion = 'del_confirm';\n  targetId = parseInt(cb.split(':')[1], 10);\n} else if (cb.startsWith('usr_del_exec:')) {\n  accion = 'del_exec';\n  targetId = parseInt(cb.split(':')[1], 10);\n}\n\nconst esMismoUsuario = targetId !== null && Number(targetId) === Number(usuario.id);\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    admin_id: usuario.id,\n    accion,\n    target_id: targetId,\n    nuevo_rol: nuevoRol,\n    es_mismo_usuario: esMismoUsuario\n  }\n}];"
       },
       "id": "2c3d46f9-b5f7-4ff0-ada6-bd90a439c4a8",
       "name": "Clasificar accion",
@@ -255,7 +255,9 @@
       "parameters": {
         "chatId": "={{ $json.chat_id }}",
         "text": "⛔ No tienes permisos de administrador.",
-        "additionalFields": {}
+        "additionalFields": {
+          "appendAttribution": false
+        }
       },
       "id": "f2972eb4-f496-43ea-b0f6-2cb5425caee4",
       "name": "Responder denegado",
@@ -297,10 +299,10 @@
     },
     {
       "parameters": {
-        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r.id);\nconst chatId = $('Clasificar accion').first().json.chat_id;\n\nconst inline_keyboard = rows.map(u => {\n  const icono = u.activo ? '🟢' : (u.codigo_vinculacion ? '🟡' : '🔴');\n  return [{\n    text: `${icono} ${u.nombre} (${u.rol})`,\n    callback_data: `usr_ver:${u.id}`\n  }];\n});\n\ninline_keyboard.push([{\n  text: '➕ Invitar nuevo usuario',\n  callback_data: 'admin_invitar'\n}]);\n\nconst texto = `👥 *Gestión de Usuarios (${rows.length})*\\n\\n🟢 Activo  |  🟡 Invitación pendiente  |  🔴 Revocado\\n\\nSelecciona un usuario para editar su rol o acceso:`;\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    text: texto,\n    parse_mode: 'Markdown',\n    reply_markup: { inline_keyboard }\n  }\n}];"
+        "jsCode": "const rows = $input.all().map(i => i.json).filter(r => r.id);\nconst chatId = $('Clasificar accion').first().json.chat_id;\n\nconst lineas = rows.map(u => {\n  const icono = u.activo ? '🟢' : (u.codigo_vinculacion ? '🟡' : '🔴');\n  return `${icono} *${u.nombre}* (${u.rol}) — /usr_${u.id}`;\n});\n\nconst listaTexto = lineas.length > 0 ? lineas.join('\\n') : '_No hay usuarios registrados._';\n\nconst texto = `👥 *Gestión de Usuarios (${rows.length})*\\n\\n🟢 Activo  |  🟡 Pendiente  |  🔴 Revocado\\n\\n${listaTexto}\\n\\n👆 Toca el enlace azul (/usr\\_ID) de un usuario para gestionarlo:`;\n\nreturn [{\n  json: {\n    chat_id: chatId,\n    text: texto\n  }\n}];"
       },
       "id": "9b5d322e-2652-4fc4-83a4-edccb25540d3",
-      "name": "Armar teclado usuarios",
+      "name": "Armar lista usuarios",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
@@ -310,23 +312,39 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8903964023:AAFkNNcuNb-NuiLH5nykagjtw1D8gc9lBeM/sendMessage",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "telegramApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json) }}",
-        "options": {}
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "➕ Invitar nuevo usuario",
+                    "additionalFields": {
+                      "callback_data": "admin_invitar"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
       },
       "id": "7333a8a0-2195-483f-bad0-255b48460cde",
-      "name": "Enviar lista dinamica",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "name": "Responder lista usuarios",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
         240,
         32
       ],
+      "webhookId": "a1b2c3d4-0001-4000-8000-000000000001",
       "credentials": {
         "telegramApi": {
           "id": "uc8UvlYCV8azBPQJ",
@@ -359,7 +377,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const u = $input.first().json;\nconst ctx = $('Clasificar accion').first().json;\nconst estado = u.activo ? '🟢 Activo' : (u.codigo_vinculacion ? `🟡 Pendiente (Código: \\`${u.codigo_vinculacion}\\`)` : '🔴 Acceso revocado');\n\nconst keyboard = [\n  [{ text: '🔄 Cambiar rol', callback_data: `usr_rol_menu:${u.id}` }]\n];\n\nif (u.activo) {\n  keyboard.push([{ text: '🔴 Revocar acceso', callback_data: `usr_revocar:${u.id}` }]);\n} else {\n  keyboard.push([\n    { text: '🟢 Re-invitar (nuevo código)', callback_data: `usr_reinvitar:${u.id}` },\n    { text: '🗑️ Eliminar', callback_data: `usr_del_confirm:${u.id}` }\n  ]);\n}\n\nkeyboard.push([{ text: '⬅️ Volver a la lista', callback_data: 'admin_usuarios' }]);\n\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text: `👤 *Ficha de Usuario*\\n\\n• *ID:* ${u.id}\\n• *Nombre:* ${u.nombre}\\n• *Rol:* ${u.rol}\\n• *Estado:* ${estado}`,\n    parse_mode: 'Markdown',\n    reply_markup: { inline_keyboard: keyboard }\n  }\n}];"
+        "jsCode": "const u = $input.first().json;\nconst ctx = $('Clasificar accion').first().json;\n\nif (!u || !u.id) {\n  return [{\n    json: {\n      chat_id: ctx.chat_id,\n      encontrado: false,\n      text: '⚠️ Usuario no encontrado.'\n    }\n  }];\n}\n\nconst estado = u.activo\n  ? '🟢 Activo'\n  : (u.codigo_vinculacion ? `🟡 Pendiente (Código: \\`${u.codigo_vinculacion}\\`)` : '🔴 Acceso revocado');\n\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    encontrado: true,\n    user_id: u.id,\n    activo: Boolean(u.activo),\n    text: `👤 *Ficha de Usuario*\\n\\n• *ID:* ${u.id}\\n• *Nombre:* ${u.nombre}\\n• *Rol:* ${u.rol}\\n• *Estado:* ${estado}`\n  }\n}];"
       },
       "id": "71cfb94a-5847-4895-9847-2e1de1640749",
       "name": "Armar ficha usuario",
@@ -372,23 +390,90 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8903964023:AAFkNNcuNb-NuiLH5nykagjtw1D8gc9lBeM/sendMessage",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "telegramApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json) }}",
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.activo }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
         "options": {}
       },
-      "id": "4c00ea26-e8e3-4ea3-9cf5-90c3597e74ca",
-      "name": "Enviar ficha usuario",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "b1c2d3e4-1111-4000-8000-000000000011",
+      "name": "¿Usuario activo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
       "position": [
-        240,
+        224,
         192
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🔄 Cambiar rol",
+                    "additionalFields": {
+                      "callback_data": "=usr_rol_menu:{{ $json.user_id }}"
+                    }
+                  },
+                  {
+                    "text": "🔴 Revocar acceso",
+                    "additionalFields": {
+                      "callback_data": "=usr_revocar:{{ $json.user_id }}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⬅️ Volver a la lista",
+                    "additionalFields": {
+                      "callback_data": "admin_usuarios"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      },
+      "id": "4c00ea26-e8e3-4ea3-9cf5-90c3597e74ca",
+      "name": "Enviar ficha activo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        112
       ],
+      "webhookId": "a1b2c3d4-0002-4000-8000-000000000002",
       "credentials": {
         "telegramApi": {
           "id": "uc8UvlYCV8azBPQJ",
@@ -398,36 +483,215 @@
     },
     {
       "parameters": {
-        "jsCode": "const ctx = $input.first().json;\nif (ctx.es_mismo_usuario) {\n  return [{\n    json: {\n      chat_id: ctx.chat_id,\n      text: '⚠️ Por seguridad, no puedes modificar tu propio rol de administrador.',\n      reply_markup: { inline_keyboard: [[{ text: '⬅️ Volver', callback_data: `usr_ver:${ctx.target_id}` }]] }\n    }\n  }];\n}\n\nreturn [{\n  json: {\n    chat_id: ctx.chat_id,\n    text: '🔄 Selecciona el *nuevo rol* para este usuario:',\n    parse_mode: 'Markdown',\n    reply_markup: {\n      inline_keyboard: [\n        [{ text: '👷 Jefe de Obra', callback_data: `usr_set_rol:${ctx.target_id}:jefe_obra` }],\n        [\n          { text: '📊 Gerencia', callback_data: `usr_set_rol:${ctx.target_id}:gerencia` },\n          { text: '🛡️ Administrador', callback_data: `usr_set_rol:${ctx.target_id}:administrador` }\n        ],\n        [{ text: '⬅️ Cancelar', callback_data: `usr_ver:${ctx.target_id}` }]\n      ]\n    }\n  }\n}];"
+        "chatId": "={{ $json.chat_id }}",
+        "text": "={{ $json.text }}",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🔄 Cambiar rol",
+                    "additionalFields": {
+                      "callback_data": "=usr_rol_menu:{{ $json.user_id }}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "🟢 Re-invitar",
+                    "additionalFields": {
+                      "callback_data": "=usr_reinvitar:{{ $json.user_id }}"
+                    }
+                  },
+                  {
+                    "text": "🗑️ Eliminar",
+                    "additionalFields": {
+                      "callback_data": "=usr_del_confirm:{{ $json.user_id }}"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⬅️ Volver a la lista",
+                    "additionalFields": {
+                      "callback_data": "admin_usuarios"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      },
+      "id": "4c00ea26-e8e3-4ea3-9cf5-90c3597e74cb",
+      "name": "Enviar ficha inactivo",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        272
+      ],
+      "webhookId": "a1b2c3d4-0002-4000-8000-000000000004",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.es_mismo_usuario }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
       },
       "id": "49c88f8b-3b8f-449e-8303-554759493e49",
-      "name": "Armar menu roles",
-      "type": "n8n-nodes-base.code",
+      "name": "¿Es mismo usuario?",
+      "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
         -240,
-        352
+        400
       ]
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.telegram.org/bot8903964023:AAFkNNcuNb-NuiLH5nykagjtw1D8gc9lBeM/sendMessage",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "telegramApi",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify($json) }}",
-        "options": {}
+        "chatId": "={{ $json.chat_id }}",
+        "text": "⚠️ Por seguridad, no puedes modificar tu propio rol de administrador.",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⬅️ Volver",
+                    "additionalFields": {
+                      "callback_data": "=usr_ver:{{ $json.target_id }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "appendAttribution": false
+        }
       },
-      "id": "6eaad821-a580-4145-a401-7d55d9717d17",
-      "name": "Enviar menu roles",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "id": "6eaad821-a580-4145-a401-7d55d9717d18",
+      "name": "Avisar propio rol",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
       "position": [
         0,
         352
       ],
+      "webhookId": "a1b2c3d4-0003-4000-8000-000000000005",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "🔄 Selecciona el *nuevo rol* para este usuario:",
+        "replyMarkup": "inlineKeyboard",
+        "inlineKeyboard": {
+          "rows": [
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "👷 Jefe de Obra",
+                    "additionalFields": {
+                      "callback_data": "=usr_set_rol:{{ $json.target_id }}:jefe_obra"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "📊 Gerencia",
+                    "additionalFields": {
+                      "callback_data": "=usr_set_rol:{{ $json.target_id }}:gerencia"
+                    }
+                  },
+                  {
+                    "text": "🛡️ Administrador",
+                    "additionalFields": {
+                      "callback_data": "=usr_set_rol:{{ $json.target_id }}:administrador"
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "row": {
+                "buttons": [
+                  {
+                    "text": "⬅️ Cancelar",
+                    "additionalFields": {
+                      "callback_data": "=usr_ver:{{ $json.target_id }}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {
+          "parse_mode": "Markdown",
+          "appendAttribution": false
+        }
+      },
+      "id": "6eaad821-a580-4145-a401-7d55d9717d17",
+      "name": "Enviar menu roles",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        496
+      ],
+      "webhookId": "a1b2c3d4-0003-4000-8000-000000000003",
       "credentials": {
         "telegramApi": {
           "id": "uc8UvlYCV8azBPQJ",
@@ -449,7 +713,7 @@
       "typeVersion": 2.5,
       "position": [
         -240,
-        512
+        624
       ],
       "credentials": {
         "postgres": {
@@ -480,7 +744,8 @@
           ]
         },
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "appendAttribution": false
         }
       },
       "id": "d1a07d06-c077-4745-af32-2197df09db4c",
@@ -489,7 +754,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        512
+        624
       ],
       "webhookId": "4d9c03e9-931c-42e2-8b6d-f49bbd4a8e8d",
       "credentials": {
@@ -513,7 +778,7 @@
       "typeVersion": 2.5,
       "position": [
         -240,
-        672
+        784
       ],
       "credentials": {
         "postgres": {
@@ -544,7 +809,8 @@
           ]
         },
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "appendAttribution": false
         }
       },
       "id": "0c1f9ebc-04be-4866-816a-cf3fc7ac5869",
@@ -553,7 +819,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        672
+        784
       ],
       "webhookId": "0dc78f3e-8bdd-46c1-be24-c76571b9e4bc",
       "credentials": {
@@ -573,7 +839,7 @@
       "typeVersion": 2,
       "position": [
         -240,
-        832
+        944
       ]
     },
     {
@@ -590,7 +856,7 @@
       "typeVersion": 2.5,
       "position": [
         0,
-        832
+        944
       ],
       "credentials": {
         "postgres": {
@@ -621,7 +887,8 @@
           ]
         },
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "appendAttribution": false
         }
       },
       "id": "1e127ab3-8e60-48de-a835-26bbc43a7aa8",
@@ -630,7 +897,7 @@
       "typeVersion": 1.2,
       "position": [
         240,
-        832
+        944
       ],
       "webhookId": "106f2d76-ac45-4d20-bedc-3fbe8908a97b",
       "credentials": {
@@ -668,7 +935,8 @@
           ]
         },
         "additionalFields": {
-          "parse_mode": "Markdown"
+          "parse_mode": "Markdown",
+          "appendAttribution": false
         }
       },
       "id": "f2bce543-8feb-42ac-ae40-9d17a97b1ed0",
@@ -677,7 +945,7 @@
       "typeVersion": 1.2,
       "position": [
         -240,
-        992
+        1104
       ],
       "webhookId": "d51cce2a-bf2f-4e94-90de-c1f1ccab1fcf",
       "credentials": {
@@ -701,7 +969,7 @@
       "typeVersion": 2.5,
       "position": [
         -240,
-        1152
+        1264
       ],
       "credentials": {
         "postgres": {
@@ -732,7 +1000,9 @@
             }
           ]
         },
-        "additionalFields": {}
+        "additionalFields": {
+          "appendAttribution": false
+        }
       },
       "id": "0c811aee-7307-4fa6-9098-7e6f41093ff7",
       "name": "Informar resultado eliminacion",
@@ -740,7 +1010,7 @@
       "typeVersion": 1.2,
       "position": [
         0,
-        1152
+        1264
       ],
       "webhookId": "96818dea-0308-4ab5-870d-d493e86cb227",
       "credentials": {
@@ -800,7 +1070,7 @@
         ],
         [
           {
-            "node": "Armar menu roles",
+            "node": "¿Es mismo usuario?",
             "type": "main",
             "index": 0
           }
@@ -846,18 +1116,18 @@
       "main": [
         [
           {
-            "node": "Armar teclado usuarios",
+            "node": "Armar lista usuarios",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Armar teclado usuarios": {
+    "Armar lista usuarios": {
       "main": [
         [
           {
-            "node": "Enviar lista dinamica",
+            "node": "Responder lista usuarios",
             "type": "main",
             "index": 0
           }
@@ -879,15 +1149,40 @@
       "main": [
         [
           {
-            "node": "Enviar ficha usuario",
+            "node": "¿Usuario activo?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Armar menu roles": {
+    "¿Usuario activo?": {
       "main": [
+        [
+          {
+            "node": "Enviar ficha activo",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Enviar ficha inactivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Es mismo usuario?": {
+      "main": [
+        [
+          {
+            "node": "Avisar propio rol",
+            "type": "main",
+            "index": 0
+          }
+        ],
         [
           {
             "node": "Enviar menu roles",

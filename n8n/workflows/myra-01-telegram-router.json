@@ -157,7 +157,7 @@
       "parameters": {
         "mode": "expression",
         "numberOutputs": 3,
-        "output": "={{ (function(){ const j = $json; const cb = String(j.callback_data || ''); const t = String(j.texto || '').trim(); const acc = String((j.invitar_pending && j.invitar_pending.invitar_accion) || ''); const pend = acc.startsWith('invitar_') && (j.tipo === 'texto' || t === '/cancelar'); if (cb === 'admin_invitar' || cb.startsWith('inv_rol:') || t === '/invitar' || pend) return 0; if (t === '/usuarios' || cb === 'admin_usuarios' || cb.startsWith('usr_')) return 1; return 2; })() }}"
+        "output": "={{ (function(){ const j = $json; const cb = String(j.callback_data || ''); const t = String(j.texto || '').trim(); const acc = String((j.invitar_pending && j.invitar_pending.invitar_accion) || ''); const pend = acc.startsWith('invitar_') && (j.tipo === 'texto' || t === '/cancelar'); if (cb === 'admin_invitar' || cb.startsWith('inv_rol:') || t === '/invitar' || pend) return 0; if (t === '/usuarios' || t.startsWith('/usr_') || cb === 'admin_usuarios' || cb.startsWith('usr_')) return 1; return 2; })() }}"
       },
       "id": "99d544ae-32ed-4e95-9f23-5ef8fa34f56a",
       "name": "¿Invitar usuario?",
@@ -422,8 +422,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        2112,
-        3152
+        2656,
+        3168
       ]
     },
     {
@@ -1061,7 +1061,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "e5205517-1f8c-408e-bd5a-29c838a344f9",
+  "versionId": "b41769a9-77ba-4e33-8768-12dd527b9774",
   "meta": {
     "instanceId": "394c1237d24a05cc783acc75d441f3ba8bc544ff8a67a56a8dff14706c755ce2"
   },
