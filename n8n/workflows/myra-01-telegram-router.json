@@ -117,39 +117,14 @@
     },
     {
       "parameters": {
-        "operation": "executeQuery",
-        "query": "SELECT p.accion AS invitar_accion\nFROM admin_pending p\nJOIN usuarios u ON u.id = p.usuario_id\nWHERE u.telegram_chat_id = $1\n  AND p.accion LIKE 'invitar\\_%'\nLIMIT 1;",
-        "options": {
-          "queryReplacement": "={{ [ Number($('Evaluar autorizacion').first().json.telegram_chat_id) ] }}"
-        }
-      },
-      "id": "52fd8ad9-76c7-4480-8d65-4e93dbf8afc0",
-      "name": "Buscar invitacion pendiente",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.7,
-      "position": [
-        3744,
-        3664
-      ],
-      "executeOnce": true,
-      "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "DddndwjEnI7KMH9I",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const original = $('Evaluar autorizacion').first().json;\nconst pending = $('Buscar admin pendiente').first().json || {};\nconst invitar = $input.first().json || {};\nreturn [{ json: { ...original, admin_pending: pending, invitar_pending: invitar } }];"
+        "jsCode": "const original = $('Evaluar autorizacion').first().json;\nconst pending = $('Buscar admin pendiente').first().json || {};\nreturn [{ json: { ...original, admin_pending: pending } }];"
       },
       "id": "5be6965a-2808-4488-b39e-901abbe48d7c",
       "name": "Preparar admin",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3968,
+        3744,
         3664
       ]
     },
@@ -157,14 +132,14 @@
       "parameters": {
         "mode": "expression",
         "numberOutputs": 3,
-        "output": "={{ (function(){ const j = $json; const cb = String(j.callback_data || ''); const t = String(j.texto || '').trim(); const acc = String((j.invitar_pending && j.invitar_pending.invitar_accion) || ''); const pend = acc.startsWith('invitar_') && (j.tipo === 'texto' || t === '/cancelar'); if (cb === 'admin_invitar' || cb.startsWith('inv_rol:') || t === '/invitar' || pend) return 0; if (t === '/usuarios' || t.startsWith('/usr_') || cb === 'admin_usuarios' || cb.startsWith('usr_')) return 1; return 2; })() }}"
+        "output": "={{ (function(){ const j = $json; const cb = String(j.callback_data || ''); const t = String(j.texto || '').trim(); if (cb === 'admin_invitar' || t === '/invitar') return 0; if (t === '/usuarios' || t.startsWith('/usr_') || cb === 'admin_usuarios' || cb.startsWith('usr_')) return 1; return 2; })() }}"
       },
       "id": "99d544ae-32ed-4e95-9f23-5ef8fa34f56a",
       "name": "¿Invitar usuario?",
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        4192,
+        3968,
         3968
       ]
     },
@@ -229,7 +204,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        5008,
+        4784,
         3952
       ]
     },
@@ -244,7 +219,7 @@
       "type": "n8n-nodes-base.switch",
       "typeVersion": 3.4,
       "position": [
-        4416,
+        4192,
         3664
       ]
     },
@@ -351,7 +326,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        4608,
+        4384,
         3584
       ]
     },
@@ -807,7 +782,7 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        4848,
+        4624,
         4112
       ],
       "id": "116b7eec-911b-43aa-bf31-8bc77f79f640",
@@ -879,17 +854,6 @@
       ]
     },
     "Buscar admin pendiente": {
-      "main": [
-        [
-          {
-            "node": "Buscar invitacion pendiente",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Buscar invitacion pendiente": {
       "main": [
         [
           {

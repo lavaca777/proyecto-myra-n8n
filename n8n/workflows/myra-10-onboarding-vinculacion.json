@@ -88,9 +88,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "UPDATE usuarios\nSET telegram_chat_id = $1,\n    activo = true,\n    codigo_vinculacion = NULL,\n    codigo_expira_at = NULL\nWHERE codigo_vinculacion = $2\n  AND telegram_chat_id IS NULL\n  AND (codigo_expira_at IS NULL OR codigo_expira_at > NOW())\nRETURNING id, nombre, rol;",
+        "query": "UPDATE usuarios\nSET telegram_chat_id = $1,\n    nombre = CASE\n      WHEN nombre LIKE 'Invitado (%' THEN COALESCE(NULLIF($3, ''), nombre)\n      ELSE nombre\n    END,\n    activo = true,\n    codigo_vinculacion = NULL,\n    codigo_expira_at = NULL\nWHERE codigo_vinculacion = $2\n  AND telegram_chat_id IS NULL\n  AND (codigo_expira_at IS NULL OR codigo_expira_at > NOW())\nRETURNING id, nombre, rol;",
         "options": {
-          "queryReplacement": "={{ [$json.telegram_chat_id, $json.codigo_limpio] }}"
+          "queryReplacement": "={{ [$json.telegram_chat_id, $json.codigo_limpio, $json.nombre_telegram] }}"
         }
       },
       "id": "f894ce6a-a98a-4be0-bedf-98121fa78e83",

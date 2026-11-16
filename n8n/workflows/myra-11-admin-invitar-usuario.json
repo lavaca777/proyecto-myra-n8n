@@ -33,7 +33,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const i = $input.first().json;\nconst usuario = i.usuario || {};\nconst texto = String(i.texto || '').trim();\nconst cb = String(i.callback_data || '');\nconst roles = ['jefe_obra', 'gerencia', 'administrador'];\nconst alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\nlet sufijo = '';\nfor (let n = 0; n < 5; n++) sufijo += alfabeto[Math.floor(Math.random() * alfabeto.length)];\nconst rolSel = cb.startsWith('inv_rol:') ? cb.slice(8) : '';\n\nlet ruta = 'ignorar';\nif (usuario.rol !== 'administrador') ruta = 'sin_permiso';\nelse if (texto === '/cancelar') ruta = 'cancelar';\nelse if (cb === 'admin_invitar' || texto === '/invitar') ruta = 'inicio';\nelse if (cb.startsWith('inv_rol:') && roles.includes(rolSel)) ruta = 'generar';\nelse if (!cb && texto && !texto.startsWith('/')) ruta = 'nombre';\n\nreturn [{ json: { telegram_chat_id: i.telegram_chat_id, texto, callback_data: cb, usuario, usuario_id: usuario.id ?? null, ruta, rol_sel: rolSel, codigo: 'MYRA-' + sufijo } }];"
+        "jsCode": "const i = $input.first().json;\nconst usuario = i.usuario || {};\nconst texto = String(i.texto || '').trim();\nconst cb = String(i.callback_data || '');\nconst alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';\nlet sufijo = '';\nfor (let n = 0; n < 5; n++) sufijo += alfabeto[Math.floor(Math.random() * alfabeto.length)];\n\nlet ruta = 'ignorar';\nif (usuario.rol !== 'administrador') ruta = 'sin_permiso';\nelse if (cb === 'admin_invitar' || texto === '/invitar') ruta = 'generar';\n\nreturn [{ json: { telegram_chat_id: i.telegram_chat_id, texto, callback_data: cb, usuario, usuario_id: usuario.id ?? null, ruta, rol_sel: 'jefe_obra', codigo: 'MYRA-' + sufijo } }];"
       },
       "id": "7f54716c-1848-4c89-a5be-3784b8214a68",
       "name": "Clasificar",
@@ -41,14 +41,14 @@
       "typeVersion": 2,
       "position": [
         -640,
-        576
+        384
       ]
     },
     {
       "parameters": {
         "mode": "expression",
-        "numberOutputs": 6,
-        "output": "={{ ['sin_permiso','cancelar','inicio','nombre','generar'].indexOf($json.ruta) >= 0 ? ['sin_permiso','cancelar','inicio','nombre','generar'].indexOf($json.ruta) : 5 }}"
+        "numberOutputs": 3,
+        "output": "={{ ['sin_permiso','generar'].indexOf($json.ruta) >= 0 ? ['sin_permiso','generar'].indexOf($json.ruta) : 2 }}"
       },
       "id": "b6a3c1a2-9d88-4211-aca2-0f2398bdf270",
       "name": "Ruta",
@@ -56,7 +56,7 @@
       "typeVersion": 3.4,
       "position": [
         -416,
-        512
+        384
       ]
     },
     {
@@ -72,8 +72,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        0,
-        0
+        -112,
+        224
       ],
       "webhookId": "de5428d3-45cf-4f55-85a4-2e987f9fc739",
       "credentials": {
@@ -86,250 +86,9 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "DELETE FROM admin_pending\nWHERE usuario_id = $1\n  AND accion LIKE 'invitar\\_%';",
+        "query": "INSERT INTO usuarios (nombre, rol, activo, codigo_vinculacion, codigo_expira_at)\nVALUES ('Invitado (' || $1::text || ')', 'jefe_obra', false, $1::text, NOW() + INTERVAL '24 hours')\nRETURNING nombre, rol, codigo_vinculacion;",
         "options": {
-          "queryReplacement": "={{ [ $json.usuario_id ] }}"
-        }
-      },
-      "id": "93562659-1765-4afc-9658-a28dee676dca",
-      "name": "Cancelar pendiente",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.7,
-      "position": [
-        -112,
-        320
-      ],
-      "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "DddndwjEnI7KMH9I",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Clasificar').first().json.telegram_chat_id }}",
-        "text": "Invitación cancelada.",
-        "additionalFields": {
-          "appendAttribution": false
-        }
-      },
-      "id": "51e870c9-a675-4425-b739-25482d0b83f0",
-      "name": "Mensaje cancelado",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        112,
-        320
-      ],
-      "webhookId": "5dc4ff49-bd72-4d1a-a15e-5edd54a55041",
-      "credentials": {
-        "telegramApi": {
-          "id": "uc8UvlYCV8azBPQJ",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO admin_pending (usuario_id, accion, paso, datos, payload)\nVALUES ($1, 'invitar_nombre', 'esperando', '{}'::jsonb, '{}'::jsonb)\nON CONFLICT (usuario_id) DO UPDATE\nSET accion = 'invitar_nombre', paso = 'esperando', entidad_id = NULL,\n    datos = '{}'::jsonb, payload = '{}'::jsonb, actualizado_en = now()\nRETURNING id;",
-        "options": {
-          "queryReplacement": "={{ [ $json.usuario_id ] }}"
-        }
-      },
-      "id": "9bb56ab9-ac5e-4402-b867-35cff9e8144c",
-      "name": "Iniciar invitación",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.7,
-      "position": [
-        -112,
-        512
-      ],
-      "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "DddndwjEnI7KMH9I",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Clasificar').first().json.telegram_chat_id }}",
-        "text": "Escribe el nombre completo de la persona que deseas invitar (o /cancelar):",
-        "additionalFields": {
-          "appendAttribution": false
-        }
-      },
-      "id": "0bee8f04-1db8-41c3-b11e-a1b9ac02ff89",
-      "name": "Pedir nombre",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        112,
-        512
-      ],
-      "webhookId": "0ad22558-dea5-4474-961d-fd176b44b74a",
-      "credentials": {
-        "telegramApi": {
-          "id": "uc8UvlYCV8azBPQJ",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "UPDATE admin_pending\nSET accion = 'invitar_rol',\n    datos = jsonb_build_object('nombre', $2::text),\n    actualizado_en = now()\nWHERE usuario_id = $1\n  AND accion = 'invitar_nombre'\nRETURNING id;",
-        "options": {
-          "queryReplacement": "={{ [ $json.usuario_id, $json.texto ] }}"
-        }
-      },
-      "id": "3aead0bb-4d8c-4b9c-9d28-07d7efc24f73",
-      "name": "Guardar nombre",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.7,
-      "position": [
-        -112,
-        800
-      ],
-      "alwaysOutputData": true,
-      "credentials": {
-        "postgres": {
-          "id": "DddndwjEnI7KMH9I",
-          "name": "Postgres account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $json.id ? \"si\" : \"no\" }}",
-              "rightValue": "si",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "77c41d62-7210-4a68-abb3-f556d80340a5",
-      "name": "¿Había invitación en curso?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        112,
-        800
-      ]
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Clasificar').first().json.telegram_chat_id }}",
-        "text": "Selecciona el rol del nuevo usuario:",
-        "replyMarkup": "inlineKeyboard",
-        "inlineKeyboard": {
-          "rows": [
-            {
-              "row": {
-                "buttons": [
-                  {
-                    "text": "Jefe de Obra",
-                    "additionalFields": {
-                      "callback_data": "inv_rol:jefe_obra"
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              "row": {
-                "buttons": [
-                  {
-                    "text": "Gerencia",
-                    "additionalFields": {
-                      "callback_data": "inv_rol:gerencia"
-                    }
-                  }
-                ]
-              }
-            },
-            {
-              "row": {
-                "buttons": [
-                  {
-                    "text": "Administrador",
-                    "additionalFields": {
-                      "callback_data": "inv_rol:administrador"
-                    }
-                  }
-                ]
-              }
-            }
-          ]
-        },
-        "additionalFields": {
-          "appendAttribution": false
-        }
-      },
-      "id": "3cbe649c-1102-421f-8a22-a9c73de5512a",
-      "name": "Pedir rol",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        336,
-        704
-      ],
-      "webhookId": "ee71311c-5b16-430e-beb6-5a296276b85f",
-      "credentials": {
-        "telegramApi": {
-          "id": "uc8UvlYCV8azBPQJ",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Clasificar').first().json.telegram_chat_id }}",
-        "text": "No hay una invitación en curso. Usa /invitar para comenzar.",
-        "additionalFields": {
-          "appendAttribution": false
-        }
-      },
-      "id": "912919e6-f4ec-42c4-96f5-11a23005f14c",
-      "name": "Sin invitación en curso",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        336,
-        896
-      ],
-      "webhookId": "f144d674-8a6d-4d82-8442-123a39855d6f",
-      "credentials": {
-        "telegramApi": {
-          "id": "uc8UvlYCV8azBPQJ",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "WITH pend AS (\n  DELETE FROM admin_pending\n  WHERE usuario_id = $1\n    AND accion = 'invitar_rol'\n  RETURNING datos->>'nombre' AS nombre\n)\nINSERT INTO usuarios (nombre, rol, activo, codigo_vinculacion, codigo_expira_at)\nSELECT nombre, $2::text, false, $3::text, NOW() + INTERVAL '24 hours'\nFROM pend\nRETURNING nombre, rol, codigo_vinculacion;",
-        "options": {
-          "queryReplacement": "={{ [ $json.usuario_id, $json.rol_sel, $json.codigo ] }}"
+          "queryReplacement": "={{ [ $json.codigo ] }}"
         }
       },
       "id": "b94069a1-22d7-461e-acb6-f133589ff7e3",
@@ -338,7 +97,7 @@
       "typeVersion": 2.7,
       "position": [
         -112,
-        992
+        448
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -350,40 +109,8 @@
     },
     {
       "parameters": {
-        "conditions": {
-          "combinator": "and",
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "leftValue": "={{ $json.codigo_vinculacion ? \"si\" : \"no\" }}",
-              "rightValue": "si",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        },
-        "options": {}
-      },
-      "id": "1f8b0ea4-42d3-44e0-b64a-dd9e125c6991",
-      "name": "¿Invitación creada?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        112,
-        992
-      ]
-    },
-    {
-      "parameters": {
         "chatId": "={{ $('Clasificar').first().json.telegram_chat_id }}",
-        "text": "=Invitación creada\n\nNombre: {{ $('Crear invitación').first().json.nombre }}\nRol: {{ $('Crear invitación').first().json.rol }}\nCódigo: {{ $('Crear invitación').first().json.codigo_vinculacion }}\nVálido por 24 horas.\n\nGenerando enlace de invitación...",
+        "text": "Generando enlace de invitación (Rol: Jefe de Obra)...",
         "additionalFields": {
           "appendAttribution": false
         }
@@ -393,8 +120,8 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        336,
-        896
+        144,
+        448
       ],
       "webhookId": "94151627-7706-4aee-bfaa-c99782d16c50",
       "credentials": {
@@ -409,7 +136,7 @@
         "operation": "editMessageText",
         "chatId": "={{ $('Clasificar').first().json.telegram_chat_id }}",
         "messageId": "={{ $json.result.message_id }}",
-        "text": "=Invitación creada\n\nNombre: {{ $('Crear invitación').first().json.nombre }}\nRol: {{ $('Crear invitación').first().json.rol }}\nCódigo: {{ $('Crear invitación').first().json.codigo_vinculacion }}\nVálido por 24 horas.\n\nEnlace directo de invitación:\nhttps://t.me/{{ $json.result.from.username }}?start={{ $('Crear invitación').first().json.codigo_vinculacion }}",
+        "text": "=Enlace de invitación creado (Rol: Jefe de Obra)\nVálido por 24 horas:\n\nhttps://t.me/{{ $json.result.from.username }}?start={{ $('Crear invitación').first().json.codigo_vinculacion }}",
         "additionalFields": {}
       },
       "id": "0be5bda6-eaab-47ce-90d5-73e4a4d99cc8",
@@ -417,34 +144,10 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        560,
-        896
+        384,
+        448
       ],
       "webhookId": "aaee48e4-2642-49d0-9e86-3292600937b5",
-      "credentials": {
-        "telegramApi": {
-          "id": "uc8UvlYCV8azBPQJ",
-          "name": "Telegram account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "chatId": "={{ $('Clasificar').first().json.telegram_chat_id }}",
-        "text": "No encontré una invitación en curso (puede haber sido cancelada). Usa /invitar para comenzar de nuevo.",
-        "additionalFields": {
-          "appendAttribution": false
-        }
-      },
-      "id": "17470052-d02c-4c50-a826-abc4f729b415",
-      "name": "Invitación no encontrada",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
-      "position": [
-        336,
-        1088
-      ],
-      "webhookId": "12c1069b-caf9-47b9-8711-4ff9fe3b68a6",
       "credentials": {
         "telegramApi": {
           "id": "uc8UvlYCV8azBPQJ",
@@ -488,79 +191,7 @@
         ],
         [
           {
-            "node": "Cancelar pendiente",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Iniciar invitación",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Guardar nombre",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
             "node": "Crear invitación",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Cancelar pendiente": {
-      "main": [
-        [
-          {
-            "node": "Mensaje cancelado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Iniciar invitación": {
-      "main": [
-        [
-          {
-            "node": "Pedir nombre",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Guardar nombre": {
-      "main": [
-        [
-          {
-            "node": "¿Había invitación en curso?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "¿Había invitación en curso?": {
-      "main": [
-        [
-          {
-            "node": "Pedir rol",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Sin invitación en curso",
             "type": "main",
             "index": 0
           }
@@ -571,25 +202,7 @@
       "main": [
         [
           {
-            "node": "¿Invitación creada?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "¿Invitación creada?": {
-      "main": [
-        [
-          {
             "node": "Enviar código",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Invitación no encontrada",
             "type": "main",
             "index": 0
           }
@@ -617,58 +230,7 @@
   "meta": {
     "instanceId": "394c1237d24a05cc783acc75d441f3ba8bc544ff8a67a56a8dff14706c755ce2"
   },
-  "nodeGroups": [
-    {
-      "id": "189cc859-bce5-4c3e-93cc-53bcfa670ef4",
-      "name": "Validar y clasificar",
-      "nodeIds": [
-        "7f54716c-1848-4c89-a5be-3784b8214a68",
-        "b6a3c1a2-9d88-4211-aca2-0f2398bdf270"
-      ],
-      "description": "Recibe el mensaje del router, exige rol administrador y decide qué paso de la invitación corresponde"
-    },
-    {
-      "id": "5c882199-039f-400b-8bb2-200e2312aaf6",
-      "name": "Cancelar invitación",
-      "nodeIds": [
-        "93562659-1765-4afc-9658-a28dee676dca",
-        "51e870c9-a675-4425-b739-25482d0b83f0"
-      ],
-      "description": "Borra la invitación a medias del administrador y confirma la cancelación por Telegram"
-    },
-    {
-      "id": "8dd36a41-2b1e-45b4-b120-75156e7c95b0",
-      "name": "Iniciar invitación",
-      "nodeIds": [
-        "9bb56ab9-ac5e-4402-b867-35cff9e8144c",
-        "0bee8f04-1db8-41c3-b11e-a1b9ac02ff89"
-      ],
-      "description": "Registra el estado pendiente del administrador y le pide el nombre de la persona invitada"
-    },
-    {
-      "id": "beb53115-c1d7-42bf-ab03-520359263563",
-      "name": "Elegir rol",
-      "nodeIds": [
-        "3aead0bb-4d8c-4b9c-9d28-07d7efc24f73",
-        "77c41d62-7210-4a68-abb3-f556d80340a5",
-        "3cbe649c-1102-421f-8a22-a9c73de5512a",
-        "912919e6-f4ec-42c4-96f5-11a23005f14c"
-      ],
-      "description": "Guarda el nombre recibido y muestra los botones de rol; avisa si no había invitación en curso"
-    },
-    {
-      "id": "c551bf97-e12f-437a-8a13-831ebe0dade4",
-      "name": "Emitir código",
-      "nodeIds": [
-        "b94069a1-22d7-461e-acb6-f133589ff7e3",
-        "1f8b0ea4-42d3-44e0-b64a-dd9e125c6991",
-        "55c4b98d-8c3d-433f-a1c7-4f70e19c5d21",
-        "0be5bda6-eaab-47ce-90d5-73e4a4d99cc8",
-        "17470052-d02c-4c50-a826-abc4f729b415"
-      ],
-      "description": "Crea el usuario inactivo con código de 24 h y envía el resumen con el enlace directo de invitación"
-    }
-  ],
+  "nodeGroups": [],
   "id": "UeE3GtU3LjSCaZ5z",
   "tags": []
 }
