@@ -132,7 +132,7 @@
       "parameters": {
         "mode": "expression",
         "numberOutputs": 3,
-        "output": "={{ (function(){ const j = $json; const cb = String(j.callback_data || ''); const t = String(j.texto || '').trim(); if (cb === 'admin_invitar' || t === '/invitar') return 0; if (t === '/usuarios' || t.startsWith('/usr_') || cb === 'admin_usuarios' || cb.startsWith('usr_')) return 1; return 2; })() }}"
+        "output": "={{ (function(){ const j = $json; const cb = String(j.callback_data || ''); const t = String(j.texto || '').trim(); if (cb === 'admin_invitar' || t === '/invitar') return 0; if (t === '/usuarios' || /^\\/usr_?\\d+$/.test(t) || cb === 'admin_usuarios' || cb.startsWith('usr_')) return 1; return 2; })() }}"
       },
       "id": "99d544ae-32ed-4e95-9f23-5ef8fa34f56a",
       "name": "¿Invitar usuario?",
