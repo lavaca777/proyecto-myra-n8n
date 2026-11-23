@@ -1276,8 +1276,7 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "errorWorkflow": "b08c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e80"
+    "binaryMode": "separate"
   },
   "versionId": "f3f95336-5de3-40df-b01c-8d439d80e6cc",
   "meta": {

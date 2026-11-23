@@ -73,7 +73,9 @@
           "id": "uc8UvlYCV8azBPQJ",
           "name": "Telegram account"
         }
-      }
+      },
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true
     }
   ],
   "connections": {
