@@ -289,7 +289,8 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "errorWorkflow": "b08c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e80"
   },
   "versionId": "29e11398-8a7b-49b9-9fd0-bba94ded378a",
   "meta": {

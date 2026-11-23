@@ -1,0 +1,120 @@
+{
+  "id": "b08c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e80",
+  "name": "[MYRA] 08 · Errores",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7c7263b1-7c99-4f07-919b-27140ab8f71a",
+      "name": "Error Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const e = $json.execution || {};\nconst w = $json.workflow || {};\nconst err = e.error || {};\nconst esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst lineas = [\n  '🚨 <b>Error en MYRA</b>',\n  '',\n  `<b>Workflow:</b> ${esc(w.name || '(desconocido)')}`,\n  `<b>Nodo:</b> ${esc(e.lastNodeExecuted || '(desconocido)')}`,\n  `<b>Ejecución:</b> ${esc(e.id || '(no guardada)')}`,\n  `<b>Modo:</b> ${esc(e.mode || '(desconocido)')}`,\n  `<b>Mensaje:</b> ${esc(String(err.message || 'Error desconocido').slice(0, 1200))}`\n];\nif (e.url) lineas.push(`<b>Detalle:</b> <a href=\"${esc(e.url)}\">Abrir ejecución</a>`);\nreturn [{ json: { mensaje: lineas.join('\\n') } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "1fbcf205-3bf5-4557-82f7-b1c9e262ee26",
+      "name": "Preparar alerta"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT telegram_chat_id\nFROM usuarios\nWHERE activo = true\n  AND telegram_chat_id IS NOT NULL\n  AND rol IN ('administrador','gerencia')\nORDER BY id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        448,
+        0
+      ],
+      "id": "34df2f5f-e375-4a05-86f6-55cbb7af5489",
+      "name": "Buscar administradores",
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "message",
+        "operation": "sendMessage",
+        "chatId": "={{ $json.telegram_chat_id }}",
+        "text": "={{ $('Preparar alerta').first().json.mensaje }}",
+        "additionalFields": {
+          "appendAttribution": false,
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "3a8ba276-7525-4334-85e5-3a9120b67e31",
+      "name": "Avisar error",
+      "webhookId": "5ddc0404-965a-4aea-8be1-03ec7887d86a",
+      "credentials": {
+        "telegramApi": {
+          "id": "uc8UvlYCV8azBPQJ",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Preparar alerta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Preparar alerta": {
+      "main": [
+        [
+          {
+            "node": "Buscar administradores",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Buscar administradores": {
+      "main": [
+        [
+          {
+            "node": "Avisar error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [],
+  "pinData": {},
+  "meta": {}
+}

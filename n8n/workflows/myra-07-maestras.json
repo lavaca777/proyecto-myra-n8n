@@ -777,7 +777,8 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate"
+    "binaryMode": "separate",
+    "errorWorkflow": "b08c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e80"
   },
   "versionId": "fc94dce7-ee21-49f9-9025-782cd49a9294",
   "meta": {
