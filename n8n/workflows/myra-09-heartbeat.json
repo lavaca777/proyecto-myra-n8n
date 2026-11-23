@@ -1,0 +1,73 @@
+{
+  "id": "b09c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e90",
+  "name": "[MYRA] 09 · Heartbeat",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "daysInterval": 3,
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "12b3d6d0-ed7f-4019-a13e-c647a9387b13",
+      "name": "Cada 3 días"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT 1 AS ping;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.7,
+      "position": [
+        256,
+        0
+      ],
+      "id": "1eaeab9e-0e10-4652-9fd7-fe904c083bcf",
+      "name": "Ping Supabase",
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "postgres": {
+          "id": "DddndwjEnI7KMH9I",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada 3 días": {
+      "main": [
+        [
+          {
+            "node": "Ping Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Santiago"
+  },
+  "tags": [],
+  "pinData": {},
+  "meta": {}
+}
