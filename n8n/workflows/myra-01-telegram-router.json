@@ -1023,8 +1023,7 @@
   "active": true,
   "settings": {
     "executionOrder": "v1",
-    "binaryMode": "separate",
-    "errorWorkflow": "b08c0a2e-7b3d-4c8a-9e1f-2a3b4c5d6e80"
+    "binaryMode": "separate"
   },
   "versionId": "b41769a9-77ba-4e33-8768-12dd527b9774",
   "meta": {
