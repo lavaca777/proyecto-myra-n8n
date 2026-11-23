@@ -60,7 +60,8 @@
           "id": "DddndwjEnI7KMH9I",
           "name": "Postgres account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -113,7 +114,8 @@
           "id": "DddndwjEnI7KMH9I",
           "name": "Postgres account"
         }
-      }
+      },
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -206,7 +208,8 @@
       "position": [
         4784,
         3952
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -328,7 +331,8 @@
       "position": [
         4384,
         3584
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -371,7 +375,8 @@
       "position": [
         2560,
         2480
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -399,7 +404,8 @@
       "position": [
         2656,
         3168
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -506,7 +512,8 @@
       "position": [
         2112,
         2480
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -641,7 +648,8 @@
       "position": [
         2560,
         2304
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -669,7 +677,8 @@
       "position": [
         2112,
         2960
-      ]
+      ],
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -758,7 +767,8 @@
         3136
       ],
       "id": "9e46eeda-23d2-4063-af29-bb1120e68a79",
-      "name": "Call '[MYRA] 10 - Onboarding y Vinculación'"
+      "name": "Call '[MYRA] 10 - Onboarding y Vinculación'",
+      "onError": "continueErrorOutput"
     },
     {
       "parameters": {
@@ -786,7 +796,32 @@
         4112
       ],
       "id": "116b7eec-911b-43aa-bf31-8bc77f79f640",
-      "name": "Call '[MYRA] 12 - Admin Gestionar Usuarios'"
+      "name": "Call '[MYRA] 12 - Admin Gestionar Usuarios'",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Normalizar update').first().json.telegram_chat_id }}",
+        "text": "⚠️ No pude completar tu solicitud por un problema temporal. Intenta de nuevo en unos minutos.",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        1800,
+        1100
+      ],
+      "id": "65014efe-5b84-4bc0-8c1c-3123b0419cf6",
+      "name": "Avisar error al usuario",
+      "webhookId": "dee7e727-a239-48be-b56a-140b569017a8",
+      "credentials": {
+        "telegramApi": {
+          "id": "YPgCfnQDmZ3qwb8E",
+          "name": "Telegram account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -818,6 +853,13 @@
         [
           {
             "node": "Evaluar autorizacion",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar error al usuario",
             "type": "main",
             "index": 0
           }
@@ -858,6 +900,13 @@
         [
           {
             "node": "Preparar admin",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar error al usuario",
             "type": "main",
             "index": 0
           }
@@ -965,6 +1014,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -1013,6 +1069,97 @@
         [
           {
             "node": "Responder no autorizado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a invitar usuario": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a comandos": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a confirmacion": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call '[MYRA] 12 - Admin Gestionar Usuarios'": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a maestras": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar a extraccion": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar error al usuario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar voz a maestras": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Avisar error al usuario",
             "type": "main",
             "index": 0
           }
