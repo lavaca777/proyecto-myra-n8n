@@ -116,8 +116,8 @@ Para texto, `tipo = 'texto'`, `file_id = NULL` y `duracion_ms = NULL`.
 - Si la transcripción viene vacía o Groq falla: responder "No pude escuchar bien..." y
   cortar el flujo.
 - No guardar nada en `gastos` desde WF-02.
-- El workflow de errores centralizado (`WF-08`) todavía está pendiente; por ahora el
-  error se registra en la ejecución de n8n.
+- WF-01 captura el error de WF-02 y responde al mismo chat del usuario. No se envían
+  alertas a administradores.
 
 ## 9. Pruebas
 

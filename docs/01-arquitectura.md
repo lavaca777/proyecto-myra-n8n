@@ -142,11 +142,14 @@ cliente o sobre todos los proyectos. El estado vive en `admin_pending` y expira 
 
 ### 3.8 Errores
 
-- Un workflow `[MYRA] 08 · Errores` con **Error Trigger** centraliza los fallos (pendiente de implementación).
-- El error se registra con el `execution.id` de n8n y se avisa al chat administrador.
-- El usuario recibe un mensaje genérico ("No pude procesar el audio, intenta de nuevo")
-  sin exponer detalles técnicos.
-- Los errores de STT se pueden reintentar una vez antes de pedir texto.
+- WF-03 maneja el fallo de Gemini: reintenta 3 veces y, si persiste, responde al
+  mismo usuario con un mensaje comprensible.
+- WF-01 captura los errores de sus subworkflows y consultas iniciales. El aviso va
+  solo al `telegram_chat_id` que originó el update; no depende del rol.
+- El mensaje al usuario no expone detalles técnicos. El detalle completo queda en la
+  ejecución de n8n.
+- No se usa un workflow central de errores ni se envían alertas masivas a
+  administradores.
 
 ## 4. Flujo principal (voz)
 

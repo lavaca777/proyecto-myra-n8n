@@ -196,8 +196,10 @@ producción n8n Cloud entrega una URL HTTPS fija.
 | 07 | Maestras | Orquestador de sesión, menú, callbacks y comandos de administración |
 | 07A | Interpretar operación | Prompt LLM, validación y borrador de la operación |
 | 07B | Ejecutar operación | Persistencia determinista de altas, ediciones y operaciones masivas |
-| 08 | Errores | Error Trigger + aviso al administrador |
-| 09 | Heartbeat | Consulta periódica a Supabase para evitar la pausa por inactividad |
+| 09 | Heartbeat | Consulta cada 3 días a Supabase para evitar la pausa por inactividad |
+| 10 | Onboarding | Vincula una cuenta nueva con un código de invitación |
+| 11 | Invitar usuario | Genera el enlace de invitación y el usuario pendiente |
+| 12 | Gestionar usuarios | Lista, cambia roles, revoca, re-invita y elimina usuarios |
 
 El detalle de nodos y transiciones está en [`docs/02-flujos.md`](docs/02-flujos.md).
 
@@ -391,6 +393,9 @@ está vacío. Usa `.\scripts\db-migrate.ps1`.
 - [x] WF-07A Interpretar operación
 - [x] WF-07B Ejecutar operación
 - [x] WF-07 edición, desactivación/reactivación y operaciones masivas por cliente
-- [ ] WF-08 Errores
-- [ ] WF-09 Heartbeat
+- [x] WF-09 Heartbeat
+- [x] WF-10 Onboarding y vinculación
+- [x] WF-11 Invitar usuario
+- [x] WF-12 Gestión de usuarios
+- [x] Manejo de errores de IA y de subworkflows con aviso al usuario
 - [ ] Despliegue en n8n Cloud + Supabase

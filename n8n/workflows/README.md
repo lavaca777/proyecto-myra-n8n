@@ -23,13 +23,15 @@ En n8n Cloud: **Workflows → Import from File** y seleccionar cada JSON. Despu�
 
 1. Recrear las credenciales (Telegram, Gemini, Groq y Postgres/Supabase).
 2. Asignar las credenciales nuevas a cada nodo.
-3. Publicar también los sub-workflows: WF-00, WF-02, WF-03, WF-04, WF-05, WF-06,
-   WF-07, WF-07A y WF-07B.
+3. Publicar también los workflows: WF-00, WF-02, WF-03, WF-04, WF-05, WF-06,
+   WF-07, WF-07A, WF-07B, WF-09, WF-10, WF-11 y WF-12.
 4. Activar WF-01 y verificar el webhook de Telegram.
 
 Los IDs de workflows y credenciales del entorno local no se reutilizan en Cloud.
 Los workflows de administración actuales son `myra-07-maestras.json`,
-`myra-07a-interpretar.json` y `myra-07b-ejecutar.json`.
+`myra-07a-interpretar.json`, `myra-07b-ejecutar.json`,
+`myra-10-onboarding-vinculacion.json`, `myra-11-admin-invitar-usuario.json` y
+`myra-12-admin-gestion-usuario.json`. WF-08 fue eliminado.
 
 ## Importar en una instancia local (desarrollo)
 

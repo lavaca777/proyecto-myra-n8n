@@ -121,7 +121,8 @@ No basta con que Supabase tenga el proyecto: hay que tener una copia recuperable
 ### 3.2 Importar workflows
 
 1. Importar los JSON de `n8n/workflows/` desde **Workflows → Import from File**.
-   Los archivos actuales son `myra-00` a `myra-07b` (incluye 07A y 07B).
+   Los archivos actuales son `myra-00` a `myra-12` (incluye 07A/07B, 09, 10, 11 y 12;
+   WF-08 fue eliminado).
 2. Recrear las credenciales en n8n Cloud:
    - Telegram
    - Google Gemini
@@ -129,8 +130,8 @@ No basta con que Supabase tenga el proyecto: hay que tener una copia recuperable
    - Postgres (Supabase)
 3. Asignar las credenciales nuevas a cada nodo. Los IDs de credenciales del entorno
    local **no** se importan.
-4. Publicar también los sub-workflows: WF-00, WF-02, WF-03, WF-04, WF-05, WF-06,
-   WF-07, WF-07A y WF-07B. En n8n Cloud se hace desde la UI.
+4. Publicar también los workflows: WF-00, WF-02, WF-03, WF-04, WF-05, WF-06,
+   WF-07, WF-07A, WF-07B, WF-09, WF-10, WF-11 y WF-12. En n8n Cloud se hace desde la UI.
 5. Activar WF-01 y verificar que el Telegram Trigger registre el webhook.
 
 Los IDs de workflows y credenciales de la instancia local no sirven en Cloud. Hay que
@@ -172,14 +173,17 @@ El plan gratuito de Supabase pausa el proyecto después de **7 días sin activid
 informático, eso significa que el bot puede dejar de funcionar después de unas
 vacaciones.
 
-Crear un workflow independiente:
+El workflow ya existe en `n8n/workflows/myra-09-heartbeat.json`:
 
 ```text
 [MYRA] 09 · Heartbeat
-Schedule Trigger (cada 3 días)
-   → Postgres: SELECT 1;
-   → IF error → Telegram al administrador
+Schedule Trigger (cada 3 días, 09:00 America/Santiago)
+   → Postgres: SELECT 1 AS ping;
+   → 3 reintentos con 5 s de espera
 ```
+
+No envía alertas a administradores. Si falla definitivamente, la ejecución queda
+marcada como error en n8n para revisión técnica.
 
 Si Supabase no considera suficiente una consulta de solo lectura, usar una escritura
 explícita con la tabla `heartbeat`:
@@ -205,8 +209,9 @@ Reglas:
 2. Crear el proyecto Supabase y aplicar migraciones.
 3. Importar los workflows en n8n Cloud.
 4. Recrear credenciales y remapear IDs.
-5. Publicar WF-00, WF-02, WF-03, WF-04, WF-05, WF-06, WF-07, WF-07A y WF-07B.
-6. Configurar y activar el heartbeat.
+5. Publicar WF-00, WF-02, WF-03, WF-04, WF-05, WF-06, WF-07, WF-07A, WF-07B,
+   WF-09, WF-10, WF-11 y WF-12.
+6. Activar el heartbeat WF-09.
 7. Ejecutar las pruebas manuales.
 
 No copiar `n8n/data/` desde el PC a n8n Cloud. Esa carpeta contiene SQLite,
@@ -238,6 +243,10 @@ credenciales locales y storage de ejecuciones; en Cloud no aplica.
 - [ ] Desactivar todos los proyectos de un cliente: pide confirmación y no toca los inactivos.
 - [ ] `/gastos` o `/exportar`: solo pregunta formato y rango; exporta todos los proyectos.
 - [ ] Migración `006`: el índice único por usuario/mensaje está aplicado.
+- [ ] Invitación: genera enlace, vincula la cuenta y asigna `jefe_obra`.
+- [ ] `/usuarios`: lista, limpia invitaciones vencidas y permite cambiar rol, revocar y eliminar.
+- [ ] Error de Gemini: 3 reintentos y aviso solo al usuario.
+- [ ] Error de otro subworkflow: aviso solo al usuario, sin alertas a administradores.
 - [ ] Heartbeat: ejecución exitosa y sin pausa de Supabase.
 
 ## 7. Operación

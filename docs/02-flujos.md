@@ -446,33 +446,76 @@ confirmación se hace con botones; la escritura solo ocurre al confirmar.
 
 ---
 
-## WF-08 · Errores
+## Manejo de errores
 
-**Estado:** pendiente de implementación.
+No hay un workflow central de errores. El aviso se maneja donde existe el chat del
+usuario:
 
-**Tipo:** workflow con `Error Trigger`
-**Responsabilidad:** centralizar fallos.
+- **WF-03:** si `Extraer con Gemini` falla después de 3 reintentos, la salida de error
+  llega a `Avisar error IA`, que responde al mismo `telegram_chat_id`. El mensaje no
+  depende del rol.
+- **WF-01:** las consultas iniciales y las llamadas a subworkflows tienen salida de
+  error conectada a `Avisar error al usuario`. Si falla WF-02, WF-03, WF-04, WF-05,
+  WF-07, WF-10, WF-11 o WF-12, el usuario recibe un aviso genérico en su propio chat.
+- Los errores manejados no se envían a administradores. El detalle técnico queda en
+  la ejecución de n8n.
 
-1. `Error Trigger` recibe `workflow`, `execution`, `trigger`.
-2. Code: extrae `execution.id`, `workflow.name`, `lastNodeExecuted`, mensaje.
-3. Postgres: registra en `registros_entrada.error_detalle` si hay `registro_id`; si no,
-   solo log estructurado.
-4. Telegram: avisa a todos los usuarios con rol `administrador` o `gerencia`.
-
-En n8n: **Settings → Error Workflow → `[MYRA] 08 · Errores`** en cada workflow.
+Límites: si falla el trigger de Telegram o la normalización inicial, todavía no hay
+`chat_id` para responder. Si Telegram está caído, no se puede enviar ningún aviso.
 
 ---
 
 ## WF-09 · Heartbeat
 
-**Estado:** pendiente de implementación.
+**Estado:** implementado.
 
 **Tipo:** workflow con `Schedule Trigger`
 **Responsabilidad:** evitar la pausa por inactividad de Supabase.
 
-1. `Schedule Trigger` cada 3 días.
-2. Postgres: `SELECT 1;` o un upsert en una tabla `heartbeat`.
-3. Si falla, avisar al administrador por Telegram.
+1. `Schedule Trigger` cada 3 días a las 09:00, zona `America/Santiago`.
+2. Postgres: `SELECT 1 AS ping;`.
+3. Reintenta 3 veces con 5 segundos de espera.
+4. Si falla, la ejecución queda marcada como error en n8n; no envía mensajes masivos.
+
+---
+
+## WF-10 · Onboarding y vinculación
+
+**Estado:** implementado.
+
+**Tipo:** sub-workflow invocado por WF-01 cuando el chat no está autorizado.
+
+1. Recibe el texto del usuario y valida un código `MYRA-XXXXX`.
+2. Si no hay formato de código, pide la invitación.
+3. Si el código existe, no fue usado y no expiró, vincula `telegram_chat_id`, activa al
+   usuario y limpia el código.
+4. Envía una bienvenida según el rol asignado.
+
+---
+
+## WF-11 · Invitar usuario
+
+**Estado:** implementado. Solo `administrador`.
+
+1. `/invitar` o el botón `admin_invitar`.
+2. Crea un usuario pendiente (`activo = false`, sin `telegram_chat_id`) con un código
+   válido por 24 horas.
+3. Genera un enlace directo `https://t.me/<bot>?start=<código>`.
+4. Por defecto el rol es `jefe_obra`; después se puede cambiar desde WF-12.
+
+---
+
+## WF-12 · Gestionar usuarios
+
+**Estado:** implementado. Solo `administrador`.
+
+1. `/usuarios` o el botón `Gestionar usuarios`.
+2. Antes de listar, elimina invitaciones vencidas que no fueron vinculadas.
+3. Muestra los usuarios con enlaces `/usr<ID>`.
+4. Permite abrir la ficha, cambiar rol, revocar acceso, re-invitar, eliminar y volver
+   al menú de maestras.
+5. El borrado está protegido: si el usuario tiene gastos o registros históricos,
+   PostgreSQL lo bloquea y el bot sugiere revocar el acceso.
 
 ---
 
@@ -498,6 +541,12 @@ En n8n: **Settings → Error Workflow → `[MYRA] 08 · Errores`** en cada workf
 | 16 | Mismo update de Telegram dos veces | Un solo `registro_entrada` |
 | 17 | Fecha futura | Se rechaza y se pregunta la fecha |
 | 18 | Audio de más de 20 MB | Mensaje claro, sin llamar a Groq |
+| 19 | Error de Gemini 503 | 3 reintentos y aviso al mismo usuario |
+| 20 | Error en otro subworkflow | Aviso al usuario, sin alertas a administradores |
+| 21 | Invitación válida | Se crea usuario pendiente y enlace de 24 h |
+| 22 | Código vencido o reutilizado | No vincula y muestra error |
+| 23 | Gestión de usuario | Cambio de rol, revocación, re-invitación y borrado |
+| 24 | Heartbeat | `SELECT 1` exitoso en Supabase |
 
 Criterios del charter a verificar:
 
